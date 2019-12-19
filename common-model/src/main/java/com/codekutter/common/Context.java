@@ -45,6 +45,13 @@ public class Context {
     private Map<String, Object> params = new HashMap<>();
 
     /**
+     * Default Empty constructor.
+     */
+    public Context() {
+
+    }
+
+    /**
      * Copy Constructor for initializing the current Context.
      *
      * @param source - Source context to initialize from.

@@ -24,10 +24,10 @@
 
 package com.codekutter.common.utils;
 
-import com.codekutter.common.config.ConfigurationException;
-import com.codekutter.common.config.ConfigurationSettings;
-import com.codekutter.common.config.annotations.ConfigPath;
-import com.codekutter.common.config.nodes.*;
+import com.codekutter.zconfig.common.ConfigurationException;
+import com.codekutter.zconfig.common.model.ConfigurationSettings;
+import com.codekutter.zconfig.common.model.annotations.ConfigPath;
+import com.codekutter.zconfig.common.model.nodes.*;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 
