@@ -75,8 +75,15 @@ public class KeyStoreVault implements IKeyVault {
 
     @Override
     public byte[] decrypt(@Nonnull String data, @Nonnull String name, @Nonnull String iv) throws SecurityException {
-        byte[] d = data.getBytes(StandardCharsets.UTF_8);
-        return decrypt(d, name, iv);
+        char[] pc = getPasscode(name);
+        if (pc == null || pc.length <= 0) {
+            throw new SecurityException(String.format("No key found for specified name. [name=%s]", name));
+        }
+        try {
+            return CypherUtils.decrypt(data, new String(pc), iv);
+        } catch (Exception e) {
+            throw new SecurityException(e);
+        }
     }
 
     @Override
@@ -86,8 +93,7 @@ public class KeyStoreVault implements IKeyVault {
             throw new SecurityException(String.format("No key found for specified name. [name=%s]", name));
         }
         try {
-            String sp = new String(pc);
-            return CypherUtils.decrypt(data, sp, iv);
+            return CypherUtils.decrypt(data, new String(pc), iv);
         } catch (Exception e) {
             throw new SecurityException(e);
         }
