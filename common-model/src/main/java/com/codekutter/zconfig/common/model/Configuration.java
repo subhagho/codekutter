@@ -24,6 +24,7 @@
 
 package com.codekutter.zconfig.common.model;
 
+import com.codekutter.common.model.ModifiedBy;
 import com.codekutter.common.utils.ConfigUtils;
 import com.codekutter.common.utils.CypherUtils;
 import com.codekutter.common.utils.LogUtils;

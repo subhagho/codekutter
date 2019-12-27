@@ -42,7 +42,7 @@ public class KeyStoreVault implements IKeyVault {
     }
 
     @Override
-    public IKeyVault addPasscode(@Nonnull String name, @Nonnull char[] key) throws SecurityException {
+    public IKeyVault addPasscode(@Nonnull String name, @Nonnull char[] key, Object... params) throws SecurityException {
         try {
             SecretKeyFactory factory = SecretKeyFactory.getInstance(SK_FACTORY_ALGO);
             SecretKey generatedSecret =

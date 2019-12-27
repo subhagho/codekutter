@@ -28,6 +28,8 @@ import com.codekutter.common.utils.DateTimeUtils;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 
+import javax.annotation.Nonnull;
+
 /**
  * Class represents a asset modification update.
  * Includes the modified by and modification timestamp.
@@ -42,6 +44,17 @@ public class ModifiedBy {
      */
     private long timestamp;
 
+    public ModifiedBy() {}
+
+    public ModifiedBy(@Nonnull String userId) {
+        modifiedBy = userId;
+        timestamp = System.currentTimeMillis();
+    }
+
+    public ModifiedBy(@Nonnull ModifiedBy source) {
+        this.modifiedBy = source.modifiedBy;
+        this.timestamp = source.timestamp;
+    }
     /**
      * Get the modified by User ID.
      *

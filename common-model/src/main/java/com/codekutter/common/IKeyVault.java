@@ -6,7 +6,7 @@ import com.codekutter.zconfig.common.IConfigurable;
 import javax.annotation.Nonnull;
 
 public interface IKeyVault extends IConfigurable {
-    IKeyVault addPasscode(@Nonnull String name, @Nonnull char[] key)
+    IKeyVault addPasscode(@Nonnull String name, @Nonnull char[] key, Object... params)
             throws SecurityException;
 
     char[] getPasscode(@Nonnull String name) throws SecurityException;
