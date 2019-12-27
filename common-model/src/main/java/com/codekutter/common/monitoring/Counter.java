@@ -16,7 +16,7 @@
  *
  */
 
-package com.codekutter.common.counters;
+package com.codekutter.common.monitoring;
 
 import com.codekutter.common.TimeWindow;
 
