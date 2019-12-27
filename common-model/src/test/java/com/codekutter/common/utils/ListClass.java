@@ -17,27 +17,43 @@
  * under the License.
  *
  * Copyright (c) $year
- * Date: 10/2/19 6:34 PM
+ * Date: 9/2/19 7:11 PM
  * Subho Ghosh (subho dot ghosh at outlook.com)
  *
  */
 
-package com.codekutter.zconfig.common;
+package com.codekutter.common.utils;
 
-import com.codekutter.zconfig.common.model.nodes.AbstractConfigNode;
+import java.math.BigDecimal;
+import java.util.Date;
+import java.util.List;
 
-import javax.annotation.Nonnull;
+public class ListClass {
+    private List<Integer> intSet;
+    private List<Date> dateSet;
+    private List<BigDecimal> bigDecimalSet;
 
-/**
- * Interface to be implemented by types that can be configurable using a configuration
- * instance.
- */
-public interface IConfigurable {
-    /**
-     * Configure this type instance.
-     *
-     * @param node - Handle to the configuration node.
-     * @throws ConfigurationException
-     */
-    void configure(@Nonnull AbstractConfigNode node) throws ConfigurationException;
+    public List<Integer> getIntSet() {
+        return intSet;
+    }
+
+    public void setIntSet(List<Integer> intSet) {
+        this.intSet = intSet;
+    }
+
+    public List<Date> getDateSet() {
+        return dateSet;
+    }
+
+    public void setDateSet(List<Date> dateSet) {
+        this.dateSet = dateSet;
+    }
+
+    public List<BigDecimal> getBigDecimalSet() {
+        return bigDecimalSet;
+    }
+
+    public void setBigDecimalSet(List<BigDecimal> bigDecimalSet) {
+        this.bigDecimalSet = bigDecimalSet;
+    }
 }

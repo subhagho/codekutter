@@ -29,6 +29,10 @@ package com.codekutter.zconfig.common;
  */
 public class GlobalConstants {
     /**
+     * Configuration Key vault name.
+     */
+    public static final String DEFAULT_CONFIG_VAULT_NAME = "__CONFIG_KEY_VAULT__";
+    /**
      * Default Joda date format to parse/print dates.
      */
     public static final String DEFAULT_JODA_DATE_FORMAT = "M.d.y";

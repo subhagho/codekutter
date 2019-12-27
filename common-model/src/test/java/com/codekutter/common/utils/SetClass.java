@@ -17,27 +17,42 @@
  * under the License.
  *
  * Copyright (c) $year
- * Date: 10/2/19 6:34 PM
+ * Date: 9/2/19 7:12 PM
  * Subho Ghosh (subho dot ghosh at outlook.com)
  *
  */
 
-package com.codekutter.zconfig.common;
+package com.codekutter.common.utils;
 
-import com.codekutter.zconfig.common.model.nodes.AbstractConfigNode;
+import java.math.BigDecimal;
+import java.util.Set;
 
-import javax.annotation.Nonnull;
+public class SetClass {
+    private Set<Long> longSet;
+    private Set<String> stringSet;
+    private Set<BigDecimal> bigDecimalSet;
 
-/**
- * Interface to be implemented by types that can be configurable using a configuration
- * instance.
- */
-public interface IConfigurable {
-    /**
-     * Configure this type instance.
-     *
-     * @param node - Handle to the configuration node.
-     * @throws ConfigurationException
-     */
-    void configure(@Nonnull AbstractConfigNode node) throws ConfigurationException;
+    public Set<Long> getLongSet() {
+        return longSet;
+    }
+
+    public void setLongSet(Set<Long> longSet) {
+        this.longSet = longSet;
+    }
+
+    public Set<String> getStringSet() {
+        return stringSet;
+    }
+
+    public void setStringSet(Set<String> stringSet) {
+        this.stringSet = stringSet;
+    }
+
+    public Set<BigDecimal> getBigDecimalSet() {
+        return bigDecimalSet;
+    }
+
+    public void setBigDecimalSet(Set<BigDecimal> bigDecimalSet) {
+        this.bigDecimalSet = bigDecimalSet;
+    }
 }

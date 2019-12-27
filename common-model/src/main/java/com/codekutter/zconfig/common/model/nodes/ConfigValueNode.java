@@ -24,6 +24,8 @@
 
 package com.codekutter.zconfig.common.model.nodes;
 
+import com.codekutter.common.utils.KeyVaultManager;
+import com.codekutter.zconfig.common.ConfigKeyVault;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
@@ -100,8 +102,11 @@ public class ConfigValueNode extends AbstractConfigNode
     public String getDecryptedValue() {
         if (encrypted && !Strings.isNullOrEmpty(this.value)) {
             try {
-                String value = ZConfigEnv.getVault()
-                                         .decrypt(this.value, getConfiguration());
+                ConfigKeyVault vault = ConfigKeyVault.getInstance();
+                if (vault == null) {
+                    throw new Exception("Configuration Key Vault not registered.");
+                }
+                String value = vault.decrypt(this.value, getConfiguration());
                 if (Strings.isNullOrEmpty(value)) {
                     throw new Exception(
                             "Error Decrypting Value. NULL value returned.");
