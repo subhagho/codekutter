@@ -9,10 +9,11 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>zconfig-common</artifactId>
-    <name>zconfig-common</name>
+    <artifactId>zconfig-client</artifactId>
+    <name>zconfig-client</name>
     <version>1.0.5-SNAPSHOT</version>
-    <url>https://github.com/subhagho/codekutter/tree/master/zconfig-common</url>
+    <!-- FIXME change it to the project's website -->
+    <url>http://www.example.com</url>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -21,17 +22,16 @@
     </properties>
 
     <dependencies>
-        <!-- https://mvnrepository.com/artifact/commons-io/commons-io -->
-        <dependency>
-            <groupId>commons-io</groupId>
-            <artifactId>commons-io</artifactId>
-            <version>2.6</version>
-        </dependency>
-
         <dependency>
             <groupId>com.codekutter</groupId>
             <artifactId>common-lib</artifactId>
             <version>1.0-SNAPSHOT</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.codekutter</groupId>
+            <artifactId>zconfig-common</artifactId>
+            <version>1.0.5-SNAPSHOT</version>
             <scope>compile</scope>
         </dependency>
     </dependencies>
