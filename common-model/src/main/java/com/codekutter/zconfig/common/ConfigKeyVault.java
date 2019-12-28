@@ -34,7 +34,6 @@ public class ConfigKeyVault {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(value));
         Preconditions.checkState(vault != null);
 
-
         try {
             String name = String.format("%s:%s:%s", config.getApplicationGroup(), config.getApplication(), config.getName());
 
@@ -57,7 +56,7 @@ public class ConfigKeyVault {
 
     private static final ConfigKeyVault _instance = new ConfigKeyVault();
 
-    public static final ConfigKeyVault getInstance() {
+    public static ConfigKeyVault getInstance() {
         return _instance;
     }
 }

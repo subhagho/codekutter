@@ -3,12 +3,14 @@ package com.codekutter.common.utils;
 import com.codekutter.common.IKeyVault;
 import com.codekutter.common.model.ModifiedBy;
 import com.codekutter.common.model.utils.VaultRecord;
+import com.codekutter.zconfig.common.ConfigurationAnnotationProcessor;
 import com.codekutter.zconfig.common.ConfigurationException;
 import com.codekutter.zconfig.common.model.EncryptedValue;
 import com.codekutter.zconfig.common.model.annotations.ConfigAttribute;
 import com.codekutter.zconfig.common.model.annotations.ConfigPath;
 import com.codekutter.zconfig.common.model.annotations.ConfigValue;
 import com.codekutter.zconfig.common.model.nodes.AbstractConfigNode;
+import com.codekutter.zconfig.common.model.nodes.ConfigPathNode;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import lombok.AccessLevel;
@@ -148,7 +150,8 @@ public class DBKeyVault implements IKeyVault {
     @Override
     public void configure(@Nonnull AbstractConfigNode node) throws ConfigurationException {
         if (session == null) {
-            // TODO: Configure driver
+            ConfigurationAnnotationProcessor.readConfigAnnotations(getClass(), (ConfigPathNode) node, this);
+            // TODO: Setup hibernate connection
         }
     }
 }
