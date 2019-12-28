@@ -3,10 +3,10 @@ package com.codekutter.common.utils;
 import com.codekutter.common.IKeyVault;
 import com.codekutter.common.model.ModifiedBy;
 import com.codekutter.common.model.utils.VaultRecord;
+import com.codekutter.common.stores.impl.HibernateConnection;
 import com.codekutter.zconfig.common.ConfigurationAnnotationProcessor;
 import com.codekutter.zconfig.common.ConfigurationException;
 import com.codekutter.zconfig.common.model.EncryptedValue;
-import com.codekutter.zconfig.common.model.annotations.ConfigAttribute;
 import com.codekutter.zconfig.common.model.annotations.ConfigPath;
 import com.codekutter.zconfig.common.model.annotations.ConfigValue;
 import com.codekutter.zconfig.common.model.nodes.AbstractConfigNode;
@@ -28,28 +28,16 @@ import java.nio.charset.StandardCharsets;
 @Accessors(fluent = true)
 @ConfigPath(path = "db-key-vault")
 public class DBKeyVault implements IKeyVault {
-    @ConfigValue(name = "url", required = true)
-    private String dbUrl;
-    @ConfigValue(name = "username", required = true)
-    private String dbUser;
-    @ConfigValue(name = "password", required = true)
-    private EncryptedValue dbPassword;
-    @ConfigValue(name = "dbname", required = true)
-    private String dbName;
-    @ConfigAttribute(name = "driver", required = true)
-    private String driver;
-    @ConfigAttribute(name = "dialect", required = true)
-    private String dialect;
-    @ConfigValue(name = "vaultKey", required = true)
+    @ConfigValue(name = "vaultKey")
     private EncryptedValue vaultKey;
-    @ConfigValue(name = "ivSpec", required = true)
+    @ConfigValue(name = "ivSpec")
     private String ivSpec;
-    @Getter(AccessLevel.NONE)
     @Setter(AccessLevel.NONE)
-    private Session session;
+    @Getter(AccessLevel.NONE)
+    private HibernateConnection connection;
 
-    public IKeyVault withSession(@Nonnull Session session) {
-        this.session = session;
+    public IKeyVault withConnection(@Nonnull HibernateConnection connection) {
+        this.connection = connection;
         return this;
     }
 
@@ -58,7 +46,7 @@ public class DBKeyVault implements IKeyVault {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(name));
         Preconditions.checkArgument(params != null && params.length > 0);
         Preconditions.checkState(vaultKey != null);
-        Preconditions.checkState(session != null);
+        Preconditions.checkState(connection != null);
         Preconditions.checkState(!Strings.isNullOrEmpty(ivSpec));
 
         String userId = (String) params[0];
@@ -67,27 +55,32 @@ public class DBKeyVault implements IKeyVault {
 
         try {
             byte[] encrypted = CypherUtils.encrypt(new String(key).getBytes(StandardCharsets.UTF_8), vaultKey.getDecryptedValue(), ivSpec);
-            Transaction tnx = session.beginTransaction();
+
+            Session session = connection.connection();
             try {
+                Transaction tnx = session.beginTransaction();
+                try {
 
-                VaultRecord record = session.find(VaultRecord.class, name);
-                if (record == null) {
-                    record = new VaultRecord();
-                    record.setKey(name);
-                    record.setData(encrypted);
-                    record.setCreatedBy(new ModifiedBy(userId));
-                    record.setModifiedBy(record.getCreatedBy());
-                } else {
-                    record.setData(encrypted);
-                    record.setModifiedBy(new ModifiedBy(userId));
+                    VaultRecord record = session.find(VaultRecord.class, name);
+                    if (record == null) {
+                        record = new VaultRecord();
+                        record.setKey(name);
+                        record.setData(encrypted);
+                        record.setCreatedBy(new ModifiedBy(userId));
+                        record.setModifiedBy(record.getCreatedBy());
+                    } else {
+                        record.setData(encrypted);
+                        record.setModifiedBy(new ModifiedBy(userId));
+                    }
+                    session.save(record);
+                    tnx.commit();
+                } catch (Throwable t) {
+                    tnx.rollback();
+                    throw t;
                 }
-                session.save(record);
-                tnx.commit();
-            } catch (Throwable t) {
-                tnx.rollback();
-                throw t;
+            } finally {
+                connection.close();
             }
-
         } catch (Exception e) {
             throw new SecurityException(e);
         }
@@ -98,18 +91,27 @@ public class DBKeyVault implements IKeyVault {
     public char[] getPasscode(@Nonnull String name) throws SecurityException {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(name));
         Preconditions.checkState(vaultKey != null);
-        Preconditions.checkState(session != null);
+        Preconditions.checkState(connection != null);
         Preconditions.checkState(!Strings.isNullOrEmpty(ivSpec));
 
-        VaultRecord record = session.find(VaultRecord.class, name);
-        if (record == null) {
-            throw new SecurityException(String.format("No record found for key. [name=%s]", name));
-        }
         try {
-            byte[] d = CypherUtils.decrypt(record.getData(), vaultKey.getDecryptedValue(), ivSpec);
-            return new String(d, StandardCharsets.UTF_8).toCharArray();
-        } catch (Exception e) {
-            throw new SecurityException(e);
+            Session session = connection.connection();
+            try {
+                VaultRecord record = session.find(VaultRecord.class, name);
+                if (record == null) {
+                    throw new SecurityException(String.format("No record found for key. [name=%s]", name));
+                }
+                try {
+                    byte[] d = CypherUtils.decrypt(record.getData(), vaultKey.getDecryptedValue(), ivSpec);
+                    return new String(d, StandardCharsets.UTF_8).toCharArray();
+                } catch (Exception e) {
+                    throw new SecurityException(e);
+                }
+            } finally {
+                connection.close();
+            }
+        } catch (Exception ex) {
+            throw new SecurityException(ex);
         }
     }
 
@@ -149,9 +151,15 @@ public class DBKeyVault implements IKeyVault {
      */
     @Override
     public void configure(@Nonnull AbstractConfigNode node) throws ConfigurationException {
-        if (session == null) {
+        if (connection == null) {
+            Preconditions.checkArgument(node instanceof ConfigPathNode);
             ConfigurationAnnotationProcessor.readConfigAnnotations(getClass(), (ConfigPathNode) node, this);
-            // TODO: Setup hibernate connection
+            AbstractConfigNode cnode = ConfigUtils.getPathNode(getClass(), (ConfigPathNode) node);
+            if (cnode == null) {
+                throw new ConfigurationException(String.format("Configuration node not found. [node=%s]", node.getAbsolutePath()));
+            }
+            connection = new HibernateConnection();
+            connection.configure(cnode);
         }
     }
 }
