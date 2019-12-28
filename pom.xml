@@ -9,7 +9,8 @@
     <packaging>pom</packaging>
     <version>1.0-SNAPSHOT</version>
     <modules>
-        <module>common-model</module>
+        <module>common-lib</module>
+        <module>zconfig-common</module>
     </modules>
 
     <name>codekutter</name>
