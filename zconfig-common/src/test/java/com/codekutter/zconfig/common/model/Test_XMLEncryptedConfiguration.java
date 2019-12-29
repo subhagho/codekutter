@@ -24,10 +24,13 @@
 
 package com.codekutter.zconfig.common.model;
 
+import com.codekutter.common.utils.KeyStoreVault;
+import com.codekutter.zconfig.common.ConfigKeyVault;
 import com.codekutter.zconfig.common.ConfigProviderFactory;
 import com.codekutter.zconfig.common.ConfigTestConstants;
 import com.codekutter.common.utils.LogUtils;
 import com.codekutter.zconfig.common.model.nodes.AbstractConfigNode;
+import com.codekutter.zconfig.common.model.nodes.ConfigPathNode;
 import com.codekutter.zconfig.common.model.nodes.ConfigValueNode;
 import com.codekutter.zconfig.common.parsers.XMLConfigParser;
 import com.codekutter.zconfig.common.readers.ConfigFileReader;
@@ -46,7 +49,7 @@ class Test_XMLEncryptedConfiguration {
             "src/test/resources/XML/test-config-encrypted.properties";
     private static Configuration configuration = null;
     private static String encryptionKey = "21947a50-6755-47";
-    private static String IV = "test-configTEST-";
+    private static String IV = "/NK/c+NKGUwMm0RF";
 
     @BeforeAll
     static void init() throws Exception {
@@ -65,6 +68,12 @@ class Test_XMLEncryptedConfiguration {
         assertFalse(Strings.isNullOrEmpty(vs));
         Version version = Version.parse(vs);
         assertNotNull(version);
+
+        KeyStoreVault vault = new KeyStoreVault();
+        // Using dummy config node.
+        vault.configure(new ConfigPathNode());
+
+        ConfigKeyVault.getInstance().withVault(vault);
 
         try (ConfigFileReader reader = new ConfigFileReader(filename)) {
             ConfigurationSettings settings = new ConfigurationSettings();

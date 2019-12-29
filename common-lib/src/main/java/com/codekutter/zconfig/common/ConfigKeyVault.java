@@ -49,9 +49,18 @@ public class ConfigKeyVault {
     }
 
     private String getIVSpec(Configuration config) throws Exception {
-        StringBuffer buff = new StringBuffer();
-        buff.append(config.getInstanceId()).append(config.getName()).append(config.getApplication()).append(config.getEncryptionHash());
-        return CypherUtils.getKeyHash(buff.toString());
+        return getIvSpec(config.getId(), config.getApplicationGroup(),
+                config.getApplication(), config.getName(), config.getEncryptionHash());
+    }
+
+    public static String getIvSpec(@Nonnull String id, @Nonnull String group,
+                                   @Nonnull String app, @Nonnull String name,
+                                   @Nonnull String keyHash) throws Exception {
+        StringBuffer buffer = new StringBuffer();
+        buffer.append(id).append(group).append(app).append(name).append(keyHash);
+
+        String spec = CypherUtils.getKeyHash(buffer.toString());
+        return spec.substring(0, 16);
     }
 
     private static final ConfigKeyVault _instance = new ConfigKeyVault();

@@ -23,7 +23,7 @@
   ~
   -->
 <root>
-    <header ID="UNIQUE-99918239013" group="TEST-APP-GROUP" application="TEST-APPLICATION" name="test-config" version="0.2"
+    <header ID="UNIQUE-99918239012" group="TEST-APP-GROUP" application="TEST-APPLICATION" name="test-config" version="0.2"
             passwordHash="2ff9irI7zQgaWmitmRK1Yg==">
         <description>This is a test JSON configuration file.</description>
         <createdBy user="subho" tiemstamp="1552835141000"/>
@@ -131,7 +131,7 @@
                     <PARAM_1>This is a replacement test. ${PROP_1}${PROP_2}</PARAM_1>
                     <PARAM_2>TEST_PARAM_2</PARAM_2>
                     <PARAM_3 encrypted="true">
-                        <value>pBfPwW18CPEJUmFDdOURqA==</value>
+                        <value>qWNMxa+1WxLC0BjvxzeA4g==</value>
                     </PARAM_3>
                     <PARAM_4>TEST_PARAM_4</PARAM_4>
                     <PARAM_5>18473498</PARAM_5>
@@ -154,7 +154,7 @@
                         <timestamp>01.02.2019 12:32:19</timestamp>
                     </updatedBy>
                     <password encrypted="true">
-                        <value>ctoFqnpM1v/TMGkStupP2w==</value>
+                        <value>iyGiHwGIT2JDgk01E/xjUw==</value>
                     </password>
                     <node_4>
                         <nodeVersion>1</nodeVersion>

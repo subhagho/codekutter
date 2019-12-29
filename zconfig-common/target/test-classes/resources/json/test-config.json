@@ -1,7 +1,6 @@
 {
     "header": {
         "id": "UNIQUE-99918239012",
-        "passwordHash": "2ff9irI7zQgaWmitmRK1Yg==",
         "group": "TEST-APP-GROUP",
         "application": "TEST-APPLICATION",
         "name": "test-config",
@@ -126,10 +125,7 @@
                 "parameters": {
                     "PARAM_1": "This is a replacement test. ${PROP_1}${PROP_2}",
                     "PARAM_2": "TEST_PARAM_2",
-                    "PARAM_3": {
-                        "@encrypted": "true",
-                        "value": "qWNMxa+1WxLC0BjvxzeA4g=="
-                    },
+                    "PARAM_3": "TEST_PARAM_3",
                     "PARAM_4": "TEST_PARAM_4",
                     "PARAM_5": "18473498",
                     "PARAM_6": "EValue3"
@@ -149,16 +145,9 @@
                         "user": "subho",
                         "timestamp": "01.02.2019 12:32:19"
                     },
-                    "password" : {
-                        "@encrypted": "true",
-                        "value": "iyGiHwGIT2JDgk01E/xjUw=="
-                    },
                     "@": {
                         "ATTR_1": "TEST_ATTR_1",
-                        "ATTR_2": {
-                            "@encrypted": "true",
-                            "value": "jXrnCW8om6MyDfxyKx9XlQ=="
-                        },
+                        "ATTR_2": "TEST_ATTR_2",
                         "ATTR_3": "TEST_ATTR_3",
                         "ATTR_4": "TEST_ATTR_4"
                     },

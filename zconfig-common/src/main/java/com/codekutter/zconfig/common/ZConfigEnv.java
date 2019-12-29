@@ -25,11 +25,12 @@
 package com.codekutter.zconfig.common;
 
 import com.codekutter.common.StateException;
-import com.codekutter.common.utils.CypherUtils;
+import com.codekutter.common.utils.KeyStoreVault;
 import com.codekutter.common.utils.LogUtils;
 import com.codekutter.common.utils.NetUtils;
 import com.codekutter.zconfig.common.model.Configuration;
 import com.codekutter.zconfig.common.model.Version;
+import com.codekutter.zconfig.common.model.nodes.ConfigPathNode;
 import com.codekutter.zconfig.common.parsers.AbstractConfigParser;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -142,6 +143,12 @@ public abstract class ZConfigEnv {
         Preconditions.checkArgument(version != null);
         Preconditions.checkArgument(parser != null);
         try {
+            KeyStoreVault vault = new KeyStoreVault();
+            // Using dummy config node.
+            vault.configure(new ConfigPathNode());
+
+            ConfigKeyVault.getInstance().withVault(vault);
+
             LogUtils.info(getClass(), String.format(
                     "Initializing Client Environment : With Configuration file [%s]...",
                     configfile));

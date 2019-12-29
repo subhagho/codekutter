@@ -23,8 +23,7 @@
   ~
   -->
 <root>
-    <header ID="UNIQUE-99918239012" group="TEST-APP-GROUP" application="TEST-APPLICATION" name="test-config" version="0.2"
-            passwordHash="2ff9irI7zQgaWmitmRK1Yg==">
+    <header ID="UNIQUE-99918239013" group="TEST-APP-GROUP" application="TEST-APPLICATION" name="test-config" version="0.2">
         <description>This is a test JSON configuration file.</description>
         <createdBy user="subho" tiemstamp="1552835141000"/>
         <updatedBy user="subho" tiemstamp="1552835341000"/>
@@ -60,58 +59,71 @@
                 <PARAM_3>TEST_PARAM_3</PARAM_3>
                 <PARAM_4>TEST_PARAM_4</PARAM_4>
             </parameters>
+            <VALUE_LIST>
+                <TEST_VALUE_LIST>TEST_STRING_1</TEST_VALUE_LIST>
+                <TEST_VALUE_LIST>TEST_STRING_2</TEST_VALUE_LIST>
+                <TEST_VALUE_LIST>TEST_STRING_3</TEST_VALUE_LIST>
+                <TEST_VALUE_LIST>TEST_STRING_4</TEST_VALUE_LIST>
+                <TEST_VALUE_LIST>Test override property. ${PROP_1}</TEST_VALUE_LIST>
+                <TEST_VALUE_LIST>TEST_STRING_6</TEST_VALUE_LIST>
+                <TEST_VALUE_LIST>TEST_STRING_7</TEST_VALUE_LIST>
+                <TEST_VALUE_LIST>TEST_STRING_8</TEST_VALUE_LIST>
+            </VALUE_LIST>
             <TEST_ELEMENT_LIST>
-                <nodeVersion>1</nodeVersion>
-                <createdBy>
-                    <user>subho</user>
-                    <timestamp>12.31.2018 12:32:19</timestamp>
-                </createdBy>
-                <updatedBy>
-                    <user>subho</user>
-                    <timestamp>01.02.2019 12:32:19</timestamp>
-                </updatedBy>
-                <string_1>STRING_1</string_1>
-                <string_2>STRING_2</string_2>
+                <TEST_ELEMENT_LIST>
+                    <nodeVersion>1</nodeVersion>
+                    <createdBy>
+                        <user>subho</user>
+                        <timestamp>12.31.2018 12:32:19</timestamp>
+                    </createdBy>
+                    <updatedBy>
+                        <user>subho</user>
+                        <timestamp>01.02.2019 12:32:19</timestamp>
+                    </updatedBy>
+                    <string_1>STRING_1</string_1>
+                    <string_2>STRING_2</string_2>
+                </TEST_ELEMENT_LIST>
+                <TEST_ELEMENT_LIST>
+                    <description>This is a test description</description>
+                    <nodeVersion>1</nodeVersion>
+                    <createdBy>
+                        <user>subho</user>
+                        <timestamp>12.31.2018 12:32:19</timestamp>
+                    </createdBy>
+                    <updatedBy>
+                        <user>subho</user>
+                        <timestamp>01.02.2019 12:32:19</timestamp>
+                    </updatedBy>
+                </TEST_ELEMENT_LIST>
+                <TEST_ELEMENT_LIST>
+                    <nodeVersion>1</nodeVersion>
+                    <createdBy>
+                        <user>subho</user>
+                        <timestamp>12.31.2018 12:32:19</timestamp>
+                    </createdBy>
+                    <updatedBy>
+                        <user>subho</user>
+                        <timestamp>01.02.2019 12:32:19</timestamp>
+                    </updatedBy>
+                    <string_1>STRING_1</string_1>
+                    <string_2>STRING_2</string_2>
+                </TEST_ELEMENT_LIST>
+                <TEST_ELEMENT_LIST>
+                    <nodeVersion>1</nodeVersion>
+                    <createdBy>
+                        <user>subho</user>
+                        <timestamp>12.31.2018 12:32:19</timestamp>
+                    </createdBy>
+                    <updatedBy>
+                        <user>subho</user>
+                        <timestamp>01.02.2019 12:32:19</timestamp>
+                    </updatedBy>
+                    <string_1>STRING_1</string_1>
+                    <string_2>STRING_2</string_2>
+                </TEST_ELEMENT_LIST>
             </TEST_ELEMENT_LIST>
-            <TEST_ELEMENT_LIST>
-                <description>This is a test description</description>
-                <nodeVersion>1</nodeVersion>
-                <createdBy>
-                    <user>subho</user>
-                    <timestamp>12.31.2018 12:32:19</timestamp>
-                </createdBy>
-                <updatedBy>
-                    <user>subho</user>
-                    <timestamp>01.02.2019 12:32:19</timestamp>
-                </updatedBy>
-            </TEST_ELEMENT_LIST>
-            <TEST_ELEMENT_LIST>
-                <nodeVersion>1</nodeVersion>
-                <createdBy>
-                    <user>subho</user>
-                    <timestamp>12.31.2018 12:32:19</timestamp>
-                </createdBy>
-                <updatedBy>
-                    <user>subho</user>
-                    <timestamp>01.02.2019 12:32:19</timestamp>
-                </updatedBy>
-                <string_1>STRING_1</string_1>
-                <string_2>STRING_2</string_2>
-            </TEST_ELEMENT_LIST>
-            <TEST_ELEMENT_LIST>
-                <nodeVersion>1</nodeVersion>
-                <createdBy>
-                    <user>subho</user>
-                    <timestamp>12.31.2018 12:32:19</timestamp>
-                </createdBy>
-                <updatedBy>
-                    <user>subho</user>
-                    <timestamp>01.02.2019 12:32:19</timestamp>
-                </updatedBy>
-                <string_1>STRING_1</string_1>
-                <string_2>STRING_2</string_2>
-            </TEST_ELEMENT_LIST>
-            <node_2>
+            <node_2 ATTRIBUTE_2="Attribute Two" ATTRIBUTE_3="Attribute Three" ATTRIBUTE_4="${PROP_1}"
+                    ATTRIBUTE_5="Attribute Five" ATTRIBUTE_1="Attribute One">
                 <description>This is a test description</description>
                 <nodeVersion>1</nodeVersion>
                 <createdBy>
@@ -130,20 +142,15 @@
                 <parameters>
                     <PARAM_1>This is a replacement test. ${PROP_1}${PROP_2}</PARAM_1>
                     <PARAM_2>TEST_PARAM_2</PARAM_2>
-                    <PARAM_3 encrypted="true">
-                        <value>qWNMxa+1WxLC0BjvxzeA4g==</value>
-                    </PARAM_3>
+                    <PARAM_3>TEST_PARAM_3</PARAM_3>
                     <PARAM_4>TEST_PARAM_4</PARAM_4>
-                    <PARAM_5>18473498</PARAM_5>
-                    <PARAM_6>EValue3</PARAM_6>
                 </parameters>
-                <remoteResource type="BLOB"
-                                resourceName="common-1.0-20171127.050926-1-javadoc.jar">
+                <remoteResource type="BLOB" resourceName="common-1.0-20171127.050926-1-javadoc.jar">
                     <url>
                         https://github.com/subhagho/openriver-maven/blob/wookler-repo/com/wookler/common/1.0-SNAPSHOT/common-1.0-20171127.050926-1-javadoc.jar?raw=true
                     </url>
                 </remoteResource>
-                <node_3>
+                <node_3 ATTR_1="TEST_ATTR_1" ATTR_2="TEST_ATTR_2" ATTR_3="TEST_ATTR_3" ATTR_4="TEST_ATTR_4">
                     <nodeVersion>1</nodeVersion>
                     <createdBy>
                         <user>subho</user>
@@ -153,9 +160,7 @@
                         <user>subho</user>
                         <timestamp>01.02.2019 12:32:19</timestamp>
                     </updatedBy>
-                    <password encrypted="true">
-                        <value>iyGiHwGIT2JDgk01E/xjUw==</value>
-                    </password>
+
                     <node_4>
                         <nodeVersion>1</nodeVersion>
                         <properties>
