@@ -1,2 +1,2 @@
 # codekutter
-Common Libraries and Utils
+Common Libraries and Utils + ZooKeeper backed configuration management server
