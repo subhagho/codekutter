@@ -17,34 +17,39 @@
  * under the License.
  *
  * Copyright (c) $year
- * Date: 1/1/19 6:43 PM
+ * Date: 15/2/19 8:33 PM
  * Subho Ghosh (subho dot ghosh at outlook.com)
  *
  */
 
-package com.codekutter.common.model;
+package com.codekutter.zconfig.core.model;
 
-import com.codekutter.common.utils.DateTimeUtils;
-import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
-
-import javax.annotation.Nonnull;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 /**
- * Class represents a asset modification update.
- * Includes the modified by and modification timestamp.
+ * Interface to be implemented by all ZooKeeper node elements.
  */
-public class ModifiedBy extends ModificationLog<String>{
-    public ModifiedBy() {}
+public interface IZkNode {
+    /**
+     * Get the name of this node.
+     *
+     * @return - Node name
+     */
+    public String getName();
 
-    public ModifiedBy(@Nonnull String userId) {
-        Preconditions.checkArgument(!Strings.isNullOrEmpty(userId));
-        setModifiedBy(userId);
-        setTimestamp(System.currentTimeMillis());
-    }
+    /**
+     * Get the path name of this node.
+     *
+     * @return - Path node name.
+     */
+    @JsonIgnore
+    public String getPath();
 
-    public ModifiedBy(@Nonnull ModifiedBy source) {
-        setModifiedBy(source.getModifiedBy());
-        setTimestamp(source.getTimestamp());
-    }
+    /**
+     * Get the absolute path of this node element.
+     *
+     * @return - Absolute Path.
+     */
+    @JsonIgnore
+    public String getAbsolutePath();
 }

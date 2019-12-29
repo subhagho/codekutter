@@ -17,34 +17,28 @@
  * under the License.
  *
  * Copyright (c) $year
- * Date: 1/1/19 6:43 PM
+ * Date: 4/3/19 4:47 PM
  * Subho Ghosh (subho dot ghosh at outlook.com)
  *
  */
 
-package com.codekutter.common.model;
+package com.codekutter.zconfig.common.events;
 
-import com.codekutter.common.utils.DateTimeUtils;
-import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
-
-import javax.annotation.Nonnull;
+import lombok.Getter;
+import lombok.Setter;
 
 /**
- * Class represents a asset modification update.
- * Includes the modified by and modification timestamp.
+ * Configuration Update event to pass updates to the server.
  */
-public class ModifiedBy extends ModificationLog<String>{
-    public ModifiedBy() {}
-
-    public ModifiedBy(@Nonnull String userId) {
-        Preconditions.checkArgument(!Strings.isNullOrEmpty(userId));
-        setModifiedBy(userId);
-        setTimestamp(System.currentTimeMillis());
-    }
-
-    public ModifiedBy(@Nonnull ModifiedBy source) {
-        setModifiedBy(source.getModifiedBy());
-        setTimestamp(source.getTimestamp());
-    }
+@Getter
+@Setter
+public class ConfigServerUpdateEvent extends AbstractConfigUpdateEvent<Object> {
+    /**
+     * Name of the node.
+     */
+    private String name;
+    /**
+     * Description of the node.
+     */
+    private String description;
 }

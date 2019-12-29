@@ -17,34 +17,46 @@
  * under the License.
  *
  * Copyright (c) $year
- * Date: 1/1/19 6:43 PM
+ * Date: 9/2/19 10:12 PM
  * Subho Ghosh (subho dot ghosh at outlook.com)
  *
  */
 
-package com.codekutter.common.model;
+package com.codekutter.zconfig.common;
 
-import com.codekutter.common.utils.DateTimeUtils;
-import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
-
-import javax.annotation.Nonnull;
+import com.codekutter.zconfig.common.ZConfigInstance;
+import com.codekutter.zconfig.common.model.annotations.ConfigPath;
+import com.codekutter.zconfig.common.model.annotations.ConfigValue;
 
 /**
- * Class represents a asset modification update.
- * Includes the modified by and modification timestamp.
+ * Class represents a service instance of the Configuration Server.
  */
-public class ModifiedBy extends ModificationLog<String>{
-    public ModifiedBy() {}
+@ConfigPath(path = "zconfig/instance")
+public class ZConfigCoreInstance extends ZConfigInstance {
 
-    public ModifiedBy(@Nonnull String userId) {
-        Preconditions.checkArgument(!Strings.isNullOrEmpty(userId));
-        setModifiedBy(userId);
-        setTimestamp(System.currentTimeMillis());
+    /**
+     * Port this instance is listening on.
+     */
+    @ConfigValue(name = "port", required = true)
+    private int port;
+
+
+    /**
+     * Get the port this service is listening on.
+     *
+     * @return - Server Port
+     */
+    public int getPort() {
+        return port;
     }
 
-    public ModifiedBy(@Nonnull ModifiedBy source) {
-        setModifiedBy(source.getModifiedBy());
-        setTimestamp(source.getTimestamp());
+    /**
+     * Get the port this service is listening on.
+     *
+     * @param port - Server Port
+     */
+    public void setPort(int port) {
+        this.port = port;
     }
+
 }

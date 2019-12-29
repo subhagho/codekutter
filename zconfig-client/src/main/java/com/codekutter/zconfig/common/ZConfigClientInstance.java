@@ -17,34 +17,19 @@
  * under the License.
  *
  * Copyright (c) $year
- * Date: 1/1/19 6:43 PM
+ * Date: 10/2/19 5:50 PM
  * Subho Ghosh (subho dot ghosh at outlook.com)
  *
  */
 
-package com.codekutter.common.model;
+package com.codekutter.zconfig.common;
 
-import com.codekutter.common.utils.DateTimeUtils;
-import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
-
-import javax.annotation.Nonnull;
+import com.codekutter.zconfig.common.model.annotations.ConfigPath;
 
 /**
- * Class represents a asset modification update.
- * Includes the modified by and modification timestamp.
+ * Instance object of a client connecting to the configuration server.
  */
-public class ModifiedBy extends ModificationLog<String>{
-    public ModifiedBy() {}
+@ConfigPath(path = "zconfig/instance")
+public class ZConfigClientInstance extends ZConfigInstance {
 
-    public ModifiedBy(@Nonnull String userId) {
-        Preconditions.checkArgument(!Strings.isNullOrEmpty(userId));
-        setModifiedBy(userId);
-        setTimestamp(System.currentTimeMillis());
-    }
-
-    public ModifiedBy(@Nonnull ModifiedBy source) {
-        setModifiedBy(source.getModifiedBy());
-        setTimestamp(source.getTimestamp());
-    }
 }

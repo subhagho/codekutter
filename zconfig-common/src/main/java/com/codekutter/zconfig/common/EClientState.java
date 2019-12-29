@@ -17,34 +17,47 @@
  * under the License.
  *
  * Copyright (c) $year
- * Date: 1/1/19 6:43 PM
+ * Date: 10/2/19 8:59 PM
  * Subho Ghosh (subho dot ghosh at outlook.com)
  *
  */
 
-package com.codekutter.common.model;
+package com.codekutter.zconfig.common;
 
-import com.codekutter.common.utils.DateTimeUtils;
-import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
-
-import javax.annotation.Nonnull;
+import com.codekutter.common.IState;
 
 /**
- * Class represents a asset modification update.
- * Includes the modified by and modification timestamp.
+ * State enum to be used for exposing client handle states.
  */
-public class ModifiedBy extends ModificationLog<String>{
-    public ModifiedBy() {}
+public enum EClientState implements IState<EClientState> {
+    /**
+     * Client state is Unknown
+     */
+    Unknown,
+    /**
+     * Client has been initialized.
+     */
+    Initialized,
+    /**
+     * Client is available for operations.
+     */
+    Available,
+    /**
+     * Client has been disposed.
+     */
+    Disposed,
+    /**
+     * Client is in Error state.
+     */
+    Error;
 
-    public ModifiedBy(@Nonnull String userId) {
-        Preconditions.checkArgument(!Strings.isNullOrEmpty(userId));
-        setModifiedBy(userId);
-        setTimestamp(System.currentTimeMillis());
-    }
 
-    public ModifiedBy(@Nonnull ModifiedBy source) {
-        setModifiedBy(source.getModifiedBy());
-        setTimestamp(source.getTimestamp());
-    }
-}
+    /**
+     * Get the state that represents an error state.
+     *
+     * @return - Error state.
+     */
+    @Override
+    public EClientState getErrorState() {
+        return Error;
+    }}

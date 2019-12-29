@@ -17,34 +17,42 @@
  * under the License.
  *
  * Copyright (c) $year
- * Date: 1/1/19 6:43 PM
+ * Date: 16/2/19 9:37 AM
  * Subho Ghosh (subho dot ghosh at outlook.com)
  *
  */
 
-package com.codekutter.common.model;
+package com.codekutter.zconfig.core.model.nodes;
 
-import com.codekutter.common.utils.DateTimeUtils;
-import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
-
-import javax.annotation.Nonnull;
+import com.codekutter.zconfig.core.model.PersistedConfigPathNode;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
 /**
- * Class represents a asset modification update.
- * Includes the modified by and modification timestamp.
+ * ZooKeeper node that stores a configuration value.
  */
-public class ModifiedBy extends ModificationLog<String>{
-    public ModifiedBy() {}
+@JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, include = JsonTypeInfo.As.PROPERTY,
+              property = "@class")
+public class PersistedConfigValueNode extends PersistedConfigPathNode {
+    /**
+     * Configuration Value.
+     */
+    private String value;
 
-    public ModifiedBy(@Nonnull String userId) {
-        Preconditions.checkArgument(!Strings.isNullOrEmpty(userId));
-        setModifiedBy(userId);
-        setTimestamp(System.currentTimeMillis());
+    /**
+     * Get the configuration value stored at this node.
+     *
+     * @return - Configuration value string.
+     */
+    public String getValue() {
+        return value;
     }
 
-    public ModifiedBy(@Nonnull ModifiedBy source) {
-        setModifiedBy(source.getModifiedBy());
-        setTimestamp(source.getTimestamp());
+    /**
+     * Set the configuration value stored at this node.
+     *
+     * @param value - Configuration value string.
+     */
+    public void setValue(String value) {
+        this.value = value;
     }
 }
