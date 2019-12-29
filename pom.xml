@@ -13,6 +13,7 @@
         <module>zconfig-common</module>
         <module>zconfig-client</module>
         <module>zconfig-server</module>
+        <module>r2db</module>
     </modules>
 
     <name>codekutter</name>
