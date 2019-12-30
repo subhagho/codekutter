@@ -1,5 +1,7 @@
 package com.codekutter.r2db.driver;
 
+import com.codekutter.common.model.IEntity;
+
 /**
  * Interface to be implemented for defining entities that can be sharded.
  *

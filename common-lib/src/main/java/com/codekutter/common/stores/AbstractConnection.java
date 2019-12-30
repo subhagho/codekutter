@@ -19,6 +19,7 @@ package com.codekutter.common.stores;
 
 import com.codekutter.common.model.IEntity;
 import com.codekutter.zconfig.common.IConfigurable;
+import com.codekutter.zconfig.common.model.annotations.ConfigPath;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
@@ -31,13 +32,17 @@ import java.util.List;
 @Getter
 @Setter
 @Accessors(fluent = true)
+@ConfigPath(path = "connection")
 public abstract class AbstractConnection<T> implements IConfigurable, Closeable {
     @Setter(AccessLevel.NONE)
     private ConnectionState state = new ConnectionState();
-    private T connection;
     @Setter(AccessLevel.NONE)
     @SuppressWarnings("rawtypes")
     private List<Class<? extends IEntity>> supportedTypes = new ArrayList<>();
+
+    public AbstractConnection() {
+
+    }
 
     public abstract boolean hasTransactionSupport();
 }

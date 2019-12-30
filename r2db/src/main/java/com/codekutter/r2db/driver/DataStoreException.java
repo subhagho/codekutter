@@ -1,17 +1,17 @@
 package com.codekutter.r2db.driver;
 
-public class DataSourceException extends Exception {
+public class DataStoreException extends Exception {
     private static final String __PREFIX = "Data Source Error : %s";
 
-    public DataSourceException(String message) {
+    public DataStoreException(String message) {
         super(String.format(__PREFIX, message));
     }
 
-    public DataSourceException(String message, Throwable cause) {
+    public DataStoreException(String message, Throwable cause) {
         super(String.format(__PREFIX, message), cause);
     }
 
-    public DataSourceException(Throwable cause) {
+    public DataStoreException(Throwable cause) {
         super(String.format(__PREFIX, cause.getLocalizedMessage()), cause);
     }
 }

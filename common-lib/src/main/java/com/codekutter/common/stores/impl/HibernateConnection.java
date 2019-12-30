@@ -18,6 +18,7 @@
 package com.codekutter.common.stores.impl;
 
 import com.codekutter.common.stores.AbstractConnection;
+import com.codekutter.common.stores.EConnectionState;
 import com.codekutter.common.utils.ConfigUtils;
 import com.codekutter.zconfig.common.ConfigurationAnnotationProcessor;
 import com.codekutter.zconfig.common.ConfigurationException;
@@ -147,8 +148,11 @@ public class HibernateConnection extends AbstractConnection<Session> {
 
                 ServiceRegistry registry = new StandardServiceRegistryBuilder().applySettings(configuration.getProperties()).build();
                 sessionFactory = configuration.buildSessionFactory(registry);
+
+                state().setState(EConnectionState.Open);
             }
         } catch (Exception ex) {
+            state().setError(ex);
             throw new ConfigurationException(ex);
         }
     }
@@ -157,6 +161,7 @@ public class HibernateConnection extends AbstractConnection<Session> {
     public void close() throws IOException {
         if (connection() != null) {
             if (connection().isOpen()) {
+                state().setState(EConnectionState.Closed);
                 connection().close();
             }
             connection(null);

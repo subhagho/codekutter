@@ -1,6 +1,8 @@
 package com.codekutter.r2db.driver;
 
 
+import com.codekutter.common.IState;
+
 public enum EConnectionState implements IState<EConnectionState> {
     /**
      * Connection state is Unknown

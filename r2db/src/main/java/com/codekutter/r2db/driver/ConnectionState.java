@@ -1,6 +1,7 @@
 package com.codekutter.r2db.driver;
 
-import com.codekutter.zconfig.common.AbstractState;
+
+import com.codekutter.common.AbstractState;
 
 public class ConnectionState extends AbstractState<EConnectionState> {
     public ConnectionState() {
