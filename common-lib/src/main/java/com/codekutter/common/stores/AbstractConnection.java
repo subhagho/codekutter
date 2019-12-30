@@ -44,5 +44,7 @@ public abstract class AbstractConnection<T> implements IConfigurable, Closeable 
 
     }
 
+    public abstract T connection();
+
     public abstract boolean hasTransactionSupport();
 }

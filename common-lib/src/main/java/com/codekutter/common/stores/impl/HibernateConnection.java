@@ -85,10 +85,7 @@ public class HibernateConnection extends AbstractConnection<Session> {
 
     @Override
     public Session connection() {
-        if (super.connection() == null) {
-            connection(sessionFactory.openSession());
-        }
-        return super.connection();
+        return sessionFactory.openSession();
     }
 
     /**
@@ -159,12 +156,9 @@ public class HibernateConnection extends AbstractConnection<Session> {
 
     @Override
     public void close() throws IOException {
-        if (connection() != null) {
-            if (connection().isOpen()) {
-                state().setState(EConnectionState.Closed);
-                connection().close();
-            }
-            connection(null);
+        if (sessionFactory != null) {
+            sessionFactory.close();
+            sessionFactory = null;
         }
     }
 
