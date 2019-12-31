@@ -5,6 +5,7 @@ import com.codekutter.common.stores.AbstractConnection;
 import com.codekutter.common.utils.ConfigUtils;
 import com.codekutter.common.utils.LogUtils;
 import com.codekutter.common.utils.ReflectionUtils;
+import com.codekutter.zconfig.common.ConfigurationAnnotationProcessor;
 import com.codekutter.zconfig.common.ConfigurationException;
 import com.codekutter.zconfig.common.IConfigurable;
 import com.codekutter.zconfig.common.model.annotations.ConfigPath;
@@ -25,12 +26,14 @@ import java.util.concurrent.ConcurrentHashMap;
 public class DataStoreManager implements IConfigurable {
     public static final String CONFIG_NODE_CONNECTIONS = "connections";
     public static final String CONFIG_NODE_DATA_STORES = "dataStores";
+    public static final String CONFIG_NODE_SHARDED_ENTITIES = "shardedEntities";
 
     private Map<String, AbstractConnection<?>> connections = new HashMap<>();
     @SuppressWarnings("rawtypes")
     private Map<Class<? extends IEntity>, AbstractConnection<?>> entityIndex = new HashMap<>();
     private Map<Class<? extends AbstractDataStore<?>>, DataStoreConfig> dataStoreConfigs = new HashMap<>();
     private Map<Long, Map<AbstractConnection<?>, AbstractDataStore<?>>> initializedStores = new ConcurrentHashMap<>();
+    private Map<Class<? extends IShardedEntity<?,?>>, Map<Integer,AbstractConnection<?>>> shardedEntities = new HashMap();
 
     @SuppressWarnings("unchecked")
     public <T> AbstractConnection<T> getDataSource(@Nonnull String name) {
@@ -118,6 +121,60 @@ public class DataStoreManager implements IConfigurable {
         return (AbstractDataStore<T>) store;
     }
 
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public <T, E extends IShardedEntity> Map<Integer, AbstractDataStore<T>> getShards(@Nonnull Class<? extends AbstractDataStore<T>> storeType, Class<? extends E> type) throws DataStoreException {
+        try {
+            if (shardedEntities.containsKey(type)) {
+                Map<Integer, AbstractDataStore<T>> storeMap = new HashMap<>();
+                Map<Integer, AbstractConnection<?>> connectionMap =
+                        shardedEntities.get(type);
+                for (Integer key : connectionMap.keySet()) {
+                    AbstractDataStore<T> store = storeType.newInstance();
+                    DataStoreConfig config = dataStoreConfigs.get(storeType);
+                    if (config == null) {
+                        throw new DataStoreException(String.format(
+                                "No configuration found for data store type. [type=%s]",
+                                storeType.getCanonicalName()));
+                    }
+                    AbstractConnection<?> connection = connectionMap.get(key);
+                    store.withConfig(config).withConnection(
+                            (AbstractConnection<T>) connection).configure();
+                    storeMap.put(key, store);
+                }
+                return storeMap;
+            }
+            return null;
+        } catch (Exception ex) {
+            throw new DataStoreException(ex);
+        }
+    }
+
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public <T, E extends IShardedEntity> AbstractDataStore<T> getShards(@Nonnull Class<? extends AbstractDataStore<T>> storeType, Class<? extends E> type, int shardId) throws DataStoreException {
+        try {
+            if (shardedEntities.containsKey(type)) {
+                Map<Integer, AbstractConnection<?>> connectionMap =
+                        shardedEntities.get(type);
+                if (connectionMap.containsKey(shardId)) {
+                    AbstractDataStore<T> store = storeType.newInstance();
+                    DataStoreConfig config = dataStoreConfigs.get(storeType);
+                    if (config == null) {
+                        throw new DataStoreException(String.format(
+                                "No configuration found for data store type. [type=%s]",
+                                storeType.getCanonicalName()));
+                    }
+                    AbstractConnection<?> connection = connectionMap.get(shardId);
+                    store.withConfig(config).withConnection(
+                            (AbstractConnection<T>) connection).configure();
+                    return store;
+                }
+            }
+            return null;
+        } catch (Exception ex) {
+            throw new DataStoreException(ex);
+        }
+    }
+
     @Override
     public void configure(@Nonnull AbstractConfigNode node) throws ConfigurationException {
         Preconditions.checkArgument(node instanceof ConfigPathNode);
@@ -167,12 +224,61 @@ public class DataStoreManager implements IConfigurable {
         }
     }
 
+    @SuppressWarnings("rawtypes")
     private void readConnection(ConfigPathNode node) throws ConfigurationException {
+        AbstractConfigNode cnode = ConfigUtils.getPathNode(AbstractConnection.class, node);
+        if (!(cnode instanceof ConfigPathNode)) {
+            throw new ConfigurationException(String.format("Invalid/NULL connection configuration. [node=%s]", node.getAbsolutePath()));
+        }
+        String type = ConfigUtils.getClassAttribute(cnode);
+        if (Strings.isNullOrEmpty(type)) {
+            throw new ConfigurationException(String.format("Invalid configuration: Class attribute not found. [node=%s]", cnode.getAbsolutePath()));
+        }
+        try {
+            Class<?> cls = Class.forName(type);
+            Object obj = cls.newInstance();
+            if (!(obj instanceof AbstractConnection)) {
+                throw new ConfigurationException(String.format("Invalid connection type. [type=%s]", cls.getCanonicalName()));
+            }
+            AbstractConnection<?> connection = (AbstractConnection<?>)obj;
+            connection.configure(cnode);
 
+            connections.put(connection.name(), connection);
+            List<Class<? extends IEntity>> classes = connection.supportedTypes();
+            if (classes != null && !classes.isEmpty()) {
+                for(Class<? extends IEntity> entity : classes) {
+                    entityIndex.put(entity, connection);
+                }
+            }
+        } catch (Exception ex) {
+            throw new ConfigurationException(ex);
+        }
     }
 
+    @SuppressWarnings("unchecked")
     private void readDataStoreConfig(ConfigPathNode node) throws ConfigurationException {
-
+        AbstractConfigNode cnode = ConfigUtils.getPathNode(DataStoreConfig.class, node);
+        if (!(cnode instanceof ConfigPathNode)) {
+            throw new ConfigurationException(String.format("Invalid/NULL data store configuration. [node=%s]", node.getAbsolutePath()));
+        }
+        String type = ConfigUtils.getClassAttribute(cnode);
+        if (Strings.isNullOrEmpty(type)) {
+            throw new ConfigurationException(String.format("Invalid configuration: Class attribute not found. [node=%s]", cnode.getAbsolutePath()));
+        }
+        try {
+            Class<?> cls = Class.forName(type);
+            Object obj = cls.newInstance();
+            if (!(obj instanceof DataStoreConfig)) {
+                throw new ConfigurationException(String.format("Invalid data store config type. [type=%s]", cls.getCanonicalName()));
+            }
+            DataStoreConfig config = (DataStoreConfig)obj;
+            ConfigurationAnnotationProcessor.readConfigAnnotations(cls,
+                                                                   (ConfigPathNode) cnode, config);
+            dataStoreConfigs.put(
+                    (Class<? extends AbstractDataStore<?>>) config.dataStoreClass(), config);
+        } catch (Exception ex) {
+            throw new ConfigurationException(ex);
+        }
     }
 
 }

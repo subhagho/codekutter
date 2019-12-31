@@ -17,6 +17,7 @@
 
 package com.codekutter.common.stores.impl;
 
+import com.codekutter.common.model.IEntity;
 import com.codekutter.common.stores.AbstractConnection;
 import com.codekutter.common.stores.EConnectionState;
 import com.codekutter.common.utils.ConfigUtils;
@@ -94,6 +95,7 @@ public class HibernateConnection extends AbstractConnection<Session> {
      * @param node - Handle to the configuration node.
      * @throws ConfigurationException
      */
+    @SuppressWarnings("unchecked")
     @Override
     public void configure(@Nonnull AbstractConfigNode node) throws ConfigurationException {
         Preconditions.checkArgument(node instanceof ConfigPathNode);
@@ -140,6 +142,7 @@ public class HibernateConnection extends AbstractConnection<Session> {
                     for (String cls : cfg.classes) {
                         Class<?> c = Class.forName(cls);
                         configuration.addAnnotatedClass(c);
+                        addSupportedType((Class<? extends IEntity>) c);
                     }
                 }
 
