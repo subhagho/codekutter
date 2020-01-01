@@ -58,6 +58,9 @@ public class HibernateConnection extends AbstractConnection<Session> {
     @Accessors(fluent = true)
     @ConfigPath(path = "settings")
     public static class HibernateConfig {
+        public static final String CACHE_FACTORY_CLASS = "org.hibernate.cache.ehcache.EhCacheRegionFactory";
+        public static final String CACHE_CONFIG_FILE = "net.sf.ehcache.configurationResourceName";
+
         @ConfigValue(name = "url", required = true)
         private String dbUrl;
         @ConfigValue(name = "username", required = true)
@@ -68,6 +71,12 @@ public class HibernateConnection extends AbstractConnection<Session> {
         private String driver;
         @ConfigAttribute(name = "dialect", required = true)
         private String dialect;
+        @ConfigValue(name = "enableCaching")
+        private boolean enableCaching = false;
+        @ConfigValue(name = "enableQueryCaching")
+        private boolean enableQueryCaching = false;
+        @ConfigValue(name = "cacheConfig")
+        private String cacheConfig;
         @ConfigValue(name = "classes")
         private List<String> classes;
     }
@@ -95,7 +104,7 @@ public class HibernateConnection extends AbstractConnection<Session> {
      * @param node - Handle to the configuration node.
      * @throws ConfigurationException
      */
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({"unchecked", "rawtypes"})
     @Override
     public void configure(@Nonnull AbstractConfigNode node) throws ConfigurationException {
         Preconditions.checkArgument(node instanceof ConfigPathNode);
@@ -128,6 +137,16 @@ public class HibernateConnection extends AbstractConnection<Session> {
                 settings.setProperty(Environment.PASS, dbPassword.getDecryptedValue());
                 settings.setProperty(Environment.DIALECT, cfg.dialect);
 
+                if (cfg.enableCaching) {
+                    if (Strings.isNullOrEmpty(cfg.cacheConfig)) {
+                        throw new ConfigurationException("Missing cache configuration file. ");
+                    }
+                    settings.setProperty(Environment.USE_SECOND_LEVEL_CACHE, "true");
+                    settings.setProperty(Environment.CACHE_REGION_FACTORY, HibernateConfig.CACHE_FACTORY_CLASS);
+                    if (cfg.enableQueryCaching)
+                        settings.setProperty(Environment.USE_QUERY_CACHE, "true");
+                    settings.setProperty(HibernateConfig.CACHE_CONFIG_FILE, cfg.cacheConfig);
+                }
                 if (cp.parmeters() != null) {
                     Map<String, ConfigValueNode> params = cp.parmeters().getKeyValues();
                     if (params != null && !params.isEmpty()) {
@@ -160,6 +179,7 @@ public class HibernateConnection extends AbstractConnection<Session> {
     @Override
     public void close() throws IOException {
         if (sessionFactory != null) {
+            state().setState(EConnectionState.Closed);
             sessionFactory.close();
             sessionFactory = null;
         }
