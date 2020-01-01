@@ -18,5 +18,7 @@
 package com.codekutter.common.stores.annotations;
 
 public interface IShardProvider {
+    IShardProvider withShardCount(int count);
+
     int getShard(Object key);
 }

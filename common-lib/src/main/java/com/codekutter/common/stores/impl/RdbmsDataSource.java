@@ -176,7 +176,7 @@ public class RdbmsDataSource extends TransactionDataStore<Session, Transaction> 
         Preconditions.checkArgument(config() instanceof RdbmsConfig);
         AbstractConnection<Session> connection =
                 dataStoreManager.getConnection(config().connectionName(), Session.class);
-        if (connection instanceof HibernateConnection) {
+        if (!(connection instanceof HibernateConnection)) {
             throw new ConfigurationException(String.format("No connection found for name. [name=%s]", config().connectionName()));
         }
         withConnection(connection);
@@ -186,7 +186,7 @@ public class RdbmsDataSource extends TransactionDataStore<Session, Transaction> 
         if (!Strings.isNullOrEmpty(((RdbmsConfig)config()).readConnectionName())) {
             AbstractConnection<Session> rc =
                     (AbstractConnection<Session>) dataStoreManager.getConnection(((RdbmsConfig) config()).readConnectionName(), Session.class);
-            if (rc instanceof HibernateConnection) {
+            if (!(rc instanceof HibernateConnection)) {
                 throw new ConfigurationException(String.format("No connection found for name. [name=%s]", ((RdbmsConfig) config()).readConnectionName()));
             }
             readConnection = (HibernateConnection)rc;

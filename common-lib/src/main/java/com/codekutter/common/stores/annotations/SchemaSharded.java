@@ -26,5 +26,4 @@ import java.lang.annotation.*;
 @Inherited
 public @interface SchemaSharded {
     Class<? extends IShardProvider> provider() default DefaultShardProvider.class;
-    SchemaShardSpec[] specs();
 }
