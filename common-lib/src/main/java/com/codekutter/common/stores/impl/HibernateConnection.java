@@ -81,7 +81,7 @@ public class HibernateConnection extends AbstractConnection<Session> {
         private List<String> classes;
     }
 
-    private static SessionFactory sessionFactory = null;
+    protected static SessionFactory sessionFactory = null;
 
     @ConfigValue(name = "config")
     private String hibernateConfig;

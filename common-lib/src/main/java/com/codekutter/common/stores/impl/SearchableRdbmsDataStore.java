@@ -26,28 +26,79 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import org.apache.lucene.search.Query;
 import org.hibernate.Session;
+import org.hibernate.search.FullTextQuery;
+import org.hibernate.search.FullTextSession;
+import org.hibernate.search.Search;
+import org.hibernate.search.elasticsearch.ElasticsearchQueries;
+import org.hibernate.search.query.engine.spi.QueryDescriptor;
 
 import javax.annotation.Nonnull;
 import java.util.List;
 
 public class SearchableRdbmsDataStore extends RdbmsDataSource implements ISearchable {
     @Override
+    @SuppressWarnings("unchecked")
     public <T> List<T> textSearch(@Nonnull Query query, @Nonnull Class<? extends T> type) throws DataStoreException {
+        Preconditions.checkState(readSession != null);
+        checkThread();
+
+        FullTextSession fullTextSession = Search.getFullTextSession(readSession);
+        FullTextQuery fq = fullTextSession.createFullTextQuery(query, type);
+        List<T> result = fq.getResultList();
+        if (result != null && !result.isEmpty()) {
+            return result;
+        }
         return null;
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public <T> List<T> textSearch(@Nonnull Query query, int batchSize, int offset, @Nonnull Class<? extends T> type) throws DataStoreException {
+        Preconditions.checkState(readSession != null);
+        checkThread();
+
+        FullTextSession fullTextSession = Search.getFullTextSession(readSession);
+        FullTextQuery fq = fullTextSession.createFullTextQuery(query, type).setFirstResult(offset).setMaxResults(batchSize);
+        List<T> result = fq.getResultList();
+        if (result != null && !result.isEmpty()) {
+            return result;
+        }
         return null;
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public <T> List<T> textSearch(@Nonnull String query, @Nonnull Class<? extends T> type) throws DataStoreException {
+        Preconditions.checkState(readSession != null);
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(query));
+        checkThread();
+
+        FullTextSession fullTextSession = Search.getFullTextSession(readSession);
+        QueryDescriptor qd = ElasticsearchQueries.fromJson(query);
+
+        FullTextQuery fq = fullTextSession.createFullTextQuery(qd, type);
+        List<T> result = fq.getResultList();
+        if (result != null && !result.isEmpty()) {
+            return result;
+        }
         return null;
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public <T> List<T> textSearch(@Nonnull String query, int batchSize, int offset, @Nonnull Class<? extends T> type) throws DataStoreException {
+        Preconditions.checkState(readSession != null);
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(query));
+        checkThread();
+
+        FullTextSession fullTextSession = Search.getFullTextSession(readSession);
+        QueryDescriptor qd = ElasticsearchQueries.fromJson(query);
+
+        FullTextQuery fq = fullTextSession.createFullTextQuery(qd, type).setMaxResults(batchSize).setFirstResult(offset);
+        List<T> result = fq.getResultList();
+        if (result != null && !result.isEmpty()) {
+            return result;
+        }
         return null;
     }
 
@@ -56,20 +107,20 @@ public class SearchableRdbmsDataStore extends RdbmsDataSource implements ISearch
         Preconditions.checkArgument(config() instanceof RdbmsConfig);
         AbstractConnection<Session> connection =
                 dataStoreManager.getConnection(config().connectionName(), Session.class);
-        if (!(connection instanceof HibernateConnection)) {
+        if (!(connection instanceof SearchableHibernateConnection)) {
             throw new ConfigurationException(String.format("No connection found for name. [name=%s]", config().connectionName()));
         }
         withConnection(connection);
-        HibernateConnection hibernateConnection = (HibernateConnection)connection;
+        SearchableHibernateConnection hibernateConnection = (SearchableHibernateConnection)connection;
         session = hibernateConnection.connection();
-        HibernateConnection readConnection = null;
+        SearchableHibernateConnection readConnection = null;
         if (!Strings.isNullOrEmpty(((RdbmsConfig)config()).readConnectionName())) {
             AbstractConnection<Session> rc =
                     (AbstractConnection<Session>) dataStoreManager.getConnection(((RdbmsConfig) config()).readConnectionName(), Session.class);
-            if (!(rc instanceof HibernateConnection)) {
+            if (!(rc instanceof SearchableHibernateConnection)) {
                 throw new ConfigurationException(String.format("No connection found for name. [name=%s]", ((RdbmsConfig) config()).readConnectionName()));
             }
-            readConnection = (HibernateConnection)rc;
+            readConnection = (SearchableHibernateConnection)rc;
         }
         if (readConnection != null) {
             readSession = readConnection.connection();

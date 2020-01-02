@@ -17,18 +17,33 @@
 
 package com.codekutter.common.stores.impl;
 
+import com.codekutter.common.model.IEntity;
+import com.codekutter.common.stores.EConnectionState;
+import com.codekutter.common.utils.ConfigUtils;
+import com.codekutter.zconfig.common.ConfigurationAnnotationProcessor;
 import com.codekutter.zconfig.common.ConfigurationException;
 import com.codekutter.zconfig.common.model.EncryptedValue;
 import com.codekutter.zconfig.common.model.annotations.ConfigValue;
 import com.codekutter.zconfig.common.model.nodes.AbstractConfigNode;
+import com.codekutter.zconfig.common.model.nodes.ConfigPathNode;
+import com.codekutter.zconfig.common.model.nodes.ConfigValueNode;
+import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 import org.hibernate.Session;
+import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
+import org.hibernate.cfg.Configuration;
+import org.hibernate.cfg.Environment;
+import org.hibernate.service.ServiceRegistry;
 
 import javax.annotation.Nonnull;
+import java.io.File;
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
+import java.util.Properties;
 
 @Getter
 @Setter
@@ -59,8 +74,84 @@ public class SearchableHibernateConnection extends HibernateConnection {
      * @throws ConfigurationException
      */
     @Override
+    @SuppressWarnings("unchecked")
     public void configure(@Nonnull AbstractConfigNode node) throws ConfigurationException {
-        super.configure(node);
+        Preconditions.checkArgument(node instanceof ConfigPathNode);
+        try {
+            ConfigurationAnnotationProcessor.readConfigAnnotations(getClass(), (ConfigPathNode) node, this);
+            if (!Strings.isNullOrEmpty(hibernateConfig())) {
+                File cfg = new File(hibernateConfig());
+                if (!cfg.exists()) {
+                    throw new ConfigurationException(String.format("Hibernate configuration not found. [path=%s]", cfg.getAbsolutePath()));
+                }
+                Properties settings = new Properties();
+                settings.setProperty(Environment.PASS, dbPassword().getDecryptedValue());
+                sessionFactory = new Configuration().configure(cfg).addProperties(settings).buildSessionFactory();
+            } else {
+                AbstractConfigNode cnode = ConfigUtils.getPathNode(getClass(), (ConfigPathNode) node);
+                if (!(cnode instanceof ConfigPathNode)) {
+                    throw new ConfigurationException(String.format("Hibernate configuration settings not found. [node=%s]", node.getAbsolutePath()));
+                }
+                ConfigPathNode cp = (ConfigPathNode) cnode;
+
+                HibernateConfig cfg = new HibernateConfig();
+                ConfigurationAnnotationProcessor.readConfigAnnotations(HibernateConfig.class, cp, cfg);
+
+                Configuration configuration = new Configuration();
+
+                Properties settings = new Properties();
+                settings.setProperty(Environment.DRIVER, cfg.driver());
+                settings.setProperty(Environment.URL, cfg.dbUrl());
+                settings.setProperty(Environment.USER, cfg.dbUser());
+                settings.setProperty(Environment.PASS, dbPassword().getDecryptedValue());
+                settings.setProperty(Environment.DIALECT, cfg.dialect());
+
+                if (cfg.enableCaching()) {
+                    if (Strings.isNullOrEmpty(cfg.cacheConfig())) {
+                        throw new ConfigurationException("Missing cache configuration file. ");
+                    }
+                    settings.setProperty(Environment.USE_SECOND_LEVEL_CACHE, "true");
+                    settings.setProperty(Environment.CACHE_REGION_FACTORY, HibernateConfig.CACHE_FACTORY_CLASS);
+                    if (cfg.enableQueryCaching())
+                        settings.setProperty(Environment.USE_QUERY_CACHE, "true");
+                    settings.setProperty(HibernateConfig.CACHE_CONFIG_FILE, cfg.cacheConfig());
+                }
+                if (cp.parmeters() != null) {
+                    Map<String, ConfigValueNode> params = cp.parmeters().getKeyValues();
+                    if (params != null && !params.isEmpty()) {
+                        for (String key : params.keySet()) {
+                            settings.setProperty(key, params.get(key).getValue());
+                        }
+                    }
+                }
+                settings.setProperty(CONFIG_INDEX_MANAGER, CONFIG_INDEX_MANAGER_VALUE);
+                StringBuffer buffer = new StringBuffer();
+                for(String host : elasticSearchHosts) {
+                    buffer.append(host).append(" ");
+                }
+                settings.setProperty(CONFIG_INDEX_MANAGER_HOSTS, buffer.toString());
+                settings.setProperty(CONFIG_INDEX_MANAGER_USER, elasticSearchUsername);
+                settings.setProperty(CONFIG_INDEX_MANAGER_PASSWD, elasticSearchPassword.getDecryptedValue());
+
+                configuration.setProperties(settings);
+
+                if (cfg.classes() != null && !cfg.classes().isEmpty()) {
+                    for (String cls : cfg.classes()) {
+                        Class<?> c = Class.forName(cls);
+                        configuration.addAnnotatedClass(c);
+                        addSupportedType((Class<? extends IEntity>) c);
+                    }
+                }
+
+                ServiceRegistry registry = new StandardServiceRegistryBuilder().applySettings(configuration.getProperties()).build();
+                sessionFactory = configuration.buildSessionFactory(registry);
+
+                state().setState(EConnectionState.Open);
+            }
+        }  catch (Exception ex) {
+            state().setError(ex);
+            throw new ConfigurationException(ex);
+        }
     }
 
     @Override
