@@ -37,9 +37,9 @@ import java.util.List;
 import java.util.Map;
 
 public class RdbmsDataSource extends TransactionDataStore<Session, Transaction> {
-    private HibernateConnection readConnection = null;
-    private Session session;
-    private Session readSession;
+    protected HibernateConnection readConnection = null;
+    protected Session session;
+    protected Session readSession;
 
     @Override
     public void beingTransaction() throws DataStoreException {
