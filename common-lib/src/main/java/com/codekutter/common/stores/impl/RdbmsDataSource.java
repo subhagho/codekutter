@@ -42,8 +42,15 @@ public class RdbmsDataSource extends TransactionDataStore<Session, Transaction> 
     protected Session readSession;
 
     @Override
+    public boolean isInTransaction() throws DataStoreException {
+        checkThread();
+        return (transaction() != null && transaction().isActive());
+    }
+
+    @Override
     public void beingTransaction() throws DataStoreException {
         Preconditions.checkState(session != null);
+        checkThread();
         if (transaction() != null) {
             if (session.isJoinedToTransaction()) {
                 throw new DataStoreException("Session already has a running transaction.");
@@ -57,7 +64,7 @@ public class RdbmsDataSource extends TransactionDataStore<Session, Transaction> 
     @Override
     public void commit() throws DataStoreException {
         Preconditions.checkState(session != null);
-        Preconditions.checkState(transaction() != null && transaction().isActive());
+        Preconditions.checkState(isInTransaction());
         checkThread();
 
         transaction().commit();
@@ -67,7 +74,7 @@ public class RdbmsDataSource extends TransactionDataStore<Session, Transaction> 
     @Override
     public void rollback() throws DataStoreException {
         Preconditions.checkState(session != null);
-        Preconditions.checkState(transaction() != null && transaction().isActive());
+        Preconditions.checkState(isInTransaction());
         checkThread();
 
         transaction().rollback();
@@ -79,7 +86,7 @@ public class RdbmsDataSource extends TransactionDataStore<Session, Transaction> 
     public <E extends IEntity> E create(@Nonnull E entity, @Nonnull Class<? extends IEntity> type) throws
             DataStoreException {
         Preconditions.checkState(session != null);
-        Preconditions.checkState(transaction() != null && transaction().isActive());
+        Preconditions.checkState(isInTransaction());
         checkThread();
 
         Object result = session.save(entity);
@@ -94,7 +101,7 @@ public class RdbmsDataSource extends TransactionDataStore<Session, Transaction> 
     public <E extends IEntity> E update(@Nonnull E entity, @Nonnull Class<? extends IEntity> type) throws
             DataStoreException {
         Preconditions.checkState(session != null);
-        Preconditions.checkState(transaction() != null && transaction().isActive());
+        Preconditions.checkState(isInTransaction());
         checkThread();
 
         Object result = session.save(entity);
@@ -109,7 +116,7 @@ public class RdbmsDataSource extends TransactionDataStore<Session, Transaction> 
     public <E extends IEntity> boolean delete(@Nonnull Object key, @Nonnull Class<? extends E> type) throws
             DataStoreException {
         Preconditions.checkState(session != null);
-        Preconditions.checkState(transaction() != null && transaction().isActive());
+        Preconditions.checkState(isInTransaction());
         checkThread();
 
         E entity = find(key, type);

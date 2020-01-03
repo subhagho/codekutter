@@ -15,23 +15,16 @@
  *
  */
 
-package com.codekutter.common.stores;
+package com.codekutter.common.stores.annotations;
 
-import lombok.Getter;
-import lombok.Setter;
-import lombok.experimental.Accessors;
+import com.codekutter.common.stores.AbstractDataStore;
 
-@Getter
-@Setter
-@Accessors(fluent = true)
-public abstract class TransactionDataStore<C, T> extends AbstractDataStore<C> {
-    private T transaction;
+import java.lang.annotation.*;
 
-    public abstract boolean isInTransaction() throws DataStoreException;
-
-    public abstract void beingTransaction() throws DataStoreException;
-
-    public abstract void commit() throws DataStoreException;
-
-    public abstract void rollback() throws DataStoreException;
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.FIELD)
+@Inherited
+@SuppressWarnings("rawtypes")
+public @interface MappedStores {
+    Class<? extends AbstractDataStore>[] stores();
 }

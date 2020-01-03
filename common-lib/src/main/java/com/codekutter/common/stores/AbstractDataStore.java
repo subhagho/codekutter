@@ -86,11 +86,18 @@ public abstract class AbstractDataStore<T> implements Closeable {
             DataStoreException;
 
     @SuppressWarnings("rawtypes")
-    public abstract <E extends IEntity> Collection<E> search(@Nonnull String query, int offset, int maxResults, @Nonnull Class<? extends E> type) throws
+    public abstract <E extends IEntity> Collection<E> search(@Nonnull String query,
+                                                             int offset,
+                                                             int maxResults,
+                                                             @Nonnull Class<? extends E> type) throws
             DataStoreException;
 
     @SuppressWarnings("rawtypes")
-    public abstract <E extends IEntity> Collection<E> search(@Nonnull String query, int offset, int maxResults, Map<String, Object> params, @Nonnull Class<? extends E> type) throws
+    public abstract <E extends IEntity> Collection<E> search(@Nonnull String query,
+                                                             int offset,
+                                                             int maxResults,
+                                                             Map<String, Object> params,
+                                                             @Nonnull Class<? extends E> type) throws
             DataStoreException;
 
     @SuppressWarnings("rawtypes")
@@ -100,9 +107,11 @@ public abstract class AbstractDataStore<T> implements Closeable {
     }
 
     @SuppressWarnings("rawtypes")
-    public <E extends IEntity> Collection<E> search(@Nonnull String query, Map<String, String> params, @Nonnull Class<? extends E> type) throws
+    public <E extends IEntity> Collection<E> search(@Nonnull String query,
+                                                    Map<String, Object> params,
+                                                    @Nonnull Class<? extends E> type) throws
             DataStoreException {
-        return search(query, 0, maxResults, type);
+        return search(query, 0, maxResults, params, type);
     }
 
 }

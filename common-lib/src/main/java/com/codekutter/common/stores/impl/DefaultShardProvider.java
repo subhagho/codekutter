@@ -31,6 +31,12 @@ public class DefaultShardProvider implements IShardProvider {
     private int shardCount;
 
     @Override
+    public IShardProvider withShardCount(int count) {
+        shardCount = count;
+        return this;
+    }
+
+    @Override
     public int getShard(Object key) {
         Preconditions.checkArgument(key instanceof String);
         Preconditions.checkArgument(!Strings.isNullOrEmpty((String) key));
