@@ -13,7 +13,7 @@
     <artifactId>common-lib</artifactId>
     <version>1.0-SNAPSHOT</version>
 
-    <name>common-model</name>
+    <name>common-lib</name>
     <url>https://github.com/subhagho/codekutter/tree/master/common-lib</url>
 
     <properties>
