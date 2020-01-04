@@ -707,7 +707,7 @@ public class XMLConfigParser extends AbstractConfigParser {
                     if (nn.getNodeType() != Node.ELEMENT_NODE) {
                         continue;
                     }
-                    if (!nn.hasChildNodes()) {
+                    if (!nn.hasChildNodes() && !nn.hasAttributes()) {
                         return -1;
                     }
                     if (Strings.isNullOrEmpty(name)) {

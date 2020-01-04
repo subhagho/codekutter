@@ -38,7 +38,7 @@ import java.util.List;
 public class SearchableRdbmsDataStore extends RdbmsDataSource implements ISearchable {
     @Override
     @SuppressWarnings("unchecked")
-    public <T> List<T> textSearch(@Nonnull Query query, @Nonnull Class<? extends T> type) throws DataStoreException {
+    public <T> List<T> textSearch(@Nonnull Query query, @Nonnull Class<? extends T> type, Object... params) throws DataStoreException {
         Preconditions.checkState(readSession != null);
         checkThread();
 
@@ -53,7 +53,7 @@ public class SearchableRdbmsDataStore extends RdbmsDataSource implements ISearch
 
     @Override
     @SuppressWarnings("unchecked")
-    public <T> List<T> textSearch(@Nonnull Query query, int batchSize, int offset, @Nonnull Class<? extends T> type) throws DataStoreException {
+    public <T> List<T> textSearch(@Nonnull Query query, int batchSize, int offset, @Nonnull Class<? extends T> type, Object... params) throws DataStoreException {
         Preconditions.checkState(readSession != null);
         checkThread();
 
@@ -68,7 +68,7 @@ public class SearchableRdbmsDataStore extends RdbmsDataSource implements ISearch
 
     @Override
     @SuppressWarnings("unchecked")
-    public <T> List<T> textSearch(@Nonnull String query, @Nonnull Class<? extends T> type) throws DataStoreException {
+    public <T> List<T> textSearch(@Nonnull String query, @Nonnull Class<? extends T> type, Object... params) throws DataStoreException {
         Preconditions.checkState(readSession != null);
         Preconditions.checkArgument(!Strings.isNullOrEmpty(query));
         checkThread();
@@ -86,7 +86,7 @@ public class SearchableRdbmsDataStore extends RdbmsDataSource implements ISearch
 
     @Override
     @SuppressWarnings("unchecked")
-    public <T> List<T> textSearch(@Nonnull String query, int batchSize, int offset, @Nonnull Class<? extends T> type) throws DataStoreException {
+    public <T> List<T> textSearch(@Nonnull String query, int batchSize, int offset, @Nonnull Class<? extends T> type, Object... params) throws DataStoreException {
         Preconditions.checkState(readSession != null);
         Preconditions.checkArgument(!Strings.isNullOrEmpty(query));
         checkThread();

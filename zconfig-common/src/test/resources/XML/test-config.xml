@@ -59,6 +59,17 @@
                 <PARAM_3>TEST_PARAM_3</PARAM_3>
                 <PARAM_4>TEST_PARAM_4</PARAM_4>
             </parameters>
+            <EMPTY_LIST>
+                <TEST_VALUE_LIST testAttr ="TEST_EMPTY" />
+                <TEST_VALUE_LIST testAttr ="TEST_EMPTY" />
+                <TEST_VALUE_LIST testAttr ="TEST_EMPTY" />
+                <TEST_VALUE_LIST testAttr ="TEST_EMPTY" />
+                <TEST_VALUE_LIST testAttr ="TEST_EMPTY" />
+                <TEST_VALUE_LIST testAttr ="TEST_EMPTY" />
+                <TEST_VALUE_LIST testAttr ="TEST_EMPTY" >
+                    <params />
+                </TEST_VALUE_LIST>
+            </EMPTY_LIST>
             <VALUE_LIST>
                 <TEST_VALUE_LIST>TEST_STRING_1</TEST_VALUE_LIST>
                 <TEST_VALUE_LIST>TEST_STRING_2</TEST_VALUE_LIST>

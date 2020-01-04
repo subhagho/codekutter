@@ -17,6 +17,7 @@
 
 package com.codekutter.common.stores;
 
+import com.codekutter.common.StateException;
 import com.codekutter.common.model.IEntity;
 import com.codekutter.zconfig.common.ConfigurationException;
 import com.codekutter.zconfig.common.model.annotations.ConfigAttribute;
@@ -52,9 +53,11 @@ public abstract class AbstractDataStore<T> implements Closeable {
         threadId = Thread.currentThread().getId();
     }
 
-    protected boolean checkThread() {
+    protected void checkThread() throws DataStoreException {
         long threadId = Thread.currentThread().getId();
-        return this.threadId == threadId;
+        if (this.threadId != threadId) {
+            throw new DataStoreException(String.format("Thread instance exception. [expected=%d][current=%d]", this.threadId, threadId));
+        }
     }
 
     public AbstractDataStore<T> withConfig(@Nonnull DataStoreConfig config) {
@@ -70,48 +73,48 @@ public abstract class AbstractDataStore<T> implements Closeable {
     public abstract void configure(@Nonnull DataStoreManager dataStoreManager) throws ConfigurationException;
 
     @SuppressWarnings("rawtypes")
-    public abstract <E extends IEntity> E create(@Nonnull E entity, @Nonnull Class<? extends IEntity> type) throws
+    public abstract <E extends IEntity> E create(@Nonnull E entity, @Nonnull Class<? extends IEntity> type, Object... params) throws
             DataStoreException;
 
     @SuppressWarnings("rawtypes")
-    public abstract <E extends IEntity> E update(@Nonnull E entity, @Nonnull Class<? extends IEntity> type) throws
+    public abstract <E extends IEntity> E update(@Nonnull E entity, @Nonnull Class<? extends IEntity> type, Object... params) throws
             DataStoreException;
 
     @SuppressWarnings("rawtypes")
-    public abstract <E extends IEntity> boolean delete(@Nonnull Object key, @Nonnull Class<? extends E> type) throws
+    public abstract <E extends IEntity> boolean delete(@Nonnull Object key, @Nonnull Class<? extends E> type, Object... params) throws
             DataStoreException;
 
     @SuppressWarnings("rawtypes")
-    public abstract <E extends IEntity> E find(@Nonnull Object key, @Nonnull Class<? extends E> type) throws
-            DataStoreException;
-
-    @SuppressWarnings("rawtypes")
-    public abstract <E extends IEntity> Collection<E> search(@Nonnull String query,
-                                                             int offset,
-                                                             int maxResults,
-                                                             @Nonnull Class<? extends E> type) throws
+    public abstract <E extends IEntity> E find(@Nonnull Object key, @Nonnull Class<? extends E> type, Object... params) throws
             DataStoreException;
 
     @SuppressWarnings("rawtypes")
     public abstract <E extends IEntity> Collection<E> search(@Nonnull String query,
                                                              int offset,
                                                              int maxResults,
-                                                             Map<String, Object> params,
-                                                             @Nonnull Class<? extends E> type) throws
+                                                             @Nonnull Class<? extends E> type, Object... params) throws
             DataStoreException;
 
     @SuppressWarnings("rawtypes")
-    public <E extends IEntity> Collection<E> search(@Nonnull String query, @Nonnull Class<? extends E> type) throws
+    public abstract <E extends IEntity> Collection<E> search(@Nonnull String query,
+                                                             int offset,
+                                                             int maxResults,
+                                                             Map<String, Object> parameters,
+                                                             @Nonnull Class<? extends E> type, Object... params) throws
+            DataStoreException;
+
+    @SuppressWarnings("rawtypes")
+    public <E extends IEntity> Collection<E> search(@Nonnull String query, @Nonnull Class<? extends E> type, Object... params) throws
             DataStoreException {
-        return search(query, 0, maxResults, type);
+        return search(query, 0, maxResults, type, params);
     }
 
     @SuppressWarnings("rawtypes")
     public <E extends IEntity> Collection<E> search(@Nonnull String query,
-                                                    Map<String, Object> params,
-                                                    @Nonnull Class<? extends E> type) throws
+                                                    Map<String, Object> parameters,
+                                                    @Nonnull Class<? extends E> type, Object... params) throws
             DataStoreException {
-        return search(query, 0, maxResults, params, type);
+        return search(query, 0, maxResults, parameters, type, params);
     }
 
 }

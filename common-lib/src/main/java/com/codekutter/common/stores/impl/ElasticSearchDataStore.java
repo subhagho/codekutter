@@ -32,6 +32,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
+@SuppressWarnings("rawtypes")
 public class ElasticSearchDataStore extends AbstractDataStore<RestHighLevelClient> implements ISearchable {
     @Override
     public void configure(@Nonnull DataStoreManager dataStoreManager) throws ConfigurationException {
@@ -39,32 +40,39 @@ public class ElasticSearchDataStore extends AbstractDataStore<RestHighLevelClien
     }
 
     @Override
-    public <E extends IEntity> E create(@Nonnull E entity, @Nonnull Class<? extends IEntity> type) throws DataStoreException {
+    public <E extends IEntity> E create(@Nonnull E entity, @Nonnull Class<? extends IEntity> type, Object... params) throws DataStoreException {
         return null;
     }
 
     @Override
-    public <E extends IEntity> E update(@Nonnull E entity, @Nonnull Class<? extends IEntity> type) throws DataStoreException {
+    public <E extends IEntity> E update(@Nonnull E entity, @Nonnull Class<? extends IEntity> type, Object... params) throws DataStoreException {
         return null;
     }
 
     @Override
-    public <E extends IEntity> boolean delete(@Nonnull Object key, @Nonnull Class<? extends E> type) throws DataStoreException {
+    public <E extends IEntity> boolean delete(@Nonnull Object key, @Nonnull Class<? extends E> type, Object... params) throws DataStoreException {
         return false;
     }
 
     @Override
-    public <E extends IEntity> E find(@Nonnull Object key, @Nonnull Class<? extends E> type) throws DataStoreException {
+    public <E extends IEntity> E find(@Nonnull Object key,
+                                      @Nonnull Class<? extends E> type,
+                                      Object... params) throws DataStoreException {
         return null;
     }
 
     @Override
-    public <E extends IEntity> Collection<E> search(@Nonnull String query, int offset, int maxResults, @Nonnull Class<? extends E> type) throws DataStoreException {
+    public <E extends IEntity> Collection<E> search(@Nonnull String query, int offset, int maxResults,
+                                                    @Nonnull Class<? extends E> type,
+                                                    Object... params) throws DataStoreException {
         return null;
     }
 
     @Override
-    public <E extends IEntity> Collection<E> search(@Nonnull String query, int offset, int maxResults, Map<String, Object> params, @Nonnull Class<? extends E> type) throws DataStoreException {
+    public <E extends IEntity> Collection<E> search(@Nonnull String query, int offset, int maxResults,
+                                                    Map<String, Object> parameters,
+                                                    @Nonnull Class<? extends E> type,
+                                                    Object... params) throws DataStoreException {
         return null;
     }
 
@@ -74,22 +82,22 @@ public class ElasticSearchDataStore extends AbstractDataStore<RestHighLevelClien
     }
 
     @Override
-    public <T> List<T> textSearch(@Nonnull Query query, @Nonnull Class<? extends T> type) throws DataStoreException {
+    public <T> List<T> textSearch(@Nonnull Query query, @Nonnull Class<? extends T> type, Object... params) throws DataStoreException {
         return null;
     }
 
     @Override
-    public <T> List<T> textSearch(@Nonnull Query query, int batchSize, int offset, @Nonnull Class<? extends T> type) throws DataStoreException {
+    public <T> List<T> textSearch(@Nonnull Query query, int batchSize, int offset, @Nonnull Class<? extends T> type, Object... params) throws DataStoreException {
         return null;
     }
 
     @Override
-    public <T> List<T> textSearch(@Nonnull String query, @Nonnull Class<? extends T> type) throws DataStoreException {
+    public <T> List<T> textSearch(@Nonnull String query, @Nonnull Class<? extends T> type, Object... params) throws DataStoreException {
         return null;
     }
 
     @Override
-    public <T> List<T> textSearch(@Nonnull String query, int batchSize, int offset, @Nonnull Class<? extends T> type) throws DataStoreException {
+    public <T> List<T> textSearch(@Nonnull String query, int batchSize, int offset, @Nonnull Class<? extends T> type, Object... params) throws DataStoreException {
         return null;
     }
 }

@@ -260,6 +260,21 @@ class Test_XMLConfiguration {
     }
 
     @Test
+    void findEmptyList() {
+        try {
+            String path = "**/node_1/EMPTY_LIST";
+            AbstractConfigNode node = configuration.find(path);
+            assertNotNull(node);
+            assertTrue(node instanceof ConfigListElementNode);
+            assertEquals(7, ((ConfigListElementNode)node).getValues().size());
+            debug(getClass(), node);
+        } catch (Throwable e) {
+            error(getClass(), e);
+            fail(e);
+        }
+    }
+
+    @Test
     void searchParent() {
         try {
             String path = "**/node_3";

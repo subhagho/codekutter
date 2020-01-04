@@ -83,7 +83,9 @@ public class RdbmsDataSource extends TransactionDataStore<Session, Transaction> 
 
     @Override
     @SuppressWarnings("rawtypes")
-    public <E extends IEntity> E create(@Nonnull E entity, @Nonnull Class<? extends IEntity> type) throws
+    public <E extends IEntity> E create(@Nonnull E entity,
+                                        @Nonnull Class<? extends IEntity> type,
+                                        Object... params) throws
             DataStoreException {
         Preconditions.checkState(session != null);
         Preconditions.checkState(isInTransaction());
@@ -98,7 +100,9 @@ public class RdbmsDataSource extends TransactionDataStore<Session, Transaction> 
 
     @Override
     @SuppressWarnings("rawtypes")
-    public <E extends IEntity> E update(@Nonnull E entity, @Nonnull Class<? extends IEntity> type) throws
+    public <E extends IEntity> E update(@Nonnull E entity,
+                                        @Nonnull Class<? extends IEntity> type,
+                                        Object... params) throws
             DataStoreException {
         Preconditions.checkState(session != null);
         Preconditions.checkState(isInTransaction());
@@ -113,7 +117,9 @@ public class RdbmsDataSource extends TransactionDataStore<Session, Transaction> 
 
     @Override
     @SuppressWarnings("rawtypes")
-    public <E extends IEntity> boolean delete(@Nonnull Object key, @Nonnull Class<? extends E> type) throws
+    public <E extends IEntity> boolean delete(@Nonnull Object key,
+                                              @Nonnull Class<? extends E> type,
+                                              Object... params) throws
             DataStoreException {
         Preconditions.checkState(session != null);
         Preconditions.checkState(isInTransaction());
@@ -129,7 +135,9 @@ public class RdbmsDataSource extends TransactionDataStore<Session, Transaction> 
 
     @Override
     @SuppressWarnings("rawtypes")
-    public <E extends IEntity> E find(@Nonnull Object key, @Nonnull Class<? extends E> type) throws
+    public <E extends IEntity> E find(@Nonnull Object key,
+                                      @Nonnull Class<? extends E> type,
+                                      Object... params) throws
             DataStoreException {
         Preconditions.checkState(session != null);
         checkThread();
@@ -141,8 +149,8 @@ public class RdbmsDataSource extends TransactionDataStore<Session, Transaction> 
     @SuppressWarnings({"unchecked", "rawtypes"})
     public <E extends IEntity> Collection<E> search(@Nonnull String query,
                                                     int offset, int maxResults,
-                                                    @Nonnull
-                                                            Class<? extends E> type)
+                                                    @Nonnull Class<? extends E> type,
+                                                    Object... params)
             throws DataStoreException {
         Preconditions.checkState(readSession != null);
         checkThread();
@@ -159,16 +167,17 @@ public class RdbmsDataSource extends TransactionDataStore<Session, Transaction> 
     @SuppressWarnings({"unchecked", "rawtypes"})
     public <E extends IEntity> Collection<E> search(@Nonnull String query,
                                                     int offset, int maxResults,
-                                                    Map<String, Object> params,
-                                                    @Nonnull Class<? extends E> type)
+                                                    Map<String, Object> parameters,
+                                                    @Nonnull Class<? extends E> type,
+                                                    Object... params)
             throws DataStoreException {
         Preconditions.checkState(readSession != null);
         checkThread();
 
         Query qq = readSession.createQuery(query, type).setMaxResults(maxResults).setFirstResult(offset);
-        if (params != null && !params.isEmpty()) {
-            for (String key : params.keySet())
-                qq.setParameter(key, params.get(key));
+        if (parameters != null && !parameters.isEmpty()) {
+            for (String key : parameters.keySet())
+                qq.setParameter(key, parameters.get(key));
         }
         List<?> result = qq.getResultList();
         if (result != null && !result.isEmpty()) {
@@ -187,16 +196,16 @@ public class RdbmsDataSource extends TransactionDataStore<Session, Transaction> 
             throw new ConfigurationException(String.format("No connection found for name. [name=%s]", config().connectionName()));
         }
         withConnection(connection);
-        HibernateConnection hibernateConnection = (HibernateConnection)connection;
+        HibernateConnection hibernateConnection = (HibernateConnection) connection;
         session = hibernateConnection.connection();
         HibernateConnection readConnection = null;
-        if (!Strings.isNullOrEmpty(((RdbmsConfig)config()).readConnectionName())) {
+        if (!Strings.isNullOrEmpty(((RdbmsConfig) config()).readConnectionName())) {
             AbstractConnection<Session> rc =
                     (AbstractConnection<Session>) dataStoreManager.getConnection(((RdbmsConfig) config()).readConnectionName(), Session.class);
             if (!(rc instanceof HibernateConnection)) {
                 throw new ConfigurationException(String.format("No connection found for name. [name=%s]", ((RdbmsConfig) config()).readConnectionName()));
             }
-            readConnection = (HibernateConnection)rc;
+            readConnection = (HibernateConnection) rc;
         }
         if (readConnection != null) {
             readSession = readConnection.connection();

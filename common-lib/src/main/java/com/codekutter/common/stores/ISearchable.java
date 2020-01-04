@@ -23,11 +23,11 @@ import javax.annotation.Nonnull;
 import java.util.List;
 
 public interface ISearchable {
-    <T> List<T> textSearch(@Nonnull Query query, @Nonnull Class<? extends T> type) throws DataStoreException;
+    <T> List<T> textSearch(@Nonnull Query query, @Nonnull Class<? extends T> type, Object... params) throws DataStoreException;
 
-    <T> List<T> textSearch(@Nonnull Query query, int batchSize, int offset, @Nonnull Class<? extends T> type) throws DataStoreException;
+    <T> List<T> textSearch(@Nonnull Query query, int batchSize, int offset, @Nonnull Class<? extends T> type, Object... params) throws DataStoreException;
 
-    <T> List<T> textSearch(@Nonnull String query, @Nonnull Class<? extends T> type) throws DataStoreException;
+    <T> List<T> textSearch(@Nonnull String query, @Nonnull Class<? extends T> type, Object... params) throws DataStoreException;
 
-    <T> List<T> textSearch(@Nonnull String query, int batchSize, int offset,  @Nonnull Class<? extends T> type) throws DataStoreException;
+    <T> List<T> textSearch(@Nonnull String query, int batchSize, int offset,  @Nonnull Class<? extends T> type, Object... params) throws DataStoreException;
 }

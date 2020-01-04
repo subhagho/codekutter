@@ -21,6 +21,7 @@ import com.codekutter.common.model.IEntity;
 import com.codekutter.common.stores.*;
 import com.codekutter.common.stores.annotations.MappedStores;
 import com.codekutter.common.stores.annotations.SchemaSharded;
+import com.codekutter.common.stores.annotations.TableSharded;
 import com.codekutter.common.utils.ConfigUtils;
 import com.codekutter.common.utils.ReflectionUtils;
 import com.codekutter.zconfig.common.ConfigurationAnnotationProcessor;
@@ -148,6 +149,8 @@ public class EntityManager implements IConfigurable {
         Object shardKey = null;
         if (entity instanceof IShardedEntity) {
             shardKey = ((IShardedEntity) entity).getShardKey();
+        } else if (type.isAnnotationPresent(TableSharded.class)) {
+
         }
         AbstractDataStore<T> dataStore = findStore(type, storeType, shardKey);
         if (dataStore == null) {
