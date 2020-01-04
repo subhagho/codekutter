@@ -567,8 +567,19 @@ public class ConfigurationAnnotationProcessor {
                     }
                 }
                 if (!Strings.isNullOrEmpty(value)) {
-                    ReflectionUtils
-                            .setValueFromString(value, target, field);
+                    if (ReflectionUtils.implementsInterface(List.class, field.getType()) || ReflectionUtils.implementsInterface(Set.class, field.getType())) {
+                        ConfigListValueNode listValueNode = new ConfigListValueNode();
+                        ConfigValueNode vn = new ConfigValueNode(node.getConfiguration(), node.getParent());
+                        vn.setName(name);
+                        vn.setValue(value);
+
+                        listValueNode.addValue(vn);
+                        setListValueFromNode(type,
+                                ((ConfigListValueNode) listValueNode),
+                                target, field);
+                    } else
+                        ReflectionUtils
+                                .setValueFromString(value, target, field);
                 } else if (configValue.required()) {
                     throw new ConfigurationException(String.format(
                             "Required configuration value not specified: [path=%s][name=%s]",

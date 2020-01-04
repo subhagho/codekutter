@@ -31,4 +31,10 @@ public class ConnectionState extends AbstractState<EConnectionState> {
     public boolean isClosed() {
         return (getState() == EConnectionState.Closed);
     }
+
+    public void checkOpened() {
+        if (!isOpen()) {
+            throw new RuntimeException(String.format("Connection isn't open. [state=%s]", getState().name()));
+        }
+    }
 }

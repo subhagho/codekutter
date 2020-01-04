@@ -29,10 +29,7 @@ import com.codekutter.zconfig.common.IConfigurable;
 import com.codekutter.zconfig.common.model.annotations.ConfigAttribute;
 import com.codekutter.zconfig.common.model.annotations.ConfigPath;
 import com.codekutter.zconfig.common.model.annotations.ConfigValue;
-import com.codekutter.zconfig.common.model.nodes.AbstractConfigNode;
-import com.codekutter.zconfig.common.model.nodes.ConfigElementNode;
-import com.codekutter.zconfig.common.model.nodes.ConfigListElementNode;
-import com.codekutter.zconfig.common.model.nodes.ConfigPathNode;
+import com.codekutter.zconfig.common.model.nodes.*;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import lombok.Data;
@@ -64,7 +61,6 @@ public class DataStoreManager implements IConfigurable {
         private Class<? extends IShardProvider> provider;
         @ConfigAttribute(name = "entityType", required = true)
         private Class<? extends IShardedEntity> entityType;
-        @ConfigValue(name = "shards")
         private Map<Integer, String> shards = new HashMap<>();
     }
 
@@ -329,10 +325,19 @@ public class DataStoreManager implements IConfigurable {
 
     private void readShardConfig(ConfigPathNode node) throws ConfigurationException {
         AbstractConfigNode cnode = ConfigUtils.getPathNode(ShardConfig.class,  node);
-        if (cnode != null) {
+        if (cnode instanceof ConfigPathNode) {
             ShardConfig config = ConfigurationAnnotationProcessor.readConfigAnnotations(ShardConfig.class, node);
             if (config == null) {
                 throw new ConfigurationException(String.format("Error reading shard configuration. [node=%s]", cnode.getAbsolutePath()));
+            }
+            ConfigParametersNode params = ((ConfigPathNode) cnode).parmeters();
+            if (params == null || params.isEmpty()) {
+                throw new ConfigurationException(String.format("Shard segments not defined. [node=%s]", cnode.getAbsolutePath()));
+            }
+            config.shards = new HashMap<>();
+            for(String key : params.getKeyValues().keySet()) {
+                ConfigValueNode cv = params.getValue(key);
+                config.shards.put(Integer.parseInt(key), cv.getValue());
             }
             shardConfigs.put(config.entityType, config);
         } else {
