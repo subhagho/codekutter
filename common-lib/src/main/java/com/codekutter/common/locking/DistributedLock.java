@@ -17,6 +17,7 @@
 
 package com.codekutter.common.locking;
 
+import com.codekutter.common.model.LockId;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import lombok.experimental.Accessors;
@@ -29,15 +30,23 @@ import java.util.concurrent.locks.ReentrantLock;
 @Getter
 @Accessors(fluent = true)
 public abstract class DistributedLock extends ReentrantLock implements Closeable {
-    private String id;
-    private String namespace;
-    private String name;
+    private String instanceId;
+    private LockId id;
     private long threadId;
 
     public DistributedLock(@Nonnull String namespace, @Nonnull String name) {
-        this.namespace = namespace;
-        this.name = name;
-        id = UUID.randomUUID().toString();
+        id = new LockId();
+        id.setNamespace(namespace);
+        id.setName(name);
+
+        instanceId = UUID.randomUUID().toString();
+        threadId = Thread.currentThread().getId();
+    }
+
+    public DistributedLock(@Nonnull LockId id) {
+        this.id = id;
+
+        instanceId = UUID.randomUUID().toString();
         threadId = Thread.currentThread().getId();
     }
 
@@ -49,7 +58,7 @@ public abstract class DistributedLock extends ReentrantLock implements Closeable
 
     @JsonIgnore
     public String getKey() {
-        return String.format("%s::%s", namespace, name);
+        return String.format("%s::%s", id.getNamespace(), id.getName());
     }
 
     @Override

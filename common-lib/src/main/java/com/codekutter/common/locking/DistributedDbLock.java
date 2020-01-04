@@ -17,8 +17,8 @@
 
 package com.codekutter.common.locking;
 
-import com.codekutter.common.model.LockId;
 import com.codekutter.common.model.DbLockRecord;
+import com.codekutter.common.model.LockId;
 import com.google.common.base.Preconditions;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
@@ -37,6 +37,10 @@ public class DistributedDbLock extends DistributedLock {
         super(namespace, name);
     }
 
+    public DistributedDbLock(@Nonnull LockId id) {
+        super(id);
+    }
+
     public DistributedDbLock withSession(@Nonnull Session session) {
         this.session = session;
         return this;
@@ -49,17 +53,13 @@ public class DistributedDbLock extends DistributedLock {
         super.lock();
         try {
             if (locked) return;
-
             checkTransaction();
-            LockId id = new LockId();
-            id.setNamespace(namespace());
-            id.setName(name());
 
-            DbLockRecord record = session.find(DbLockRecord.class, id, LockModeType.PESSIMISTIC_WRITE);
+            DbLockRecord record = session.find(DbLockRecord.class, id(), LockModeType.PESSIMISTIC_WRITE);
             if (record == null) {
                 record = new DbLockRecord();
-                record.setId(id);
-                record.setInstanceId(id());
+                record.setId(id());
+                record.setInstanceId(instanceId());
                 record.setLocked(true);
                 record.setTimestamp(System.currentTimeMillis());
 
@@ -79,15 +79,12 @@ public class DistributedDbLock extends DistributedLock {
             try {
                 if (locked) return true;
                 checkTransaction();
-                LockId id = new LockId();
-                id.setNamespace(namespace());
-                id.setName(name());
 
-                DbLockRecord record = session.find(DbLockRecord.class, id, LockModeType.PESSIMISTIC_WRITE);
+                DbLockRecord record = session.find(DbLockRecord.class, id(), LockModeType.PESSIMISTIC_WRITE);
                 if (record == null) {
                     record = new DbLockRecord();
-                    record.setId(id);
-                    record.setInstanceId(id());
+                    record.setId(id());
+                    record.setInstanceId(instanceId());
                     record.setLocked(true);
                     record.setTimestamp(System.currentTimeMillis());
 
@@ -110,15 +107,12 @@ public class DistributedDbLock extends DistributedLock {
             try {
                 if (locked) return true;
                 checkTransaction();
-                LockId id = new LockId();
-                id.setNamespace(namespace());
-                id.setName(name());
 
-                DbLockRecord record = session.find(DbLockRecord.class, id, LockModeType.PESSIMISTIC_WRITE);
+                DbLockRecord record = session.find(DbLockRecord.class, id(), LockModeType.PESSIMISTIC_WRITE);
                 if (record == null) {
                     record = new DbLockRecord();
-                    record.setId(id);
-                    record.setInstanceId(id());
+                    record.setId(id());
+                    record.setInstanceId(instanceId());
                     record.setLocked(true);
                     record.setTimestamp(System.currentTimeMillis());
 

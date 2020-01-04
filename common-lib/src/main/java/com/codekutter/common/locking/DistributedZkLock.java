@@ -17,6 +17,7 @@
 
 package com.codekutter.common.locking;
 
+import com.codekutter.common.model.LockId;
 import com.google.common.base.Preconditions;
 import org.apache.curator.framework.recipes.locks.InterProcessSemaphoreMutex;
 
@@ -31,6 +32,10 @@ public class DistributedZkLock extends DistributedLock {
 
     public DistributedZkLock(@Nonnull String namespace, @Nonnull String name) {
         super(namespace, name);
+    }
+
+    public DistributedZkLock(@Nonnull LockId id) {
+        super(id);
     }
 
     public DistributedZkLock withMutex(@Nonnull InterProcessSemaphoreMutex mutex) {
