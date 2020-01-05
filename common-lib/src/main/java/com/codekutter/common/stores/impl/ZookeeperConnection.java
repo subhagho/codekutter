@@ -52,9 +52,9 @@ public class ZookeeperConnection extends AbstractConnection<CuratorFramework> {
     public static final int DEFAULT_MAX_RETRIES = 3;
     public static final int DEFAULT_RETRY_INTERVAL = 300;
 
-    @ConfigAttribute(name = "host", required = true)
+    @ConfigValue(name = "host", required = true)
     private String zkHost;
-    @ConfigAttribute(name = "port", required = true)
+    @ConfigValue(name = "port", required = true)
     private int zkPort;
     @ConfigValue(name = "username", required = true)
     private String username;
@@ -104,7 +104,7 @@ public class ZookeeperConnection extends AbstractConnection<CuratorFramework> {
                     return ZooDefs.Ids.CREATOR_ALL_ACL;
                 }
             }).build();
-
+            client.start();
             state().setState(EConnectionState.Open);
             LogUtils.debug(getClass(), String.format("Opened connection. [type=%s][name=%s]", getClass().getCanonicalName(), name()));
         } catch (Throwable t) {

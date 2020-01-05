@@ -25,6 +25,7 @@ import com.codekutter.zconfig.common.model.annotations.ConfigValue;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.netflix.spectator.api.*;
+import com.netflix.spectator.api.Clock;
 import com.netflix.spectator.api.Timer;
 import com.netflix.spectator.gc.GcLogger;
 import com.netflix.spectator.jvm.Jmx;
@@ -71,7 +72,8 @@ public class Monitoring {
     private static boolean enableMemoryStats = true;
     private static final int REPORT_INTERVAL = 10;
 
-    private static final Registry __REGISTRY = new MetricsRegistry();
+    private static Registry __REGISTRY;
+    private static final MetricRegistry codaRegistry = new MetricRegistry();
     private static Map<String, Id> counters = new ConcurrentHashMap<>();
     private static Map<String, Timer> timers = new ConcurrentHashMap<>();
     private static Map<String, DistributionSummary> distributionSummaries = new ConcurrentHashMap<>();
@@ -82,9 +84,9 @@ public class Monitoring {
 
     public static void start(String ns, int reporters, String metricsDir, boolean memStats, boolean gcStats) throws ConfigurationException {
         namespace = ns;
-
+        __REGISTRY = new MetricsRegistry(Clock.SYSTEM, codaRegistry);
         if ((reporters & REPORTER_JMX) > 0) {
-            JmxReporter reporter = JmxReporter.forRegistry((MetricRegistry) __REGISTRY).build();
+            JmxReporter reporter = JmxReporter.forRegistry(codaRegistry).build();
             reporter.start();
 
             Monitoring.reporters.add(reporter);
@@ -97,13 +99,13 @@ public class Monitoring {
                     throw new ConfigurationException(String.format("Error creating metrics directory. [path=%s]", dir.getAbsolutePath()));
                 }
             }
-            CsvReporter reporter = CsvReporter.forRegistry((MetricRegistry) __REGISTRY).build(dir);
+            CsvReporter reporter = CsvReporter.forRegistry(codaRegistry).build(dir);
             reporter.start(REPORT_INTERVAL, TimeUnit.SECONDS);
 
             Monitoring.reporters.add(reporter);
         }
         if ((reporters & REPORTER_SLF4J) > 0) {
-            Slf4jReporter reporter = Slf4jReporter.forRegistry((MetricRegistry) __REGISTRY).build();
+            Slf4jReporter reporter = Slf4jReporter.forRegistry(codaRegistry).build();
             reporter.start(REPORT_INTERVAL, TimeUnit.SECONDS);
 
             Monitoring.reporters.add(reporter);

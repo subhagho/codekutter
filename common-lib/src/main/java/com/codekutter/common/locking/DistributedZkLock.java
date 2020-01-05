@@ -18,27 +18,50 @@
 package com.codekutter.common.locking;
 
 import com.codekutter.common.model.LockId;
+import com.codekutter.common.utils.Monitoring;
 import com.google.common.base.Preconditions;
-import org.apache.curator.framework.recipes.locks.InterProcessSemaphoreMutex;
+import com.netflix.spectator.api.Id;
+import com.netflix.spectator.api.Timer;
+import org.apache.curator.framework.recipes.locks.InterProcessMutex;
 
 import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
 public class DistributedZkLock extends DistributedLock {
+    private static final class Metrics {
+        private static final String METRIC_LATENCY_LOCK = String.format("%s.%s.%s.LOCK", DistributedZkLock.class.getName(), "%s", "%s");
+        private static final String METRIC_LATENCY_UNLOCK = String.format("%s.%s.%s.UNLOCK", DistributedZkLock.class.getName(), "%s", "%s" );
+        private static final String METRIC_COUNTER_ERROR = String.format("%s.%s.%s.ERRORS", DistributedZkLock.class.getName(), "%s", "%s");
+        private static final String METRIC_COUNTER_CALLS = String.format("%s.%s.%s.CALLS", DistributedZkLock.class.getName(), "%s", "%s");
+    }
+
     private static final int DEFAULT_LOCK_TIMEOUT = 500;
 
-    private InterProcessSemaphoreMutex mutex = null;
+    private InterProcessMutex mutex = null;
+    private Timer lockLatency = null;
+    private Timer unlockLatency = null;
+    private Id callCounter = null;
+    private Id errorCounter = null;
 
     public DistributedZkLock(@Nonnull String namespace, @Nonnull String name) {
         super(namespace, name);
+        setupMetrics();
     }
 
     public DistributedZkLock(@Nonnull LockId id) {
         super(id);
+        setupMetrics();
     }
 
-    public DistributedZkLock withMutex(@Nonnull InterProcessSemaphoreMutex mutex) {
+    private void setupMetrics() {
+        lockLatency = Monitoring.addTimer(String.format(Metrics.METRIC_LATENCY_LOCK, id().getNamespace(), id().getName()));
+        unlockLatency = Monitoring.addTimer(String.format(Metrics.METRIC_LATENCY_UNLOCK, id().getNamespace(), id().getName()));
+        callCounter = Monitoring.addCounter(String.format(Metrics.METRIC_COUNTER_ERROR, id().getNamespace(), id().getName()));
+        errorCounter = Monitoring.addCounter(String.format(Metrics.METRIC_COUNTER_CALLS, id().getNamespace(), id().getName()));
+    }
+
+    public DistributedZkLock withMutex(@Nonnull InterProcessMutex mutex) {
         this.mutex = mutex;
         return this;
     }
@@ -47,69 +70,89 @@ public class DistributedZkLock extends DistributedLock {
     public void lock() {
         Preconditions.checkState(mutex != null);
         checkThread();
-        try {
-            if (!mutex.isAcquiredInThisProcess())
-                if (!tryLock()) {
-                    throw new LockException(String.format("[%s][%s] Timeout getting lock.", id().getNamespace(), id().getName()));
-                }
-        } catch (Throwable ex) {
-            throw new LockException(ex);
-        }
+        Monitoring.increment(callCounter.name(), null);
+        lockLatency.record(() -> {
+            try {
+                if (!mutex.isAcquiredInThisProcess())
+                    if (!tryLock()) {
+                        throw new LockException(String.format("[%s][%s] Timeout getting lock.", id().getNamespace(), id().getName()));
+                    }
+            } catch (Throwable ex) {
+                Monitoring.increment(errorCounter.name(), null);
+                throw new LockException(ex);
+            }
+        });
     }
 
     @Override
     public boolean tryLock() {
         Preconditions.checkState(mutex != null);
         checkThread();
-        if (super.tryLock()) {
-            try {
-                if (mutex.isAcquiredInThisProcess())
-                    return true;
-                return mutex.acquire(DEFAULT_LOCK_TIMEOUT, TimeUnit.MILLISECONDS);
-            } catch (Throwable t) {
-                super.unlock();
-                throw new LockException(t);
-            }
+        Monitoring.increment(callCounter.name(), null);
+        try {
+            return lockLatency.record(() -> {
+                if (super.tryLock()) {
+                    try {
+                        if (mutex.isAcquiredInThisProcess()) {
+                            return true;
+                        }
+                        return mutex.acquire(DEFAULT_LOCK_TIMEOUT, TimeUnit.MILLISECONDS);
+                    } catch (Throwable t) {
+                        super.unlock();
+                        Monitoring.increment(errorCounter.name(), null);
+                        throw new LockException(t);
+                    }
+                }
+                return false;
+            });
+        } catch (Exception ex) {
+            throw new LockException(ex);
         }
-        return false;
     }
 
     @Override
     public boolean tryLock(long timeout, TimeUnit unit) {
         Preconditions.checkState(mutex != null);
         checkThread();
+        Monitoring.increment(callCounter.name(), null);
         try {
-            if (super.tryLock(timeout, unit)) {
-                try {
-                    if (mutex.isAcquiredInThisProcess())
-                        return true;
-                    return mutex.acquire(timeout, unit);
-                } catch (Throwable t) {
-                    super.unlock();
-                    throw new LockException(t);
+            return lockLatency.record(() -> {
+                if (super.tryLock(timeout, unit)) {
+                    try {
+                        if (mutex.isAcquiredInThisProcess())
+                            return true;
+                        return mutex.acquire(timeout, unit);
+                    } catch (Throwable t) {
+                        super.unlock();
+                        Monitoring.increment(errorCounter.name(), null);
+                        throw new LockException(t);
+                    }
                 }
-            }
+                return false;
+            });
         } catch (Exception ex) {
             throw new LockException(ex);
         }
-        return false;
     }
 
     @Override
     public void unlock() {
         Preconditions.checkState(mutex != null);
         checkThread();
-        try {
-            if (mutex.isAcquiredInThisProcess()) {
-                mutex.release();
-            } else {
-                throw new LockException(String.format("[%s][%s] Lock not held by current thread. [thread=%d]", id().getNamespace(), id().getName(), threadId()));
+        unlockLatency.record(() -> {
+            try {
+                if (mutex.isAcquiredInThisProcess()) {
+                    mutex.release();
+                } else {
+                    throw new LockException(String.format("[%s][%s] Lock not held by current thread. [thread=%d]", id().getNamespace(), id().getName(), threadId()));
+                }
+                super.unlock();
+            } catch (Throwable t) {
+                super.unlock();
+                Monitoring.increment(errorCounter.name(), null);
+                throw new LockException(t);
             }
-            super.unlock();
-        } catch (Throwable t) {
-            super.unlock();
-            throw new LockException(t);
-        }
+        });
     }
 
     @Override

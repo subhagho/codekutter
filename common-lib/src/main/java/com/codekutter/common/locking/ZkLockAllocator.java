@@ -33,7 +33,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 import org.apache.curator.framework.CuratorFramework;
-import org.apache.curator.framework.recipes.locks.InterProcessSemaphoreMutex;
+import org.apache.curator.framework.recipes.locks.InterProcessMutex;
 
 import javax.annotation.Nonnull;
 import java.util.HashMap;
@@ -48,7 +48,7 @@ public class ZkLockAllocator extends AbstractLockAllocator<CuratorFramework> {
     private String zkLockPath = null;
     @Setter(AccessLevel.NONE)
     @Getter(AccessLevel.NONE)
-    private Map<LockId, InterProcessSemaphoreMutex> locks = new HashMap<>();
+    private Map<LockId, InterProcessMutex> locks = new HashMap<>();
     @Setter(AccessLevel.NONE)
     @Getter(AccessLevel.NONE)
     private ReentrantLock lock = new ReentrantLock();
@@ -57,11 +57,11 @@ public class ZkLockAllocator extends AbstractLockAllocator<CuratorFramework> {
     protected DistributedLock createInstance(@Nonnull LockId id) throws LockException {
         lock.lock();
         try {
-            InterProcessSemaphoreMutex mutex = null;
+            InterProcessMutex mutex = null;
             if (locks.containsKey(id)) {
                 mutex = locks.get(id);
             } else {
-                mutex = new InterProcessSemaphoreMutex(connection.connection(), getLockPath(id));
+                mutex = new InterProcessMutex(connection.connection(), getLockPath(id));
                 locks.put(id, mutex);
             }
 

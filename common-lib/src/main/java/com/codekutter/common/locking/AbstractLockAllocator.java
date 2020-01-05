@@ -48,7 +48,7 @@ public abstract class AbstractLockAllocator<T> implements IConfigurable, Closeab
     private long lockExpiryTimeout = DEFAULT_LOCK_TIMEOUT;
     @ConfigValue(name = "lockGetTimeout")
     private long lockTimeout = -1;
-    @ConfigAttribute(name = "lockType")
+    @ConfigAttribute(name = "lockType", required = true)
     private Class<? extends DistributedLock> lockType;
     @Setter(AccessLevel.NONE)
     protected AbstractConnection<T> connection;
@@ -57,6 +57,7 @@ public abstract class AbstractLockAllocator<T> implements IConfigurable, Closeab
     private Map<Long, Map<LockId, DistributedLock>> threadLocks = new ConcurrentHashMap<>();
     @Setter(AccessLevel.NONE)
     private ObjectState state = new ObjectState();
+
 
     public DistributedLock allocate(@Nonnull String namespace, @Nonnull String name) throws LockException {
         try {

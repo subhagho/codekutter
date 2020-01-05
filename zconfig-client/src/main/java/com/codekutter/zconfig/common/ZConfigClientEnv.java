@@ -125,15 +125,15 @@ public class ZConfigClientEnv extends ZConfigEnv {
         if (!(node instanceof ConfigPathNode)) {
             throw new ConfigurationException(
                     String.format("Base configuration node not found. [node=%s]",
-                                  CONFIG_NODE_ZCONFIG));
+                            CONFIG_NODE_ZCONFIG));
         }
         settings = new ConfigurationSettings();
         ConfigurationAnnotationProcessor
                 .readConfigAnnotations(ConfigurationSettings.class,
-                                       (ConfigPathNode) node, settings);
+                        (ConfigPathNode) node, settings);
         LogUtils.debug(getClass(), settings);
         LogUtils.info(getClass(),
-                      "Client environment successfully initialized...");
+                "Client environment successfully initialized...");
         configurationManager.add(getConfiguration());
     }
 
@@ -182,8 +182,8 @@ public class ZConfigClientEnv extends ZConfigEnv {
                 }
                 if (readerType == EReaderType.File) {
                     String uri = String.format("%s://%s",
-                                               EReaderType.getURIScheme(readerType),
-                                               basePath);
+                            EReaderType.getURIScheme(readerType),
+                            basePath);
                     serverUri = new URI(uri);
                 } else if (readerType == EReaderType.HTTP ||
                         readerType == EReaderType.HTTPS) {
@@ -245,10 +245,10 @@ public class ZConfigClientEnv extends ZConfigEnv {
         String path = getRelativeConfigurationPath(configName, version, configType);
         if (serverUri.getScheme().equals(GlobalConstants.URI_SCHEME_FILE)) {
             path = String.format("%s/%s.%s", path, configName,
-                                 configType.name().toLowerCase());
+                    configType.name().toLowerCase());
         } else {
             path = String.format("%s/%s", path,
-                                 configType.name().toLowerCase());
+                    configType.name().toLowerCase());
         }
         return String.format("%s%s", serverUri.toString(), path);
     }
@@ -268,8 +268,8 @@ public class ZConfigClientEnv extends ZConfigEnv {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(configName));
         Preconditions.checkArgument(version != null);
         return String.format("/%s/%s/%s/%d", instance.getApplicationGroup(),
-                             instance.getApplicationName(), configName,
-                             version.getMajorVersion());
+                instance.getApplicationName(), configName,
+                version.getMajorVersion());
     }
 
     /**
@@ -287,7 +287,7 @@ public class ZConfigClientEnv extends ZConfigEnv {
                                           @Nonnull
                                                   ConfigProviderFactory.EConfigType configType,
                                           String password)
-    throws ConfigurationException {
+            throws ConfigurationException {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(configName));
         Preconditions.checkArgument(version != null);
         Preconditions.checkArgument(configType != null);
@@ -310,7 +310,7 @@ public class ZConfigClientEnv extends ZConfigEnv {
      */
     public <T> T autowireType(@Nonnull Class<T> type, @Nonnull String configName,
                               String relativePath)
-    throws ConfigurationException {
+            throws ConfigurationException {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(configName));
         Preconditions.checkArgument(type != null);
 
@@ -351,16 +351,16 @@ public class ZConfigClientEnv extends ZConfigEnv {
      * @param version    - Configuration version (expected)
      * @throws ConfigurationException
      */
-    public static void setup(@Nonnull String configfile, @Nonnull String version,
+    public static void setup(@Nonnull String configName, @Nonnull String configfile, @Nonnull String version,
                              String password)
-    throws ConfigurationException {
+            throws ConfigurationException {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(configfile));
         Preconditions.checkArgument(!Strings.isNullOrEmpty(version));
 
         try {
             ZConfigEnv.getEnvLock();
             try {
-                ZConfigEnv env = ZConfigEnv.initialize(ZConfigClientEnv.class);
+                ZConfigEnv env = ZConfigEnv.initialize(ZConfigClientEnv.class, configName);
                 if (env.getState() != EEnvState.Initialized) {
                     env.init(configfile, Version.parse(version), password);
                 }
@@ -382,10 +382,11 @@ public class ZConfigClientEnv extends ZConfigEnv {
      * @param version    - Configuration version (expected)
      * @throws ConfigurationException
      */
-    public static void setup(@Nonnull String configfile,
+    public static void setup(@Nonnull String configName,
+                             @Nonnull String configfile,
                              @Nonnull ConfigProviderFactory.EConfigType type,
                              @Nonnull String version, String password)
-    throws ConfigurationException {
+            throws ConfigurationException {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(configfile));
         Preconditions.checkArgument(type != null);
         Preconditions.checkArgument(!Strings.isNullOrEmpty(version));
@@ -394,7 +395,7 @@ public class ZConfigClientEnv extends ZConfigEnv {
         try {
             ZConfigEnv.getEnvLock();
             try {
-                ZConfigEnv env = ZConfigEnv.initialize(ZConfigClientEnv.class);
+                ZConfigEnv env = ZConfigEnv.initialize(ZConfigClientEnv.class, configName);
                 if (env.getState() != EEnvState.Initialized) {
                     env.init(configfile, type, Version.parse(version), password);
                 }
@@ -419,6 +420,6 @@ public class ZConfigClientEnv extends ZConfigEnv {
         }
         throw new EnvException(
                 String.format("Env handle is not of client type. [type=%s]",
-                              env.getClass().getCanonicalName()));
+                        env.getClass().getCanonicalName()));
     }
 }

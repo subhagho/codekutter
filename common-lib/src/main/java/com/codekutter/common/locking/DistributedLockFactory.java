@@ -44,8 +44,8 @@ public class DistributedLockFactory implements IConfigurable {
     public DistributedLock getLock(@Nonnull Class<? extends DistributedLock> type,
                                    @Nonnull String namespace,
                                    @Nonnull String name) throws LockException {
-        Preconditions.checkArgument(Strings.isNullOrEmpty(namespace));
-        Preconditions.checkArgument(Strings.isNullOrEmpty(name));
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(namespace));
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(name));
         try {
             state.check(EObjectState.Available, getClass());
             AbstractLockAllocator<?> allocator = allocators.get(type);

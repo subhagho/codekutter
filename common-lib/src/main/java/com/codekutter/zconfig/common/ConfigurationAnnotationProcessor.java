@@ -749,17 +749,15 @@ public class ConfigurationAnnotationProcessor {
             }
 
             if (!Strings.isNullOrEmpty(value)) {
-                if (canProcessFieldType(field) || field.getType().isEnum()) {
-                    if (!Strings.isNullOrEmpty(value)) {
-                        ReflectionUtils.setValueFromString(value, target, field);
-                    } else {
-                        Class<? extends ITransformer> tt = param.transformer();
-                        if (tt != NullTransformer.class) {
-                            ITransformer<?, String> transformer = tt.newInstance();
+                if (canProcessFieldType(field) || field.getType().isEnum() || field.getType().equals(Class.class)) {
+                    ReflectionUtils.setValueFromString(value, target, field);
+                } else {
+                    Class<? extends ITransformer> tt = param.transformer();
+                    if (tt != NullTransformer.class) {
+                        ITransformer<?, String> transformer = tt.newInstance();
 
-                            Object tValue = transformer.transform(value);
-                            ReflectionUtils.setObjectValue(target, field, tValue);
-                        }
+                        Object tValue = transformer.transform(value);
+                        ReflectionUtils.setObjectValue(target, field, tValue);
                     }
                 }
             } else if (param.required()) {
@@ -843,7 +841,7 @@ public class ConfigurationAnnotationProcessor {
                 }
             }
             if (!Strings.isNullOrEmpty(value)) {
-                if (canProcessFieldType(field) || field.getType().isEnum()) {
+                if (canProcessFieldType(field) || field.getType().isEnum() || field.getType().equals(Class.class)) {
                     ReflectionUtils.setValueFromString(value, target, field);
                 } else {
                     Class<? extends ITransformer> tt = attribute.transformer();
@@ -963,6 +961,8 @@ public class ConfigurationAnnotationProcessor {
     private static boolean canSetFieldType(Field field) throws Exception {
         if (ReflectionUtils.isPrimitiveTypeOrString(field) ||
                 field.getType().isEnum()) {
+            return true;
+        } else if (field.getType().equals(Class.class)) {
             return true;
         } else if (ReflectionUtils
                 .implementsInterface(List.class, field.getType())) {

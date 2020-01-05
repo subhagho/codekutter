@@ -28,6 +28,7 @@ import com.codekutter.common.StateException;
 import com.codekutter.common.utils.KeyStoreVault;
 import com.codekutter.common.utils.LogUtils;
 import com.codekutter.common.utils.NetUtils;
+import com.codekutter.common.utils.ReflectionUtils;
 import com.codekutter.zconfig.common.model.Configuration;
 import com.codekutter.zconfig.common.model.Version;
 import com.codekutter.zconfig.common.model.nodes.ConfigPathNode;
@@ -40,6 +41,7 @@ import com.google.common.base.Strings;
 import org.joda.time.DateTime;
 
 import javax.annotation.Nonnull;
+import java.lang.reflect.Constructor;
 import java.net.InetAddress;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -320,14 +322,16 @@ public abstract class ZConfigEnv {
      * @return - Created Env handle.
      * @throws EnvException - Exception raised if initialization lock not acquired by current thread.
      */
-    protected static ZConfigEnv initialize(Class<? extends ZConfigEnv> type)
+    @SuppressWarnings("unchecked")
+    protected static ZConfigEnv initialize(@Nonnull Class<? extends ZConfigEnv> type, @Nonnull String configName)
             throws EnvException {
         if (!_envLock.isLocked() || !_envLock.isHeldByCurrentThread()) {
             throw new EnvException("Environment not locked for initialisation.");
         }
         try {
             if (__env == null) {
-                __env = type.newInstance();
+                Constructor<? extends ZConfigEnv> ctor = (Constructor<? extends ZConfigEnv>) ReflectionUtils.getConstructor(type, String.class);
+                __env = ctor.newInstance(configName);
                 LogUtils.info(ZConfigEnv.class,
                         String.format("Created ENV instance with type [%s]...",
                                 type.getCanonicalName()));

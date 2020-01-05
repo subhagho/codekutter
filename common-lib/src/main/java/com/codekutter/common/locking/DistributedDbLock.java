@@ -21,7 +21,10 @@ import com.codekutter.common.model.DbLockRecord;
 import com.codekutter.common.model.LockId;
 import com.codekutter.common.utils.DateTimeUtils;
 import com.codekutter.common.utils.LogUtils;
+import com.codekutter.common.utils.Monitoring;
 import com.google.common.base.Preconditions;
+import com.netflix.spectator.api.Id;
+import com.netflix.spectator.api.Timer;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
 
@@ -31,10 +34,21 @@ import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
 public class DistributedDbLock extends DistributedLock {
+    private static final class Metrics {
+        private static final String METRIC_LATENCY_LOCK = String.format("%s.%s.%s.LOCK", DistributedDbLock.class.getName(), "%s", "%s");
+        private static final String METRIC_LATENCY_UNLOCK = String.format("%s.%s.%s.UNLOCK", DistributedDbLock.class.getName(), "%s", "%s" );
+        private static final String METRIC_COUNTER_ERROR = String.format("%s.%s.%s.ERRORS", DistributedDbLock.class.getName(), "%s", "%s");
+        private static final String METRIC_COUNTER_CALLS = String.format("%s.%s.%s.CALLS", DistributedDbLock.class.getName(), "%s", "%s");
+    }
+
     private static final long DEFAULT_SLEEP_INTERVAL = 300;
 
     private Session session;
     private boolean locked = false;
+    private Timer lockLatency = null;
+    private Timer unlockLatency = null;
+    private Id callCounter = null;
+    private Id errorCounter = null;
 
     public DistributedDbLock(@Nonnull String namespace, @Nonnull String name) {
         super(namespace, name);
@@ -42,6 +56,13 @@ public class DistributedDbLock extends DistributedLock {
 
     public DistributedDbLock(@Nonnull LockId id) {
         super(id);
+    }
+
+    private void setupMetrics() {
+        lockLatency = Monitoring.addTimer(String.format(Metrics.METRIC_LATENCY_LOCK, id().getNamespace(), id().getName()));
+        unlockLatency = Monitoring.addTimer(String.format(Metrics.METRIC_LATENCY_UNLOCK, id().getNamespace(), id().getName()));
+        callCounter = Monitoring.addCounter(String.format(Metrics.METRIC_COUNTER_ERROR, id().getNamespace(), id().getName()));
+        errorCounter = Monitoring.addCounter(String.format(Metrics.METRIC_COUNTER_CALLS, id().getNamespace(), id().getName()));
     }
 
     public DistributedDbLock withSession(@Nonnull Session session) {
@@ -53,6 +74,7 @@ public class DistributedDbLock extends DistributedLock {
     public void lock() {
         Preconditions.checkState(session != null);
         if (!tryLock(lockGetTimeout(), TimeUnit.MILLISECONDS)) {
+            Monitoring.increment(errorCounter.name(), null);
             throw new LockException(String.format("[%s][%s] Timeout getting lock.", id().getNamespace(), id().getName()));
         }
     }
@@ -61,42 +83,11 @@ public class DistributedDbLock extends DistributedLock {
     public boolean tryLock() {
         Preconditions.checkState(session != null);
         checkThread();
-        if (super.tryLock()) {
-            if (locked) return true;
-            Transaction tnx = session.beginTransaction();
-            try {
-                DbLockRecord record = checkExpiry(fetch(session, true));
-                if (record.isLocked() && instanceId().compareTo(record.getInstanceId()) == 0) {
-                    session.save(record);
-                    tnx.commit();
-                    locked = true;
-                } else if (!record.isLocked()) {
-                    record.setInstanceId(instanceId());
-                    record.setTimestamp(System.currentTimeMillis());
-                    session.update(record);
-                    tnx.commit();
-                    locked = true;
-                } else
-                    tnx.rollback();
-            } catch (Exception ex) {
-                tnx.rollback();
-                throw ex;
-            }
-        }
-        return locked;
-    }
-
-    @Override
-    public boolean tryLock(long timeout, TimeUnit unit) {
-        Preconditions.checkState(session != null);
-        checkThread();
+        Monitoring.increment(callCounter.name(), null);
         try {
-            long start = System.currentTimeMillis();
-            long period = DateTimeUtils.period(timeout, unit);
-            if (super.tryLock(timeout, unit)) {
-                if (locked) return true;
-                while (true) {
-                    if ((System.currentTimeMillis() - start) > period) break;
+            return lockLatency.record(() -> {
+                if (super.tryLock()) {
+                    if (locked) return true;
                     Transaction tnx = session.beginTransaction();
                     try {
                         DbLockRecord record = checkExpiry(fetch(session, true));
@@ -104,24 +95,68 @@ public class DistributedDbLock extends DistributedLock {
                             session.save(record);
                             tnx.commit();
                             locked = true;
-                            break;
                         } else if (!record.isLocked()) {
                             record.setInstanceId(instanceId());
                             record.setTimestamp(System.currentTimeMillis());
                             session.update(record);
                             tnx.commit();
                             locked = true;
-                            break;
-                        }
-                        tnx.rollback();
+                        } else
+                            tnx.rollback();
                     } catch (Exception ex) {
                         tnx.rollback();
                         throw ex;
                     }
                 }
-            }
-            return locked;
+                return locked;
+            });
+        } catch (Exception ex) {
+            Monitoring.increment(errorCounter.name(), null);
+            throw new LockException(ex);
+        }
+    }
+
+    @Override
+    public boolean tryLock(long timeout, TimeUnit unit) {
+        Preconditions.checkState(session != null);
+        checkThread();
+        Monitoring.increment(callCounter.name(), null);
+        try {
+            return lockLatency.record(() -> {
+                long start = System.currentTimeMillis();
+                long period = DateTimeUtils.period(timeout, unit);
+                if (super.tryLock(timeout, unit)) {
+                    if (locked) return true;
+                    while (true) {
+                        if ((System.currentTimeMillis() - start) > period) break;
+                        Transaction tnx = session.beginTransaction();
+                        try {
+                            DbLockRecord record = checkExpiry(fetch(session, true));
+                            if (record.isLocked() && instanceId().compareTo(record.getInstanceId()) == 0) {
+                                session.save(record);
+                                tnx.commit();
+                                locked = true;
+                                break;
+                            } else if (!record.isLocked()) {
+                                record.setInstanceId(instanceId());
+                                record.setTimestamp(System.currentTimeMillis());
+                                session.update(record);
+                                tnx.commit();
+                                locked = true;
+                                break;
+                            }
+                            tnx.rollback();
+                        } catch (Exception ex) {
+                            tnx.rollback();
+                            throw ex;
+                        }
+                        Thread.sleep(DEFAULT_SLEEP_INTERVAL);
+                    }
+                }
+                return locked;
+            });
         } catch (Throwable t) {
+            Monitoring.increment(errorCounter.name(), null);
             throw new LockException(t);
         }
     }
@@ -130,31 +165,33 @@ public class DistributedDbLock extends DistributedLock {
     public void unlock() {
         Preconditions.checkState(session != null);
         checkThread();
-        if (locked) {
-            DbLockRecord record = fetch(session, false);
-            if (record == null) {
-                throw new LockException(String.format("[%s][%s][%s] Lock record not found.", id().getNamespace(), id().getName(), threadId()));
-            }
-            if (record.isLocked() && instanceId().compareTo(record.getInstanceId()) == 0) {
-                Transaction tnx = session.beginTransaction();
-                try {
-                    record.setLocked(false);
-                    record.setInstanceId(null);
-                    record.setTimestamp(-1);
-
-                    session.save(record);
-                    tnx.commit();
-                } catch (Throwable t) {
-                    tnx.rollback();
-                    throw new LockException(t);
+        unlockLatency.record(() -> {
+            if (locked) {
+                DbLockRecord record = fetch(session, false);
+                if (record == null) {
+                    throw new LockException(String.format("[%s][%s][%s] Lock record not found.", id().getNamespace(), id().getName(), threadId()));
                 }
+                if (record.isLocked() && instanceId().compareTo(record.getInstanceId()) == 0) {
+                    Transaction tnx = session.beginTransaction();
+                    try {
+                        record.setLocked(false);
+                        record.setInstanceId(null);
+                        record.setTimestamp(-1);
+
+                        session.save(record);
+                        tnx.commit();
+                    } catch (Throwable t) {
+                        tnx.rollback();
+                        throw new LockException(t);
+                    }
+                } else {
+                    throw new LockException(String.format("[%s][%s] Lock not held by current thread. [thread=%d]", id().getNamespace(), id().getName(), threadId()));
+                }
+                locked = false;
             } else {
                 throw new LockException(String.format("[%s][%s] Lock not held by current thread. [thread=%d]", id().getNamespace(), id().getName(), threadId()));
             }
-            locked = false;
-        } else {
-            throw new LockException(String.format("[%s][%s] Lock not held by current thread. [thread=%d]", id().getNamespace(), id().getName(), threadId()));
-        }
+        });
     }
 
     @Override

@@ -21,9 +21,11 @@ import com.codekutter.common.locking.DistributedLockFactory;
 import com.codekutter.common.utils.ConfigUtils;
 import com.codekutter.common.utils.LogUtils;
 import com.codekutter.common.utils.Monitoring;
+import com.codekutter.zconfig.common.model.Version;
 import com.codekutter.zconfig.common.model.nodes.AbstractConfigNode;
 import com.codekutter.zconfig.common.model.nodes.ConfigPathNode;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 
 import javax.annotation.Nonnull;
 
@@ -48,7 +50,7 @@ public class ExtendedZConfigEnv extends ZConfigEnv {
 
         AbstractConfigNode node = getConfiguration().getRootConfigNode().find(CONFIG_ENV_PATH);
         if (node instanceof ConfigPathNode) {
-            envNode = (ConfigPathNode)node;
+            envNode = (ConfigPathNode) node;
 
             setupMonitoring();
             setupLockFactory();
@@ -63,6 +65,7 @@ public class ExtendedZConfigEnv extends ZConfigEnv {
             DistributedLockFactory.setup(node);
         }
     }
+
     private void setupMonitoring() throws ConfigurationException {
         Monitoring.MonitorConfig config = ConfigurationAnnotationProcessor.readConfigAnnotations(Monitoring.MonitorConfig.class, envNode);
         if (config == null) {
@@ -91,5 +94,56 @@ public class ExtendedZConfigEnv extends ZConfigEnv {
         super.dispose();
         Monitoring.stop();
         DistributedLockFactory.close();
+    }
+
+    /**
+     * Setup the client environment using the passed configuration file.
+     * Method to be used in-case the configuration type cannot be deciphered using
+     * the file extension.
+     *
+     * @param configfile - Configuration file (path) to read from.
+     * @param type       - Configuration type.
+     * @param version    - Configuration version (expected)
+     * @throws ConfigurationException
+     */
+    public static void setup(@Nonnull String configName,
+                             @Nonnull String configfile,
+                             @Nonnull ConfigProviderFactory.EConfigType type,
+                             @Nonnull String version, String password)
+            throws ConfigurationException {
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(configfile));
+        Preconditions.checkArgument(type != null);
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(version));
+
+
+        try {
+            ZConfigEnv.getEnvLock();
+            try {
+                ZConfigEnv env = ZConfigEnv.initialize(ExtendedZConfigEnv.class, configName);
+                if (env.getState() != EEnvState.Initialized) {
+                    env.init(configfile, type, Version.parse(version), password);
+                }
+            } finally {
+                ZConfigEnv.releaseEnvLock();
+            }
+        } catch (Exception e) {
+            throw new ConfigurationException(e);
+        }
+    }
+
+    /**
+     * Get the instance of the client environment handle.
+     *
+     * @return - Client environment handle.
+     * @throws EnvException
+     */
+    public static ExtendedZConfigEnv env() throws EnvException {
+        ZConfigEnv env = ZConfigEnv.env();
+        if (env instanceof ExtendedZConfigEnv) {
+            return (ExtendedZConfigEnv) env;
+        }
+        throw new EnvException(
+                String.format("Env handle is not of client type. [type=%s]",
+                        env.getClass().getCanonicalName()));
     }
 }

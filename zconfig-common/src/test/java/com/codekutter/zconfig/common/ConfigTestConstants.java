@@ -28,4 +28,5 @@ public class ConfigTestConstants {
     public static final String PROP_CONFIG_FILE = "config.file";
     public static final String PROP_CONFIG_URL = "config.url";
     public static final String PROP_CONFIG_VERSION = "config.version";
+    public static final String PROP_CONFIG_NAME = "config.name";
 }
