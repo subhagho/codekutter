@@ -19,6 +19,7 @@ package com.codekutter.common.locking;
 
 import com.codekutter.common.model.LockId;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.google.common.base.Preconditions;
 import lombok.Getter;
 import lombok.experimental.Accessors;
 
@@ -30,9 +31,13 @@ import java.util.concurrent.locks.ReentrantLock;
 @Getter
 @Accessors(fluent = true)
 public abstract class DistributedLock extends ReentrantLock implements Closeable {
+    private static final long DEFAULT_LOCK_TIMEOUT = 15 * 60 * 1000; // 15 mins.
+
     private String instanceId;
     private LockId id;
     private long threadId;
+    private long lockGetTimeout = DEFAULT_LOCK_TIMEOUT;
+    private long lockExpiryTimeout = -1;
 
     public DistributedLock(@Nonnull String namespace, @Nonnull String name) {
         id = new LockId();
@@ -54,6 +59,18 @@ public abstract class DistributedLock extends ReentrantLock implements Closeable
         if (threadId != Thread.currentThread().getId()) {
             throw new LockException(String.format("Lock not owned by current thread. [owner thread id=%d]", threadId));
         }
+    }
+
+    public DistributedLock withLockGetTimeout(long lockGetTimeout) {
+        if (lockGetTimeout > 0)
+            this.lockGetTimeout = lockGetTimeout;
+        return this;
+    }
+
+    public DistributedLock withLockExpiryTimeout(long lockExpiryTimeout) {
+        if (lockExpiryTimeout > 0)
+            this.lockExpiryTimeout = lockExpiryTimeout;
+        return this;
     }
 
     @JsonIgnore

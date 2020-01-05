@@ -19,6 +19,9 @@ package com.codekutter.common.utils;
 
 import com.codahale.metrics.*;
 import com.codekutter.zconfig.common.ConfigurationException;
+import com.codekutter.zconfig.common.model.annotations.ConfigAttribute;
+import com.codekutter.zconfig.common.model.annotations.ConfigPath;
+import com.codekutter.zconfig.common.model.annotations.ConfigValue;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.netflix.spectator.api.*;
@@ -26,6 +29,9 @@ import com.netflix.spectator.api.Timer;
 import com.netflix.spectator.gc.GcLogger;
 import com.netflix.spectator.jvm.Jmx;
 import com.netflix.spectator.metrics3.MetricsRegistry;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.experimental.Accessors;
 
 import javax.annotation.Nonnull;
 import java.io.File;
@@ -36,11 +42,33 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
 public class Monitoring {
+    @ConfigPath(path = "monitoring")
+    @Getter
+    @Setter
+    @Accessors(fluent = true)
+    public static class MonitorConfig {
+        @ConfigAttribute
+        private boolean enableJmx = false;
+        @ConfigAttribute
+        private boolean enableSlf4j = true;
+        @ConfigAttribute
+        private boolean enableFileLogging = false;
+        @ConfigValue
+        private boolean enableGcStats = true;
+        @ConfigValue
+        private boolean enableMemoryStats = true;
+        @ConfigValue
+        private String fileLoggerDir = null;
+        @ConfigAttribute
+        private String namespace = null;
+    }
+
     public static final int REPORTER_JMX = (int)Math.pow(2, 1);
     public static final int REPORTER_CSV = (int)Math.pow(2,2);
     public static final int REPORTER_SLF4J = (int)Math.pow(2,3);
-    public static boolean enableGcStats = true;
-    public static boolean enableMemoryStats = true;
+
+    private static boolean enableGcStats = true;
+    private static boolean enableMemoryStats = true;
     private static final int REPORT_INTERVAL = 10;
 
     private static final Registry __REGISTRY = new MetricsRegistry();
@@ -48,17 +76,20 @@ public class Monitoring {
     private static Map<String, Timer> timers = new ConcurrentHashMap<>();
     private static Map<String, DistributionSummary> distributionSummaries = new ConcurrentHashMap<>();
     private static GcLogger gcLogger = null;
+    private static String namespace;
 
     private static List<Reporter> reporters = new ArrayList<>();
 
-    public static void start(int reps, String metricsDir, boolean memStats, boolean gcStats) throws ConfigurationException {
-        if ((reps & REPORTER_JMX) > 0) {
+    public static void start(String ns, int reporters, String metricsDir, boolean memStats, boolean gcStats) throws ConfigurationException {
+        namespace = ns;
+
+        if ((reporters & REPORTER_JMX) > 0) {
             JmxReporter reporter = JmxReporter.forRegistry((MetricRegistry) __REGISTRY).build();
             reporter.start();
 
-            reporters.add(reporter);
+            Monitoring.reporters.add(reporter);
         }
-        if ((reps & REPORTER_CSV) > 0) {
+        if ((reporters & REPORTER_CSV) > 0) {
             Preconditions.checkArgument(!Strings.isNullOrEmpty(metricsDir));
             File dir = new File(metricsDir);
             if (!dir.exists()) {
@@ -69,13 +100,13 @@ public class Monitoring {
             CsvReporter reporter = CsvReporter.forRegistry((MetricRegistry) __REGISTRY).build(dir);
             reporter.start(REPORT_INTERVAL, TimeUnit.SECONDS);
 
-            reporters.add(reporter);
+            Monitoring.reporters.add(reporter);
         }
-        if ((reps & REPORTER_SLF4J) > 0) {
+        if ((reporters & REPORTER_SLF4J) > 0) {
             Slf4jReporter reporter = Slf4jReporter.forRegistry((MetricRegistry) __REGISTRY).build();
             reporter.start(REPORT_INTERVAL, TimeUnit.SECONDS);
 
-            reporters.add(reporter);
+            Monitoring.reporters.add(reporter);
         }
         if (enableGcStats = gcStats) {
             gcLogger = new GcLogger();
@@ -104,52 +135,80 @@ public class Monitoring {
     }
 
     public static Id addCounter(@Nonnull String name) {
-        Id id = __REGISTRY.createId(name);
-        counters.put(name, id);
+        name = name(name);
+        if (!Strings.isNullOrEmpty(name)) {
+            Id id = __REGISTRY.createId(name);
+            counters.put(name, id);
 
-        return id;
+            return id;
+        }
+        return null;
     }
 
     public static Id addCounter(@Nonnull String name, String... tags) {
-        Id id = __REGISTRY.createId(name, tags);
-        counters.put(name, id);
+        name = name(name);
+        if (!Strings.isNullOrEmpty(name)) {
+            Id id = __REGISTRY.createId(name, tags);
+            counters.put(name, id);
 
-        return id;
+            return id;
+        }
+        return null;
     }
 
     public static Timer addTimer(@Nonnull String name) {
-        Timer timer = __REGISTRY.timer(name);
-        timers.put(name, timer);
+        name = name(name);
+        if (!Strings.isNullOrEmpty(name)) {
+            Timer timer = __REGISTRY.timer(name);
+            timers.put(name, timer);
 
-        return timer;
+            return timer;
+        }
+        return null;
     }
 
     public static Timer addTimer(@Nonnull String name, String... tags) {
-        Timer timer = __REGISTRY.timer(name, tags);
-        timers.put(name, timer);
+        name = name(name);
+        if (!Strings.isNullOrEmpty(name)) {
+            Timer timer = __REGISTRY.timer(name, tags);
+            timers.put(name, timer);
 
-        return timer;
+            return timer;
+        }
+        return null;
     }
 
     public static DistributionSummary addDistributionSummary(@Nonnull String name) {
-        DistributionSummary summary = __REGISTRY.distributionSummary(name);
-        distributionSummaries.put(name, summary);
+        name = name(name);
+        if (!Strings.isNullOrEmpty(name)) {
+            DistributionSummary summary = __REGISTRY.distributionSummary(name);
+            distributionSummaries.put(name, summary);
 
-        return summary;
+            return summary;
+        }
+        return null;
     }
 
     public static DistributionSummary addDistributionSummary(@Nonnull String name, String... tags) {
-        DistributionSummary summary = __REGISTRY.distributionSummary(name, tags);
-        distributionSummaries.put(name, summary);
+        name = name(name);
+        if (!Strings.isNullOrEmpty(name)) {
+            DistributionSummary summary = __REGISTRY.distributionSummary(name, tags);
+            distributionSummaries.put(name, summary);
 
-        return summary;
+            return summary;
+        }
+        return null;
     }
 
     public static void addGauge(@Nonnull String name, @Nonnull Object source, @Nonnull String method) {
-        __REGISTRY.methodValue(name, source, method);
+        name = name(name);
+        if (!Strings.isNullOrEmpty(name)) {
+            __REGISTRY.methodValue(name, source, method);
+        }
     }
 
     public static void increment(@Nonnull String name, Map<String, String> tags) {
+        name = name(name);
         if (counters.containsKey(name)) {
             Id id = counters.get(name);
             Id contId = id;
@@ -163,14 +222,26 @@ public class Monitoring {
     }
 
     public static void summary(@Nonnull String name, long value) {
+        name = name(name);
         if (distributionSummaries.containsKey(name)) {
             distributionSummaries.get(name).record(value);
         }
     }
 
     public static Timer timer(@Nonnull String name) {
+        name = name(name);
         if (timers.containsKey(name)) {
             return timers.get(name);
+        }
+        return null;
+    }
+
+    private static String name(String name) {
+        if (!Strings.isNullOrEmpty(name)) {
+            if (!Strings.isNullOrEmpty(namespace)) {
+                return String.format("%s.%s", namespace, name);
+            }
+            return name;
         }
         return null;
     }

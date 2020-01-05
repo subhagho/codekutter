@@ -164,9 +164,9 @@ public abstract class ZConfigEnv {
             }
 
             postInit();
-
             updateState(EEnvState.Initialized);
         } catch (Exception e) {
+            LogUtils.error(getClass(), e);
             throw new ConfigurationException(e);
         }
     }

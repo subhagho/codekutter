@@ -47,12 +47,13 @@ public class DistributedZkLock extends DistributedLock {
     public void lock() {
         Preconditions.checkState(mutex != null);
         checkThread();
-        super.lock();
         try {
             if (!mutex.isAcquiredInThisProcess())
-                mutex.acquire();
-        } catch (Throwable t) {
-            super.unlock();
+                if (!tryLock()) {
+                    throw new LockException(String.format("[%s][%s] Timeout getting lock.", id().getNamespace(), id().getName()));
+                }
+        } catch (Throwable ex) {
+            throw new LockException(ex);
         }
     }
 
@@ -62,26 +63,34 @@ public class DistributedZkLock extends DistributedLock {
         checkThread();
         if (super.tryLock()) {
             try {
-                if (!mutex.isAcquiredInThisProcess())
-                    return mutex.acquire(DEFAULT_LOCK_TIMEOUT, TimeUnit.MILLISECONDS);
+                if (mutex.isAcquiredInThisProcess())
+                    return true;
+                return mutex.acquire(DEFAULT_LOCK_TIMEOUT, TimeUnit.MILLISECONDS);
             } catch (Throwable t) {
                 super.unlock();
+                throw new LockException(t);
             }
         }
         return false;
     }
 
     @Override
-    public boolean tryLock(long timeout, TimeUnit unit) throws InterruptedException {
+    public boolean tryLock(long timeout, TimeUnit unit) {
         Preconditions.checkState(mutex != null);
         checkThread();
-        if (super.tryLock(timeout, unit)) {
-            try {
-                if (!mutex.isAcquiredInThisProcess())
+        try {
+            if (super.tryLock(timeout, unit)) {
+                try {
+                    if (mutex.isAcquiredInThisProcess())
+                        return true;
                     return mutex.acquire(timeout, unit);
-            } catch (Throwable t) {
-                super.unlock();
+                } catch (Throwable t) {
+                    super.unlock();
+                    throw new LockException(t);
+                }
             }
+        } catch (Exception ex) {
+            throw new LockException(ex);
         }
         return false;
     }
@@ -90,13 +99,26 @@ public class DistributedZkLock extends DistributedLock {
     public void unlock() {
         Preconditions.checkState(mutex != null);
         checkThread();
-        super.unlock();
+        try {
+            if (mutex.isAcquiredInThisProcess()) {
+                mutex.release();
+            } else {
+                throw new LockException(String.format("[%s][%s] Lock not held by current thread. [thread=%d]", id().getNamespace(), id().getName(), threadId()));
+            }
+            super.unlock();
+        } catch (Throwable t) {
+            super.unlock();
+            throw new LockException(t);
+        }
     }
 
     @Override
     public boolean isLocked() {
         Preconditions.checkState(mutex != null);
-        return super.isLocked();
+        if (super.isLocked()) {
+            return mutex.isAcquiredInThisProcess();
+        }
+        return false;
     }
 
     @Override

@@ -24,6 +24,7 @@ import com.codekutter.common.stores.AbstractConnection;
 import com.codekutter.zconfig.common.IConfigurable;
 import com.codekutter.zconfig.common.model.annotations.ConfigAttribute;
 import com.codekutter.zconfig.common.model.annotations.ConfigPath;
+import com.codekutter.zconfig.common.model.annotations.ConfigValue;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
@@ -43,7 +44,10 @@ import java.util.concurrent.ConcurrentHashMap;
 public abstract class AbstractLockAllocator<T> implements IConfigurable, Closeable {
     private static final long DEFAULT_LOCK_TIMEOUT = 60 * 60 * 1000; // 1 Hr.
 
-    private long lockTimeout = DEFAULT_LOCK_TIMEOUT;
+    @ConfigValue(name = "lockExpiryTimeout")
+    private long lockExpiryTimeout = DEFAULT_LOCK_TIMEOUT;
+    @ConfigValue(name = "lockGetTimeout")
+    private long lockTimeout = -1;
     @ConfigAttribute(name = "lockType")
     private Class<? extends DistributedLock> lockType;
     @Setter(AccessLevel.NONE)

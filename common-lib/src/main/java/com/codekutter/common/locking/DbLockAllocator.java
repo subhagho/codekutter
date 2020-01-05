@@ -66,7 +66,8 @@ public class DbLockAllocator extends AbstractLockAllocator<Session> {
                 }
                 threadSessions.put(threadId, session);
             }
-            return new DistributedDbLock(id).withSession(session);
+            return new DistributedDbLock(id).withSession(session).
+                    withLockExpiryTimeout(lockExpiryTimeout()).withLockGetTimeout(lockTimeout());
         } finally {
             lock.unlock();
         }

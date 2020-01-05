@@ -31,6 +31,9 @@ import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 
+import javax.annotation.Nonnull;
+import java.util.concurrent.TimeUnit;
+
 /**
  * Utility class to parse/write datetime.
  */
@@ -101,5 +104,28 @@ public class DateTimeUtils {
     public static String toString(long timestamp) {
         DateTime dateTime = new DateTime(timestamp);
         return dateTime.toString(GlobalConstants.DEFAULT_JODA_DATETIME_FORMAT);
+    }
+
+    /**
+     * Convert to a milliseconds period.
+     *
+     * @param timeout - Timeout value
+     * @param unit - Time unit.
+     * @return - Milliseconds window.
+     */
+    public static long period(long timeout, @Nonnull TimeUnit unit) {
+        switch (unit) {
+            case SECONDS:
+                return timeout * 1000;
+            case MILLISECONDS:
+                return timeout;
+            case DAYS:
+                return timeout * 24 * 60 * 60 * 1000;
+            case HOURS:
+                return timeout * 60 * 60 * 1000;
+            case MINUTES:
+                return timeout * 60 * 1000;
+        }
+        return timeout;
     }
 }
