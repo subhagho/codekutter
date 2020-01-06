@@ -29,7 +29,8 @@ import com.codekutter.common.utils.ReflectionUtils;
 import com.codekutter.zconfig.common.model.Configuration;
 import com.codekutter.zconfig.common.model.EncryptedValue;
 import com.codekutter.zconfig.common.model.annotations.*;
-import com.codekutter.zconfig.common.model.annotations.transformers.NullTransformer;
+import com.codekutter.zconfig.common.transformers.NullParser;
+import com.codekutter.zconfig.common.transformers.NullTransformer;
 import com.codekutter.zconfig.common.model.nodes.*;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
@@ -539,11 +540,13 @@ public class ConfigurationAnnotationProcessor {
                                          AbstractConfigNode node, T target, List<String> valuePaths)
             throws ConfigurationException {
         try {
+            Class<? extends ITransformer> tt = configValue.transformer();
+            Class<? extends ICustomParser> pp = configValue.parser();
             String name = configValue.name();
             if (Strings.isNullOrEmpty(name)) {
                 name = field.getName();
             }
-            if (field.getType().isEnum() || canSetFieldType(field)) {
+            if ((field.getType().isEnum() || canSetFieldType(field))) {
                 String value = null;
                 if (node instanceof ConfigPathNode) {
                     AbstractConfigNode fnode = node.find(name);
@@ -567,17 +570,6 @@ public class ConfigurationAnnotationProcessor {
                     }
                 }
                 if (!Strings.isNullOrEmpty(value)) {
-                    if (ReflectionUtils.implementsInterface(List.class, field.getType()) || ReflectionUtils.implementsInterface(Set.class, field.getType())) {
-                        ConfigListValueNode listValueNode = new ConfigListValueNode();
-                        ConfigValueNode vn = new ConfigValueNode(node.getConfiguration(), node.getParent());
-                        vn.setName(name);
-                        vn.setValue(value);
-
-                        listValueNode.addValue(vn);
-                        setListValueFromNode(type,
-                                ((ConfigListValueNode) listValueNode),
-                                target, field);
-                    } else
                         ReflectionUtils
                                 .setValueFromString(value, target, field);
                 } else if (configValue.required()) {
@@ -614,7 +606,6 @@ public class ConfigurationAnnotationProcessor {
                     ReflectionUtils.setObjectValue(target, field, ev);
                 }
             } else {
-                Class<? extends ITransformer> tt = configValue.transformer();
                 if (tt != NullTransformer.class) {
                     ITransformer<?, String> transformer = tt.newInstance();
                     String value = null;
@@ -638,6 +629,10 @@ public class ConfigurationAnnotationProcessor {
                                 "Required configuration value not specified: [path=%s][name=%s]",
                                 node.getAbsolutePath(), name));
                     }
+                } else if (pp != NullParser.class) {
+                    ICustomParser<?> parser = pp.newInstance();
+                    Object pvalue = parser.parse(node, name);
+                    ReflectionUtils.setObjectValue(target, field, pvalue);
                 } else {
                     Class<?> ftype = field.getType();
                     String path = hasConfigAnnotation(ftype);
@@ -964,28 +959,6 @@ public class ConfigurationAnnotationProcessor {
             return true;
         } else if (field.getType().equals(Class.class)) {
             return true;
-        } else if (ReflectionUtils
-                .implementsInterface(List.class, field.getType())) {
-            Class<?> itype = ReflectionUtils.getGenericListType(field);
-            Preconditions.checkArgument(itype != null);
-            if (ReflectionUtils.isPrimitiveTypeOrString(itype)) {
-                return true;
-            } else if (itype.equals(BigInteger.class) ||
-                    itype.equals(BigDecimal.class) || itype.equals(
-                    Date.class)) {
-                return true;
-            }
-        } else if (ReflectionUtils
-                .implementsInterface(Set.class, field.getType())) {
-            Class<?> itype = ReflectionUtils.getGenericSetType(field);
-            Preconditions.checkArgument(itype != null);
-            if (ReflectionUtils.isPrimitiveTypeOrString(itype)) {
-                return true;
-            } else if (itype.equals(BigInteger.class) ||
-                    itype.equals(BigDecimal.class) || itype.equals(
-                    Date.class)) {
-                return true;
-            }
         }
         return false;
     }

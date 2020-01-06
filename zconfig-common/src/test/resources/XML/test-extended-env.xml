@@ -39,7 +39,8 @@
                 <enableGcStats>false</enableGcStats>
             </monitoring>
             <distributed-locks>
-                <lock-allocator class="com.codekutter.common.locking.ZkLockAllocator" lockType="com.codekutter.common.locking.DistributedZkLock">
+                <!--lock-allocator class="com.codekutter.common.locking.ZkLockAllocator"
+                                lockType="com.codekutter.common.locking.DistributedZkLock">
                     <lockPath>/CODEKUTTER/COMMON/TEST</lockPath>
                     <lockExpiryTimeout>500000</lockExpiryTimeout>
                     <lockGetTimeout>50000</lockGetTimeout>
@@ -52,6 +53,23 @@
                         </password>
                         <maxRetries>5</maxRetries>
                         <retryInterval>500</retryInterval>
+                    </connection>
+                </lock-allocator-->
+                <lock-allocator class="com.codekutter.common.locking.DbLockAllocator"
+                                lockType="com.codekutter.common.locking.DistributedDbLock">
+                    <lockExpiryTimeout>500000</lockExpiryTimeout>
+                    <lockGetTimeout>50000</lockGetTimeout>
+                    <connection name="LockDbConnection" class="com.codekutter.common.stores.impl.HibernateConnection"
+                                driver="org.mariadb.jdbc.Driver" dialect="org.hibernate.dialect.MariaDBDialect">
+                        <url>jdbc:mariadb://127.0.0.1:3306/test</url>
+                        <port>3306</port>
+                        <username>testDbUser</username>
+                        <password encrypted="true">
+                            <value>iyGiHwGIT2JDgk01E/xjUw==</value>
+                        </password>
+                        <classes>
+                            <class>com.codekutter.common.model.DbLockRecord</class>
+                        </classes>
                     </connection>
                 </lock-allocator>
             </distributed-locks>

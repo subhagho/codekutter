@@ -19,6 +19,8 @@ package com.codekutter.common.locking;
 
 import com.codekutter.common.model.EObjectState;
 import com.codekutter.common.model.LockId;
+import com.codekutter.common.stores.AbstractConnection;
+import com.codekutter.common.stores.ConnectionManager;
 import com.codekutter.common.stores.impl.HibernateConnection;
 import com.codekutter.common.utils.ConfigUtils;
 import com.codekutter.common.utils.LogUtils;
@@ -88,8 +90,12 @@ public class DbLockAllocator extends AbstractLockAllocator<Session> {
             if (cnode == null) {
                 throw new ConfigurationException(String.format("Invalid DB Lock Allocator Configuration. [node=%s]", node.getAbsolutePath()));
             }
-            connection = new HibernateConnection();
-            connection.configure(cnode);
+            LogUtils.info(getClass(), String.format("Initializing DataBase Locking. [config path=%s]", cnode.getAbsolutePath()));
+            AbstractConfigNode ccnode = ConfigUtils.getPathNode(AbstractConnection.class, (ConfigPathNode) cnode);
+            if (!(ccnode instanceof ConfigPathNode)) {
+                throw new ConfigurationException(String.format("Connection configuration not found. [node=%s]", cnode.getAbsolutePath()));
+            }
+            connection = ConnectionManager.get().readConnection((ConfigPathNode) ccnode);
 
             state().setState(EObjectState.Available);
             LogUtils.debug(getClass(), String.format("Lock allocator initialized. [type=%s]", getClass().getCanonicalName()));

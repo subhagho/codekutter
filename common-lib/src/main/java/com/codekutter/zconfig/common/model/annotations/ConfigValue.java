@@ -24,7 +24,8 @@
 
 package com.codekutter.zconfig.common.model.annotations;
 
-import com.codekutter.zconfig.common.model.annotations.transformers.NullTransformer;
+import com.codekutter.zconfig.common.transformers.NullParser;
+import com.codekutter.zconfig.common.transformers.NullTransformer;
 
 import java.lang.annotation.*;
 
@@ -61,4 +62,11 @@ public @interface ConfigValue {
      * @return - Transformation class.
      */
     Class<? extends ITransformer> transformer() default NullTransformer.class;
+
+    /**
+     * Specify the custom parser class if any.
+     *
+     * @return - Custom Parser class.
+     */
+    Class<? extends ICustomParser> parser() default NullParser.class;
 }

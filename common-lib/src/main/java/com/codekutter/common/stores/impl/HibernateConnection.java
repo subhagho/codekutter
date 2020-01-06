@@ -30,6 +30,7 @@ import com.codekutter.zconfig.common.model.annotations.ConfigValue;
 import com.codekutter.zconfig.common.model.nodes.AbstractConfigNode;
 import com.codekutter.zconfig.common.model.nodes.ConfigPathNode;
 import com.codekutter.zconfig.common.model.nodes.ConfigValueNode;
+import com.codekutter.zconfig.common.transformers.StringListParser;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import lombok.Getter;
@@ -56,7 +57,7 @@ public class HibernateConnection extends AbstractConnection<Session> {
     @Getter
     @Setter
     @Accessors(fluent = true)
-    @ConfigPath(path = "settings")
+    @ConfigPath(path = "connection")
     public static class HibernateConfig {
         public static final String CACHE_FACTORY_CLASS = "org.hibernate.cache.ehcache.EhCacheRegionFactory";
         public static final String CACHE_CONFIG_FILE = "net.sf.ehcache.configurationResourceName";
@@ -77,7 +78,7 @@ public class HibernateConnection extends AbstractConnection<Session> {
         private boolean enableQueryCaching = false;
         @ConfigValue(name = "cacheConfig")
         private String cacheConfig;
-        @ConfigValue(name = "classes")
+        @ConfigValue(name = "classes", parser = StringListParser.class)
         private List<String> classes;
     }
 

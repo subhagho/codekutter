@@ -17,11 +17,14 @@
 
 package com.codekutter.common.stores;
 
-import com.codekutter.common.StateException;
 import com.codekutter.common.model.IEntity;
+import com.codekutter.common.utils.ConfigUtils;
 import com.codekutter.zconfig.common.ConfigurationException;
 import com.codekutter.zconfig.common.model.annotations.ConfigAttribute;
 import com.codekutter.zconfig.common.model.annotations.ConfigValue;
+import com.codekutter.zconfig.common.model.nodes.AbstractConfigNode;
+import com.codekutter.zconfig.common.model.nodes.ConfigPathNode;
+import com.google.common.base.Strings;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
@@ -68,6 +71,36 @@ public abstract class AbstractDataStore<T> implements Closeable {
     public AbstractDataStore<T> withConnection(@Nonnull AbstractConnection<T> connection) {
         this.connection = connection;
         return this;
+    }
+
+    @SuppressWarnings("unchecked")
+    public void readConnection(@Nonnull ConfigPathNode node) throws ConfigurationException {
+        try {
+            if (connection != null) return;
+
+            AbstractConfigNode cnode = ConfigUtils.getPathNode(AbstractConnection.class, node);
+            if (cnode instanceof ConfigPathNode) {
+                String ref = ConfigUtils.getReferenceAttribute((ConfigPathNode) cnode);
+                if (!Strings.isNullOrEmpty(ref)) {
+                    connection = ConnectionManager.get().connection(ref);
+                    if (connection == null) {
+                        throw new ConfigurationException(String.format("Invalid connection reference. [data store=%s][reference=%s]", name, ref));
+                    }
+                } else {
+                    String cname = ConfigUtils.getClassAttribute(cnode);
+                    if (Strings.isNullOrEmpty(cname)) {
+                        throw new ConfigurationException("Invalid connection configuration: Missing class attribute.");
+                    }
+                    Class<? extends AbstractConnection<?>> cls = (Class<? extends AbstractConnection<?>>) Class.forName(cname);
+                    connection = (AbstractConnection<T>) cls.newInstance();
+                    connection.configure(node);
+                }
+            } else {
+                throw new ConfigurationException(String.format("No connection defined. [data store=%s]", name));
+            }
+        } catch (Exception ex) {
+            throw new ConfigurationException(ex);
+        }
     }
 
     public abstract void configure(@Nonnull DataStoreManager dataStoreManager) throws ConfigurationException;

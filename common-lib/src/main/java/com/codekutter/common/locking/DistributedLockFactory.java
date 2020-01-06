@@ -74,16 +74,12 @@ public class DistributedLockFactory implements IConfigurable {
      */
     @Override
     public void configure(@Nonnull AbstractConfigNode node) throws ConfigurationException {
-        Preconditions.checkArgument(node instanceof ConfigPathNode);
         try {
-            AbstractConfigNode cnode = ConfigUtils.getPathNode(getClass(), (ConfigPathNode) node);
-            if (cnode == null) {
-                return;
-            }
-            if (cnode instanceof ConfigPathNode) {
-                createAllocator((ConfigPathNode) cnode);
-            } else if (cnode instanceof ConfigListElementNode) {
-                List<ConfigElementNode> nodes = ((ConfigListElementNode) cnode).getValues();
+            LogUtils.info(getClass(), String.format("Initializing Distributed Locking. [config path=%s]", node.getAbsolutePath()));
+            if (node instanceof ConfigPathNode) {
+                createAllocator((ConfigPathNode) node);
+            } else if (node instanceof ConfigListElementNode) {
+                List<ConfigElementNode> nodes = ((ConfigListElementNode) node).getValues();
                 if (nodes != null && !nodes.isEmpty()) {
                     for (ConfigElementNode n : nodes) {
                         createAllocator((ConfigPathNode) n);

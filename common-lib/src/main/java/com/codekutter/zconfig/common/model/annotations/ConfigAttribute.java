@@ -24,7 +24,7 @@
 
 package com.codekutter.zconfig.common.model.annotations;
 
-import com.codekutter.zconfig.common.model.annotations.transformers.NullTransformer;
+import com.codekutter.zconfig.common.transformers.NullTransformer;
 
 import java.lang.annotation.*;
 

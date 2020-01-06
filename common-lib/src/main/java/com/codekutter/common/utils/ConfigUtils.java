@@ -43,6 +43,7 @@ public class ConfigUtils {
     private static final String NODE_NAME_DESCRIPTION = "__description";
     private static final String ATTR_CLASS = "class";
     private static final String ATTR_NAME = "name";
+    private static final String ATTR_REFERENCE = "reference";
 
     /**
      * Get the resolved search path for specified search string.
@@ -291,6 +292,23 @@ public class ConfigUtils {
                 if (vn != null) {
                     return vn.getValue();
                 }
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Get the "reference" attribute for the node.
+     *
+     * @param node - Configuration node.
+     * @return - Reference attribute value.
+     */
+    public static String getReferenceAttribute(@Nonnull ConfigPathNode node) {
+        ConfigAttributesNode attrs = ((ConfigPathNode) node).attributes();
+        if (attrs.hasKey(ATTR_REFERENCE)) {
+            ConfigValueNode vn = attrs.getValue(ATTR_REFERENCE);
+            if (vn != null) {
+                return vn.getValue();
             }
         }
         return null;

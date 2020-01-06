@@ -32,7 +32,7 @@ import com.codekutter.zconfig.common.model.annotations.ConfigParam;
 import com.codekutter.zconfig.common.model.annotations.ConfigPath;
 import com.codekutter.zconfig.common.model.annotations.ConfigValue;
 import com.codekutter.zconfig.common.model.annotations.MethodInvoke;
-import com.codekutter.zconfig.common.model.annotations.transformers.JodaTimeTransformer;
+import com.codekutter.zconfig.common.transformers.JodaTimeTransformer;
 import com.codekutter.zconfig.common.model.nodes.AbstractConfigNode;
 import com.codekutter.zconfig.common.parsers.XMLConfigParser;
 import com.codekutter.zconfig.common.readers.ConfigFileReader;

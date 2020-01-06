@@ -52,10 +52,12 @@ public class DistributedDbLock extends DistributedLock {
 
     public DistributedDbLock(@Nonnull String namespace, @Nonnull String name) {
         super(namespace, name);
+        setupMetrics();
     }
 
     public DistributedDbLock(@Nonnull LockId id) {
         super(id);
+        setupMetrics();
     }
 
     private void setupMetrics() {
@@ -97,6 +99,7 @@ public class DistributedDbLock extends DistributedLock {
                             locked = true;
                         } else if (!record.isLocked()) {
                             record.setInstanceId(instanceId());
+                            record.setLocked(true);
                             record.setTimestamp(System.currentTimeMillis());
                             session.update(record);
                             tnx.commit();
@@ -138,6 +141,7 @@ public class DistributedDbLock extends DistributedLock {
                                 locked = true;
                                 break;
                             } else if (!record.isLocked()) {
+                                record.setLocked(true);
                                 record.setInstanceId(instanceId());
                                 record.setTimestamp(System.currentTimeMillis());
                                 session.update(record);
@@ -167,27 +171,27 @@ public class DistributedDbLock extends DistributedLock {
         checkThread();
         unlockLatency.record(() -> {
             if (locked) {
-                DbLockRecord record = fetch(session, false);
-                if (record == null) {
-                    throw new LockException(String.format("[%s][%s][%s] Lock record not found.", id().getNamespace(), id().getName(), threadId()));
-                }
-                if (record.isLocked() && instanceId().compareTo(record.getInstanceId()) == 0) {
-                    Transaction tnx = session.beginTransaction();
-                    try {
-                        record.setLocked(false);
-                        record.setInstanceId(null);
-                        record.setTimestamp(-1);
-
-                        session.save(record);
-                        tnx.commit();
-                    } catch (Throwable t) {
-                        tnx.rollback();
-                        throw new LockException(t);
+                Transaction tnx = session.beginTransaction();
+                try {
+                    DbLockRecord record = fetch(session, false);
+                    if (record == null) {
+                        throw new LockException(String.format("[%s][%s][%s] Lock record not found.", id().getNamespace(), id().getName(), threadId()));
                     }
-                } else {
-                    throw new LockException(String.format("[%s][%s] Lock not held by current thread. [thread=%d]", id().getNamespace(), id().getName(), threadId()));
+                    if (record.isLocked() && instanceId().compareTo(record.getInstanceId()) == 0) {
+                            record.setLocked(false);
+                            record.setInstanceId(null);
+                            record.setTimestamp(-1);
+
+                            session.save(record);
+                    } else {
+                        throw new LockException(String.format("[%s][%s] Lock not held by current thread. [thread=%d]", id().getNamespace(), id().getName(), threadId()));
+                    }
+                    locked = false;
+                    tnx.commit();
+                } catch (Throwable t) {
+                    tnx.rollback();
+                    throw new LockException(t);
                 }
-                locked = false;
             } else {
                 throw new LockException(String.format("[%s][%s] Lock not held by current thread. [thread=%d]", id().getNamespace(), id().getName(), threadId()));
             }

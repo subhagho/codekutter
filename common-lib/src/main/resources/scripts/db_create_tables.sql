@@ -17,11 +17,13 @@ DROP TABLE IF EXISTS `tb_db_locks`;
 
 CREATE TABLE `tb_db_locks`
 (
-    `namespace`   varchar(128) NOT NULL,
-    `name`        varchar(128) NOT NULL,
-    `locked`      tinyint(1)   NOT NULL,
-    `instance_id` varchar(128)   DEFAULT NULL,
-    `timestamp`   decimal(24, 0) DEFAULT NULL,
+    `namespace`       varchar(128) NOT NULL,
+    `name`            varchar(128) NOT NULL,
+    `locked`          tinyint(1)   NOT NULL,
+    `instance_id`     varchar(128)   DEFAULT NULL,
+    `timestamp`       decimal(24, 0) DEFAULT NULL,
+    `read_lock_count` int(11)        DEFAULT NULL,
+    `record_version`  decimal(24, 0) DEFAULT NULL,
     PRIMARY KEY (`namespace`, `name`)
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8 COMMENT ='Table used for database distributed locks.';

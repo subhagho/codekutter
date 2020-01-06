@@ -76,7 +76,7 @@ public class ElasticSearchConnection extends AbstractConnection<RestHighLevelCli
                 array[indx] = h;
                 indx++;
             }
-            client = new RestHighLevelClient(RestClient.builder(array));
+            client = new RestHighLevelClient(RestClient.builder(array).build());
             state().setState(EConnectionState.Open);
         } catch (Throwable t) {
             state().setError(t);
@@ -87,7 +87,6 @@ public class ElasticSearchConnection extends AbstractConnection<RestHighLevelCli
     @Override
     public void close() throws IOException {
         if (client != null && state().isOpen()) {
-            client.close();
             state().setState(EConnectionState.Closed);
             client = null;
         }

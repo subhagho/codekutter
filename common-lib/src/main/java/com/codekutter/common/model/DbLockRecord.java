@@ -24,6 +24,7 @@ import javax.persistence.Column;
 import javax.persistence.EmbeddedId;
 import javax.persistence.Entity;
 import javax.persistence.Table;
+import javax.persistence.Version;
 
 @Entity
 @Table(name = "tb_db_locks")
@@ -38,4 +39,9 @@ public class DbLockRecord {
     private String instanceId;
     @Column(name = "timestamp")
     private long timestamp;
+    @Column(name = "read_lock_count")
+    private long readLockCount;
+    @Version
+    @Column(name = "record_version")
+    private long recordVersion;
 }

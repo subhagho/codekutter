@@ -18,9 +18,13 @@
 package com.codekutter.common.stores;
 
 import com.codekutter.common.model.IEntity;
+import com.codekutter.common.utils.ConfigUtils;
+import com.codekutter.zconfig.common.ConfigurationException;
 import com.codekutter.zconfig.common.IConfigurable;
 import com.codekutter.zconfig.common.model.annotations.ConfigAttribute;
 import com.codekutter.zconfig.common.model.annotations.ConfigPath;
+import com.codekutter.zconfig.common.model.nodes.ConfigPathNode;
+import com.google.common.base.Strings;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
@@ -35,9 +39,13 @@ import java.util.List;
 @Setter
 @Accessors(fluent = true)
 @ConfigPath(path = "connection")
+@SuppressWarnings("rawtypes")
 public abstract class AbstractConnection<T> implements IConfigurable, Closeable {
     @ConfigAttribute(name = "name")
     private String name;
+    @ConfigAttribute(name = "class")
+    private Class<? extends AbstractConnection> type;
+
     @Setter(AccessLevel.NONE)
     private ConnectionState state = new ConnectionState();
     @Setter(AccessLevel.NONE)

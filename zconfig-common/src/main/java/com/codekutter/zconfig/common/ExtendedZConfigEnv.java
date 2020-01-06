@@ -23,6 +23,7 @@ import com.codekutter.common.utils.LogUtils;
 import com.codekutter.common.utils.Monitoring;
 import com.codekutter.zconfig.common.model.Version;
 import com.codekutter.zconfig.common.model.nodes.AbstractConfigNode;
+import com.codekutter.zconfig.common.model.nodes.ConfigListElementNode;
 import com.codekutter.zconfig.common.model.nodes.ConfigPathNode;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
@@ -61,7 +62,7 @@ public class ExtendedZConfigEnv extends ZConfigEnv {
 
     private void setupLockFactory() throws ConfigurationException {
         AbstractConfigNode node = ConfigUtils.getPathNode(DistributedLockFactory.class, envNode);
-        if (node instanceof ConfigPathNode) {
+        if ((node instanceof ConfigPathNode) || (node instanceof ConfigListElementNode)) {
             DistributedLockFactory.setup(node);
         }
     }

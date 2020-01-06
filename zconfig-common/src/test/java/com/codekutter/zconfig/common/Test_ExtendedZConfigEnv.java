@@ -69,6 +69,23 @@ class Test_ExtendedZConfigEnv {
     }
 
     @Test
+    void getDbLock() {
+        try {
+            DistributedLock lock = DistributedLockFactory.get().getDbLock(namespace, dbLockName);
+            assertNotNull(lock);
+            lock.lock();
+            try {
+                LogUtils.debug(getClass(), String.format("Acquired lock. [namespace=%s][name=%s]", lock.id().getNamespace(), lock.id().getName()));
+            } finally {
+                lock.unlock();
+            }
+        } catch (Throwable t) {
+            LogUtils.error(getClass(), t);
+            fail(t);
+        }
+    }
+
+    //@Test
     void getZkLock() {
         try {
             DistributedLock lock = DistributedLockFactory.get().getZkLock(namespace, zkLockName);
