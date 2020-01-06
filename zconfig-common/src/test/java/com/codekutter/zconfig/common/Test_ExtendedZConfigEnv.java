@@ -85,7 +85,7 @@ class Test_ExtendedZConfigEnv {
         }
     }
 
-    //@Test
+    @Test
     void getZkLock() {
         try {
             DistributedLock lock = DistributedLockFactory.get().getZkLock(namespace, zkLockName);
