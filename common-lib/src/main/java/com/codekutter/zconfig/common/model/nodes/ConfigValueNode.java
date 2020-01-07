@@ -24,13 +24,12 @@
 
 package com.codekutter.zconfig.common.model.nodes;
 
-import com.codekutter.common.utils.KeyVaultManager;
+import com.codekutter.common.GlobalConstants;
 import com.codekutter.zconfig.common.ConfigKeyVault;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.codekutter.zconfig.common.ConfigurationException;
-import com.codekutter.zconfig.common.GlobalConstants;
 import com.codekutter.zconfig.common.model.Configuration;
 import com.codekutter.zconfig.common.model.ENodeState;
 import org.joda.time.DateTime;

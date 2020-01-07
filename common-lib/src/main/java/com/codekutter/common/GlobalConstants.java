@@ -24,6 +24,9 @@
 
 package com.codekutter.common;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+
 /**
  * Class defines static global constants.
  */
@@ -110,5 +113,10 @@ public class GlobalConstants {
      */
     public static boolean isSolaris() {
         return (OS.indexOf("sunos") >= 0);
+    }
+
+    public static ObjectMapper defaultMapper() {
+        ObjectMapper mapper = new ObjectMapper();
+        return mapper.enable(SerializationFeature.INDENT_OUTPUT);
     }
 }
