@@ -17,6 +17,7 @@ import java.util.Base64;
 
 public class KeyStoreVault implements IKeyVault {
     private static final String SK_FACTORY_ALGO = "PBE";
+    private static final String DEFAULT_KEYSTORE_TYPE = "PKCS12";
 
     private KeyStore keyStore = null;
     private SecureRandom rand = new SecureRandom();
@@ -31,7 +32,8 @@ public class KeyStoreVault implements IKeyVault {
     @Override
     public void configure(@Nonnull AbstractConfigNode node) throws ConfigurationException {
         try {
-            keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
+            // keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
+            keyStore = KeyStore.getInstance(DEFAULT_KEYSTORE_TYPE);
             array = generateSalt(16).toCharArray();
             keyStore.load(null, array);
         } catch (KeyStoreException | IOException | NoSuchAlgorithmException | CertificateException e) {
