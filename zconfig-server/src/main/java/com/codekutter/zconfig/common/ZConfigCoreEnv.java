@@ -68,10 +68,10 @@ public class ZConfigCoreEnv extends ZConfigEnv {
         zkConnectionConfig = new ZkConnectionConfig();
         ConfigurationAnnotationProcessor
                 .readConfigAnnotations(ZkConnectionConfig.class, getConfiguration(),
-                        zkConnectionConfig);
+                                       zkConnectionConfig);
         LogUtils.debug(getClass(), zkConnectionConfig);
         LogUtils.info(getClass(),
-                "Core environment successfully initialized...");
+                      "Core environment successfully initialized...");
     }
 
     /**
@@ -110,14 +110,15 @@ public class ZConfigCoreEnv extends ZConfigEnv {
                              @Nonnull String configfile,
                              @Nonnull String version,
                              String password)
-            throws ConfigurationException {
+    throws ConfigurationException {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(configfile));
         Preconditions.checkArgument(!Strings.isNullOrEmpty(version));
 
         try {
             ZConfigEnv.getEnvLock();
             try {
-                ZConfigEnv env = ZConfigEnv.initialize(ZConfigCoreEnv.class, configName);
+                ZConfigEnv env =
+                        ZConfigEnv.initialize(ZConfigCoreEnv.class, configName);
                 if (env.getState() != EEnvState.Initialized) {
                     env.init(configfile, Version.parse(version), password);
                 }
@@ -143,7 +144,7 @@ public class ZConfigCoreEnv extends ZConfigEnv {
                              @Nonnull String configfile,
                              @Nonnull ConfigProviderFactory.EConfigType type,
                              @Nonnull String version, String password)
-            throws ConfigurationException {
+    throws ConfigurationException {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(configfile));
         Preconditions.checkArgument(type != null);
         Preconditions.checkArgument(!Strings.isNullOrEmpty(version));
@@ -151,7 +152,8 @@ public class ZConfigCoreEnv extends ZConfigEnv {
         try {
             ZConfigEnv.getEnvLock();
             try {
-                ZConfigEnv env = ZConfigEnv.initialize(ZConfigCoreEnv.class, configName);
+                ZConfigEnv env =
+                        ZConfigEnv.initialize(ZConfigCoreEnv.class, configName);
                 if (env.getState() != EEnvState.Initialized) {
                     env.init(configfile, type, Version.parse(version), password);
                 }
@@ -176,6 +178,6 @@ public class ZConfigCoreEnv extends ZConfigEnv {
         }
         throw new EnvException(
                 String.format("Env handle is not of client type. [type=%s]",
-                        env.getClass().getCanonicalName()));
+                              env.getClass().getCanonicalName()));
     }
 }
