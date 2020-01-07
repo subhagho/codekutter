@@ -20,14 +20,20 @@ package com.codekutter.common.messaging;
 import com.amazon.sqs.javamessaging.ProviderConfiguration;
 import com.amazon.sqs.javamessaging.SQSConnection;
 import com.amazon.sqs.javamessaging.SQSConnectionFactory;
+import com.amazonaws.ClientConfiguration;
 import com.amazonaws.services.sqs.AmazonSQSClientBuilder;
 import com.codekutter.common.stores.AbstractConnection;
 import com.codekutter.common.stores.EConnectionState;
+import com.codekutter.common.utils.ConfigUtils;
+import com.codekutter.common.utils.LogUtils;
+import com.codekutter.common.utils.ReflectionUtils;
 import com.codekutter.zconfig.common.ConfigurationAnnotationProcessor;
 import com.codekutter.zconfig.common.ConfigurationException;
 import com.codekutter.zconfig.common.model.annotations.ConfigAttribute;
 import com.codekutter.zconfig.common.model.nodes.AbstractConfigNode;
+import com.codekutter.zconfig.common.model.nodes.ConfigParametersNode;
 import com.codekutter.zconfig.common.model.nodes.ConfigPathNode;
+import com.codekutter.zconfig.common.model.nodes.ConfigValueNode;
 import com.google.common.base.Preconditions;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -36,6 +42,7 @@ import lombok.experimental.Accessors;
 
 import javax.annotation.Nonnull;
 import java.io.IOException;
+import java.util.Map;
 
 @Getter
 @Setter
@@ -67,10 +74,15 @@ public class AwsSQSConnection extends AbstractConnection<SQSConnection> {
         Preconditions.checkArgument(node instanceof ConfigPathNode);
         try {
             ConfigurationAnnotationProcessor.readConfigAnnotations(getClass(), (ConfigPathNode) node, this);
+            AbstractConfigNode cnode = ConfigUtils.getPathNode(getClass(), (ConfigPathNode) node);
+            if (!(cnode instanceof ConfigPathNode)) {
+                throw new ConfigurationException(String.format("Invalid connection configuration. [node=%s]", node.getAbsolutePath()));
+            }
+            ClientConfiguration config = configBuilder((ConfigPathNode) cnode);
             SQSConnectionFactory connectionFactory = new SQSConnectionFactory(
                     new ProviderConfiguration(),
                     AmazonSQSClientBuilder.standard()
-                            .withRegion(region)
+                            .withRegion(region).withClientConfiguration(config)
             );
             connection = connectionFactory.createConnection();
             connection.start();
@@ -80,6 +92,23 @@ public class AwsSQSConnection extends AbstractConnection<SQSConnection> {
             state().setError(t);
             throw new ConfigurationException(t);
         }
+    }
+
+    private ClientConfiguration configBuilder(ConfigPathNode node) throws ConfigurationException {
+        ClientConfiguration config = new ClientConfiguration();
+        ConfigParametersNode params = node.parmeters();
+        if (params != null && !params.getKeyValues().isEmpty()) {
+            Map<String, ConfigValueNode> values = params.getKeyValues();
+            for (String f : values.keySet()) {
+                boolean ret = ReflectionUtils.setValueFromString(values.get(f).getValue(), config, ClientConfiguration.class, f);
+                if (!ret) {
+                    LogUtils.warn(getClass(), String.format("Ignored Invalid configuration : [property=%s]", f));
+                } else {
+                    LogUtils.debug(getClass(), String.format("Set client configuration [property=%s]", f));
+                }
+            }
+        }
+        return config;
     }
 
     @Override

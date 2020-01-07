@@ -42,7 +42,7 @@ import java.util.Map;
 @Getter
 @Setter
 @Accessors(fluent = true)
-@ConfigPath(path = "queue-manager")
+@ConfigPath(path = "queues")
 public class QueueManager implements IConfigurable, Closeable {
     private static final String CONFIG_NODE_QUEUES = "queues";
 

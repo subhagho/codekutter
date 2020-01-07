@@ -26,6 +26,7 @@ package com.codekutter.common;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.joda.JodaModule;
 
 /**
  * Class defines static global constants.
@@ -115,8 +116,15 @@ public class GlobalConstants {
         return (OS.indexOf("sunos") >= 0);
     }
 
-    public static ObjectMapper defaultMapper() {
+    /**
+     * Get a new instance of the JSON Object mapper.
+     *
+     * @return - JSON Object mapper.
+     */
+    public static ObjectMapper getJsonMapper() {
         ObjectMapper mapper = new ObjectMapper();
-        return mapper.enable(SerializationFeature.INDENT_OUTPUT);
+        mapper.registerModule(new JodaModule());
+        mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+        return mapper;
     }
 }

@@ -264,6 +264,34 @@ public class ReflectionUtils {
      * Set the value of the field by converting the specified String value to the
      * required value type.
      *
+     * @param value    - String value to set.
+     * @param source   - Object to set the attribute value.
+     * @param type     - Class type to set property for.
+     * @param property - Property to set.
+     * @return - True if value was set.
+     * @throws ReflectionException
+     */
+    public static boolean setValueFromString(@Nonnull String value,
+                                             @Nonnull Object source,
+                                             @Nonnull Class<?> type,
+                                             @Nonnull String property) {
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(property));
+        Field f = findField(type, property);
+        if (f != null) {
+            try {
+                setValueFromString(value, source, f);
+                return true;
+            } catch (ReflectionException re) {
+                LogUtils.error(ReflectionUtils.class, re);
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Set the value of the field by converting the specified String value to the
+     * required value type.
+     *
      * @param value  - String value to set.
      * @param source - Object to set the attribute value.
      * @param f      - Field to set value for.
@@ -361,6 +389,46 @@ public class ReflectionUtils {
         MethodUtils.invokeMethod(o, method, value);
     }
 
+
+    /**
+     * Set the value of the specified field in the object to the value passed.
+     *
+     * @param o        - Object to set value for.
+     * @param property - Property name to set value for.
+     * @param type     - Class type
+     * @param value    - Value to set to.
+     * @return - True, if value set.
+     * @throws Exception
+     */
+    public static boolean setObjectValue(@Nonnull Object o,
+                                         @Nonnull String property,
+                                         @Nonnull Class<?> type,
+                                         Object value)
+            throws Exception {
+        Preconditions.checkArgument(o != null);
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(property));
+
+        Field f = type.getField(property);
+        if (f == null) {
+            return false;
+        }
+
+        String method = "set" + StringUtils.capitalize(f.getName());
+        Method m = MethodUtils.getAccessibleMethod(o.getClass(), method,
+                f.getType());
+        if (m == null) {
+            method = f.getName();
+            m = MethodUtils.getAccessibleMethod(o.getClass(), method,
+                    f.getType());
+        }
+
+        if (m == null)
+            return false;
+
+        MethodUtils.invokeMethod(o, method, value);
+        return true;
+    }
+
     /**
      * Set the value of the field to the passed String value.
      *
@@ -393,7 +461,7 @@ public class ReflectionUtils {
         Preconditions.checkArgument(f != null);
         Preconditions.checkArgument(!Strings.isNullOrEmpty(value));
 
-        boolean bv = Boolean.valueOf(value);
+        boolean bv = Boolean.parseBoolean(value);
         setObjectValue(o, f, bv);
     }
 
@@ -520,7 +588,7 @@ public class ReflectionUtils {
      * @throws Exception
      */
     public static void setClassValue(@Nonnull Object o, @Nonnull Field f,
-                                    @Nonnull String value)
+                                     @Nonnull String value)
             throws Exception {
         Preconditions.checkArgument(o != null);
         Preconditions.checkArgument(f != null);

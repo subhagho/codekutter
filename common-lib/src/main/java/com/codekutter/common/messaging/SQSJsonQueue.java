@@ -125,6 +125,7 @@ public class SQSJsonQueue extends AbstractQueue<SQSConnection, DefaultStringMess
                 } catch (Exception ex) {
                     LogUtils.error(getClass(), ex);
                     Monitoring.increment(sendErrorCounter.name(), null);
+                    throw new RuntimeException(ex);
                 }
             });
         } catch (Exception ex) {
@@ -135,15 +136,18 @@ public class SQSJsonQueue extends AbstractQueue<SQSConnection, DefaultStringMess
     }
 
     private TextMessage message(DefaultStringMessage message) throws JsonProcessingException, JMSException {
-        ObjectMapper mapper = GlobalConstants.defaultMapper();
+        message.setQueue(queue);
+        message.setTimestamp(System.currentTimeMillis());
+
+        ObjectMapper mapper = GlobalConstants.getJsonMapper();
         String json = mapper.writeValueAsString(message);
         return session.createTextMessage(json);
     }
 
     private DefaultStringMessage message(TextMessage message) throws JMSException, JsonProcessingException {
-        ObjectMapper mapper = GlobalConstants.defaultMapper();
+        ObjectMapper mapper = GlobalConstants.getJsonMapper();
         DefaultStringMessage m = mapper.readValue(message.getText(), DefaultStringMessage.class);
-        m.messageId(message.getJMSMessageID());
+        m.setMessageId(message.getJMSMessageID());
 
         return m;
     }

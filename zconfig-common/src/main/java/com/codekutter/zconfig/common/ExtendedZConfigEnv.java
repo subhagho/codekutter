@@ -107,8 +107,13 @@ public class ExtendedZConfigEnv extends ZConfigEnv {
     @Override
     protected void dispose() {
         super.dispose();
-        Monitoring.stop();
-        DistributedLockFactory.close();
+        try {
+            Monitoring.stop();
+            DistributedLockFactory.close();
+            QueueManager.get().close();
+        } catch (Exception ex) {
+            LogUtils.error(getClass(), ex);
+        }
     }
 
     /**

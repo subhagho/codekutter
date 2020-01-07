@@ -31,6 +31,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import java.io.FileInputStream;
+import java.util.List;
 import java.util.Properties;
 import java.util.UUID;
 
@@ -113,9 +114,36 @@ class Test_ExtendedZConfigEnv {
             AbstractQueue<SQSConnection, DefaultStringMessage> queue = QueueManager.get().getQueue(sqsQueueName);
             assertNotNull(queue);
             DefaultStringMessage message = new DefaultStringMessage();
-            message.messageId(UUID.randomUUID().toString());
-            message.body(String.format("This is a test message. [id=%s]", message.messageId()));
+            message.setMessageId(UUID.randomUUID().toString());
+            message.setBody(String.format("This is a test message. [id=%s]", message.getMessageId()));
+            message.setTimestamp(System.currentTimeMillis());
+
             queue.send(message);
+        } catch (Throwable t) {
+            LogUtils.error(getClass(), t);
+            fail(t);
+        }
+    }
+
+    @Test
+    void testSqsQueueReceive() {
+        try {
+            AbstractQueue<SQSConnection, DefaultStringMessage> queue = QueueManager.get().getQueue(sqsQueueName);
+            assertNotNull(queue);
+            for (int ii = 0; ii < 5; ii++) {
+                DefaultStringMessage message = new DefaultStringMessage();
+                message.setMessageId(UUID.randomUUID().toString());
+                message.setBody(String.format("This is a test message. [id=%s]", message.getMessageId()));
+                message.setTimestamp(System.currentTimeMillis());
+                queue.send(message);
+            }
+
+            List<DefaultStringMessage> messages = queue.receiveBatch(5, 5000);
+            assertNotNull(messages);
+            assertTrue(messages.size() >= 5);
+
+            for (int ii = 0; ii < messages.size(); ii++)
+                LogUtils.debug(getClass(), String.format("[ID=%s] : %s", messages.get(ii).getMessageId(), messages.get(ii).getBody()));
         } catch (Throwable t) {
             LogUtils.error(getClass(), t);
             fail(t);

@@ -74,9 +74,15 @@
                 </lock-allocator>
             </distributed-locks>
             <queues>
-                <queue name="TEST-SQS-QUEUE" queue="ingest-queue-01">
+                <queue name="TEST-SQS-QUEUE" class="com.codekutter.common.messaging.SQSJsonQueue"
+                       queue="ingest-queue-01">
                     <receiveTimeout>50000</receiveTimeout>
-                    <connection name="TEST-SQS-CONNECTION" region="us-east-2" />
+                    <connection name="TEST-SQS-CONNECTION" region="us-east-2">
+                        <parameters>
+                            <maxConnections>20</maxConnections>
+                            <connectionTimeout>20000</connectionTimeout>
+                        </parameters>
+                    </connection>
                 </queue>
             </queues>
         </env>
