@@ -39,7 +39,7 @@
                 <enableGcStats>false</enableGcStats>
             </monitoring>
             <distributed-locks>
-                <lock-allocator class="com.codekutter.common.locking.ZkLockAllocator"
+                <!--lock-allocator class="com.codekutter.common.locking.ZkLockAllocator"
                                 lockType="com.codekutter.common.locking.DistributedZkLock">
                     <lockPath>/CODEKUTTER/COMMON/TEST</lockPath>
                     <lockExpiryTimeout>500000</lockExpiryTimeout>
@@ -54,7 +54,7 @@
                         <maxRetries>5</maxRetries>
                         <retryInterval>500</retryInterval>
                     </connection>
-                </lock-allocator>
+                </lock-allocator -->
                 <lock-allocator class="com.codekutter.common.locking.DbLockAllocator"
                                 lockType="com.codekutter.common.locking.DistributedDbLock">
                     <lockExpiryTimeout>500000</lockExpiryTimeout>
@@ -73,6 +73,12 @@
                     </connection>
                 </lock-allocator>
             </distributed-locks>
+            <queues>
+                <queue name="TEST-SQS-QUEUE" queue="ingest-queue-01">
+                    <receiveTimeout>50000</receiveTimeout>
+                    <connection name="TEST-SQS-CONNECTION" region="us-east-2" />
+                </queue>
+            </queues>
         </env>
     </configuration>
 </root>

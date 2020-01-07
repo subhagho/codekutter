@@ -17,11 +17,14 @@
 
 package com.codekutter.zconfig.common;
 
+import com.amazon.sqs.javamessaging.SQSConnection;
 import com.codekutter.common.locking.DistributedLock;
 import com.codekutter.common.locking.DistributedLockFactory;
+import com.codekutter.common.messaging.AbstractQueue;
+import com.codekutter.common.messaging.QueueManager;
+import com.codekutter.common.model.DefaultStringMessage;
 import com.codekutter.common.utils.LogUtils;
 import com.codekutter.zconfig.common.model.Version;
-import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -29,6 +32,7 @@ import org.junit.jupiter.api.Test;
 
 import java.io.FileInputStream;
 import java.util.Properties;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -40,6 +44,7 @@ class Test_ExtendedZConfigEnv {
     private static String namespace = Test_ExtendedZConfigEnv.class.getCanonicalName();
     private static String zkLockName = "TEST_ZK_LOCK";
     private static String dbLockName = "TEST_DB_LOCK";
+    private static String sqsQueueName = "TEST-SQS-QUEUE";
 
     @BeforeAll
     public static void setup() throws Exception {
@@ -85,7 +90,7 @@ class Test_ExtendedZConfigEnv {
         }
     }
 
-    @Test
+    //@Test
     void getZkLock() {
         try {
             DistributedLock lock = DistributedLockFactory.get().getZkLock(namespace, zkLockName);
@@ -96,6 +101,21 @@ class Test_ExtendedZConfigEnv {
             } finally {
                 lock.unlock();
             }
+        } catch (Throwable t) {
+            LogUtils.error(getClass(), t);
+            fail(t);
+        }
+    }
+
+    @Test
+    void testSqsQueueSend() {
+        try {
+            AbstractQueue<SQSConnection, DefaultStringMessage> queue = QueueManager.get().getQueue(sqsQueueName);
+            assertNotNull(queue);
+            DefaultStringMessage message = new DefaultStringMessage();
+            message.messageId(UUID.randomUUID().toString());
+            message.body(String.format("This is a test message. [id=%s]", message.messageId()));
+            queue.send(message);
         } catch (Throwable t) {
             LogUtils.error(getClass(), t);
             fail(t);

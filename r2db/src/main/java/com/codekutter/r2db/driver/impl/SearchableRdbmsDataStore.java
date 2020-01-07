@@ -15,12 +15,14 @@
  *
  */
 
-package com.codekutter.common.stores.impl;
+package com.codekutter.r2db.driver.impl;
 
 import com.codekutter.common.stores.AbstractConnection;
 import com.codekutter.common.stores.DataStoreException;
 import com.codekutter.common.stores.DataStoreManager;
 import com.codekutter.common.stores.ISearchable;
+import com.codekutter.common.stores.impl.RdbmsConfig;
+import com.codekutter.common.stores.impl.RdbmsDataSource;
 import com.codekutter.zconfig.common.ConfigurationException;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;

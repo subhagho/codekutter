@@ -15,13 +15,13 @@
  *
  */
 
-package com.codekutter.common.stores.impl;
+package com.codekutter.r2db.driver.impl;
 
 import com.codekutter.common.stores.AbstractConnection;
 import com.codekutter.common.stores.EConnectionState;
 import com.codekutter.zconfig.common.ConfigurationAnnotationProcessor;
 import com.codekutter.zconfig.common.ConfigurationException;
-import com.codekutter.zconfig.common.model.annotations.ConfigAttribute;
+import com.codekutter.zconfig.common.model.annotations.ConfigValue;
 import com.codekutter.zconfig.common.model.nodes.AbstractConfigNode;
 import com.codekutter.zconfig.common.model.nodes.ConfigPathNode;
 import com.google.common.base.Preconditions;
@@ -29,23 +29,28 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
+import org.apache.http.HttpHost;
+import org.elasticsearch.client.RestClient;
+import org.elasticsearch.client.RestHighLevelClient;
 
 import javax.annotation.Nonnull;
-import java.io.File;
 import java.io.IOException;
+import java.util.Map;
 
 @Getter
 @Setter
 @Accessors(fluent = true)
-public class LocalDirectoryConnection extends AbstractConnection<File> {
-    @ConfigAttribute(required = true)
-    private String directory;
+public class ElasticSearchConnection extends AbstractConnection<RestHighLevelClient> {
+    @ConfigValue(name = "hosts", required = true)
+    private Map<String, Integer> hosts;
     @Setter(AccessLevel.NONE)
-    private File dir;
+    @Getter(AccessLevel.NONE)
+    private RestHighLevelClient client = null;
 
     @Override
-    public File connection() {
-        return dir;
+    public RestHighLevelClient connection() {
+        Preconditions.checkState(state().isOpen());
+        return client;
     }
 
     @Override
@@ -64,22 +69,26 @@ public class LocalDirectoryConnection extends AbstractConnection<File> {
         Preconditions.checkArgument(node instanceof ConfigPathNode);
         try {
             ConfigurationAnnotationProcessor.readConfigAnnotations(getClass(), (ConfigPathNode) node, this);
-            dir = new File(directory);
-            if (!dir.exists()) {
-                throw new ConfigurationException(String.format("Specified directory source not found. [path=%s]", dir.getAbsolutePath()));
+            HttpHost[] array = new HttpHost[hosts.size()];
+            int indx = 0;
+            for (String host : hosts.keySet()) {
+                HttpHost h = new HttpHost(host, hosts.get(host), "http");
+                array[indx] = h;
+                indx++;
             }
-            if (!dir.isDirectory()) {
-                throw new ConfigurationException(String.format("Specified path isn't a directory. [path=%s]", dir.getAbsolutePath()));
-            }
+            client = new RestHighLevelClient(RestClient.builder(array).build());
             state().setState(EConnectionState.Open);
-        } catch (Exception ex) {
-            state().setError(ex);
-            throw new ConfigurationException(ex);
+        } catch (Throwable t) {
+            state().setError(t);
+            throw new ConfigurationException(t);
         }
     }
 
     @Override
     public void close() throws IOException {
-        // Do nothing
+        if (client != null && state().isOpen()) {
+            state().setState(EConnectionState.Closed);
+            client = null;
+        }
     }
 }

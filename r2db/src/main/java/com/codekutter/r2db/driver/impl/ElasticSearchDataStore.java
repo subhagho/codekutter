@@ -15,7 +15,7 @@
  *
  */
 
-package com.codekutter.common.stores.impl;
+package com.codekutter.r2db.driver.impl;
 
 import com.codekutter.common.model.IEntity;
 import com.codekutter.common.stores.AbstractDataStore;

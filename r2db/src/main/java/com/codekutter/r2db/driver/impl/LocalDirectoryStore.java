@@ -15,7 +15,7 @@
  *
  */
 
-package com.codekutter.common.stores.impl;
+package com.codekutter.r2db.driver.impl;
 
 import com.codekutter.common.model.FileEntity;
 import com.codekutter.common.model.IEntity;
@@ -216,6 +216,6 @@ public class LocalDirectoryStore extends AbstractDirectoryStore<File> {
 
     @Override
     public void close() throws IOException {
-
+        // Do nothing...
     }
 }

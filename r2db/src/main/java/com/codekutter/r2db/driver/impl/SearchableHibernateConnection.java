@@ -15,10 +15,11 @@
  *
  */
 
-package com.codekutter.common.stores.impl;
+package com.codekutter.r2db.driver.impl;
 
 import com.codekutter.common.model.IEntity;
 import com.codekutter.common.stores.EConnectionState;
+import com.codekutter.common.stores.impl.HibernateConnection;
 import com.codekutter.common.utils.ConfigUtils;
 import com.codekutter.zconfig.common.ConfigurationAnnotationProcessor;
 import com.codekutter.zconfig.common.ConfigurationException;

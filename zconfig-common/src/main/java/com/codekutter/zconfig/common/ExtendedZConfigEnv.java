@@ -18,6 +18,7 @@
 package com.codekutter.zconfig.common;
 
 import com.codekutter.common.locking.DistributedLockFactory;
+import com.codekutter.common.messaging.QueueManager;
 import com.codekutter.common.utils.ConfigUtils;
 import com.codekutter.common.utils.LogUtils;
 import com.codekutter.common.utils.Monitoring;
@@ -53,7 +54,20 @@ public class ExtendedZConfigEnv extends ZConfigEnv {
         if (node instanceof ConfigPathNode) {
             envNode = (ConfigPathNode) node;
 
-            setupMonitoring();
+            AbstractConfigNode cnode = ConfigUtils.getPathNode(Monitoring.MonitorConfig.class, envNode);
+            if (cnode instanceof ConfigPathNode) {
+                setupMonitoring();
+            } else {
+                LogUtils.warn(getClass(),
+                        String.format("No monitoring configuration set or configuration is invalid. [node=%s]",
+                                envNode.getAbsolutePath()));
+            }
+
+            cnode = ConfigUtils.getPathNode(QueueManager.class, envNode);
+            if (cnode instanceof ConfigPathNode) {
+                QueueManager.setup(cnode);
+            }
+
             setupLockFactory();
         } else {
             envNode = null;
