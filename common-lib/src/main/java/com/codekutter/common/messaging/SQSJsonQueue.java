@@ -20,6 +20,8 @@ package com.codekutter.common.messaging;
 import com.amazon.sqs.javamessaging.SQSConnection;
 import com.codekutter.common.GlobalConstants;
 import com.codekutter.common.model.DefaultStringMessage;
+import com.codekutter.common.stores.AbstractConnection;
+import com.codekutter.common.stores.ConnectionManager;
 import com.codekutter.common.utils.ConfigUtils;
 import com.codekutter.common.utils.LogUtils;
 import com.codekutter.common.utils.Monitoring;
@@ -234,8 +236,10 @@ public class SQSJsonQueue extends AbstractQueue<SQSConnection, DefaultStringMess
             if (!(cnode instanceof ConfigPathNode)) {
                 throw new ConfigurationException(String.format("Invalid Queue configuration. [node=%s]", node.getAbsolutePath()));
             }
-            connection = new AwsSQSConnection();
-            connection.configure(cnode);
+            AbstractConnection<SQSConnection> conn = ConnectionManager.get().readConnection((ConfigPathNode) cnode);
+            if (!(conn instanceof AwsSQSConnection)) {
+                throw new ConfigurationException(String.format("Invalid SQS connection returned. [type=%s]", conn.getClass().getCanonicalName()));
+            }
 
             if (autoAck)
                 session = connection.connection().createSession(false, Session.AUTO_ACKNOWLEDGE);
@@ -250,7 +254,6 @@ public class SQSJsonQueue extends AbstractQueue<SQSConnection, DefaultStringMess
     @Override
     public void close() throws IOException {
         if (connection != null) {
-            connection.close();
             try {
                 if (producer != null) {
                     producer.close();
@@ -259,6 +262,7 @@ public class SQSJsonQueue extends AbstractQueue<SQSConnection, DefaultStringMess
                     consumer.close();
                 }
                 session.close();
+                connection.close();
             } catch (JMSException ex) {
                 throw new IOException(ex);
             }

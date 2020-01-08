@@ -17,20 +17,51 @@
 
 package com.codekutter.r2db.driver.impl;
 
+import com.amazonaws.ClientConfiguration;
 import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.AmazonS3ClientBuilder;
+import com.codekutter.common.messaging.AwsSQSConnection;
 import com.codekutter.common.stores.AbstractConnection;
+import com.codekutter.common.stores.ConnectionException;
+import com.codekutter.common.stores.EConnectionState;
+import com.codekutter.common.utils.ConfigUtils;
+import com.codekutter.common.utils.LogUtils;
+import com.codekutter.common.utils.ReflectionUtils;
+import com.codekutter.zconfig.common.ConfigurationAnnotationProcessor;
 import com.codekutter.zconfig.common.ConfigurationException;
+import com.codekutter.zconfig.common.model.annotations.ConfigAttribute;
 import com.codekutter.zconfig.common.model.nodes.AbstractConfigNode;
+import com.codekutter.zconfig.common.model.nodes.ConfigParametersNode;
+import com.codekutter.zconfig.common.model.nodes.ConfigPathNode;
+import com.codekutter.zconfig.common.model.nodes.ConfigValueNode;
+import com.google.common.base.Preconditions;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.experimental.Accessors;
 
 import javax.annotation.Nonnull;
 import java.io.IOException;
+import java.util.Map;
 
+@Getter
+@Setter
+@Accessors(fluent = true)
 public class AwsS3Connection extends AbstractConnection<AmazonS3> {
+    @ConfigAttribute(required = true)
+    private String region;
+    @Getter(AccessLevel.NONE)
+    @Setter(AccessLevel.NONE)
     private AmazonS3 client = null;
 
     @Override
-    public AmazonS3 connection() {
-        return client;
+    public AmazonS3 connection() throws ConnectionException {
+        try {
+            state().checkOpened();
+            return client;
+        } catch (Throwable t) {
+            throw new ConnectionException(t, getClass());
+        }
     }
 
     @Override
@@ -46,11 +77,44 @@ public class AwsS3Connection extends AbstractConnection<AmazonS3> {
      */
     @Override
     public void configure(@Nonnull AbstractConfigNode node) throws ConfigurationException {
+        Preconditions.checkArgument(node instanceof ConfigPathNode);
+        try {
+            ConfigurationAnnotationProcessor.readConfigAnnotations(getClass(), (ConfigPathNode) node, this);
+            AbstractConfigNode cnode = ConfigUtils.getPathNode(getClass(), (ConfigPathNode) node);
+            if (!(cnode instanceof ConfigPathNode)) {
+                throw new ConfigurationException(String.format("Invalid connection configuration. [node=%s]", node.getAbsolutePath()));
+            }
+            ClientConfiguration config = configBuilder((ConfigPathNode) cnode);
+            client = AmazonS3ClientBuilder.standard()
+                    .withRegion(region).withClientConfiguration(config).build();
+        } catch (Throwable t) {
+            state().setError(t);
+            throw new ConfigurationException(t);
+        }
+    }
 
+    private ClientConfiguration configBuilder(ConfigPathNode node) throws ConfigurationException {
+        ClientConfiguration config = new ClientConfiguration();
+        ConfigParametersNode params = node.parmeters();
+        if (params != null && !params.getKeyValues().isEmpty()) {
+            Map<String, ConfigValueNode> values = params.getKeyValues();
+            for (String f : values.keySet()) {
+                boolean ret = ReflectionUtils.setValueFromString(values.get(f).getValue(), config, ClientConfiguration.class, f);
+                if (!ret) {
+                    LogUtils.warn(AwsSQSConnection.class, String.format("Ignored Invalid configuration : [property=%s]", f));
+                } else {
+                    LogUtils.debug(AwsSQSConnection.class, String.format("Set client configuration [property=%s]", f));
+                }
+            }
+        }
+        return config;
     }
 
     @Override
     public void close() throws IOException {
-
+        if (state().isOpen()) {
+            state().setState(EConnectionState.Closed);
+        }
+        client = null;
     }
 }

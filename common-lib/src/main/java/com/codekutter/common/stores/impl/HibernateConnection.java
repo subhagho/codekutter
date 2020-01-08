@@ -19,6 +19,7 @@ package com.codekutter.common.stores.impl;
 
 import com.codekutter.common.model.IEntity;
 import com.codekutter.common.stores.AbstractConnection;
+import com.codekutter.common.stores.ConnectionException;
 import com.codekutter.common.stores.EConnectionState;
 import com.codekutter.common.utils.ConfigUtils;
 import com.codekutter.zconfig.common.ConfigurationAnnotationProcessor;
@@ -95,8 +96,13 @@ public class HibernateConnection extends AbstractConnection<Session> {
     }
 
     @Override
-    public Session connection() {
-        return sessionFactory.openSession();
+    public Session connection() throws ConnectionException {
+        try {
+            state().checkOpened();
+            return sessionFactory.openSession();
+        } catch (Throwable t) {
+            throw new ConnectionException(t, getClass());
+        }
     }
 
     /**
@@ -179,8 +185,9 @@ public class HibernateConnection extends AbstractConnection<Session> {
 
     @Override
     public void close() throws IOException {
-        if (sessionFactory != null) {
+        if (state().isOpen())
             state().setState(EConnectionState.Closed);
+        if (sessionFactory != null) {
             sessionFactory.close();
             sessionFactory = null;
         }

@@ -15,10 +15,30 @@
  *
  */
 
-package com.codekutter.common.stores;
+package com.codekutter.r2db.driver.model;
 
-import com.codekutter.common.Context;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
+import lombok.experimental.Accessors;
 
-public abstract class AbstractDirectoryStore<C> extends AbstractDataStore<C> {
-    public abstract <S, T> void move(S source, T target, Context context) throws DataStoreException;
+import javax.annotation.Nonnull;
+
+@Getter
+@Setter
+@ToString
+@Accessors(fluent = true)
+public class S3FileKey implements Comparable<S3FileKey> {
+    private String bucket;
+    private String key;
+
+
+    @Override
+    public int compareTo(@Nonnull S3FileKey s3FileKey) {
+        int ret = bucket.compareTo(s3FileKey.bucket);
+        if (ret == 0) {
+            ret = key.compareTo(s3FileKey.key);
+        }
+        return ret;
+    }
 }

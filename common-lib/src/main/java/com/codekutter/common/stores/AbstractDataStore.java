@@ -17,6 +17,7 @@
 
 package com.codekutter.common.stores;
 
+import com.codekutter.common.Context;
 import com.codekutter.common.model.IEntity;
 import com.codekutter.common.utils.ConfigUtils;
 import com.codekutter.zconfig.common.ConfigurationException;
@@ -106,26 +107,26 @@ public abstract class AbstractDataStore<T> implements Closeable {
     public abstract void configure(@Nonnull DataStoreManager dataStoreManager) throws ConfigurationException;
 
     @SuppressWarnings("rawtypes")
-    public abstract <E extends IEntity> E create(@Nonnull E entity, @Nonnull Class<? extends IEntity> type, Object... params) throws
+    public abstract <E extends IEntity> E create(@Nonnull E entity, @Nonnull Class<? extends IEntity> type, Context context) throws
             DataStoreException;
 
     @SuppressWarnings("rawtypes")
-    public abstract <E extends IEntity> E update(@Nonnull E entity, @Nonnull Class<? extends IEntity> type, Object... params) throws
+    public abstract <E extends IEntity> E update(@Nonnull E entity, @Nonnull Class<? extends IEntity> type, Context context) throws
             DataStoreException;
 
     @SuppressWarnings("rawtypes")
-    public abstract <E extends IEntity> boolean delete(@Nonnull Object key, @Nonnull Class<? extends E> type, Object... params) throws
+    public abstract <E extends IEntity> boolean delete(@Nonnull Object key, @Nonnull Class<? extends E> type, Context context) throws
             DataStoreException;
 
     @SuppressWarnings("rawtypes")
-    public abstract <E extends IEntity> E find(@Nonnull Object key, @Nonnull Class<? extends E> type, Object... params) throws
+    public abstract <E extends IEntity> E find(@Nonnull Object key, @Nonnull Class<? extends E> type, Context context) throws
             DataStoreException;
 
     @SuppressWarnings("rawtypes")
     public abstract <E extends IEntity> Collection<E> search(@Nonnull String query,
                                                              int offset,
                                                              int maxResults,
-                                                             @Nonnull Class<? extends E> type, Object... params) throws
+                                                             @Nonnull Class<? extends E> type, Context context) throws
             DataStoreException;
 
     @SuppressWarnings("rawtypes")
@@ -133,21 +134,21 @@ public abstract class AbstractDataStore<T> implements Closeable {
                                                              int offset,
                                                              int maxResults,
                                                              Map<String, Object> parameters,
-                                                             @Nonnull Class<? extends E> type, Object... params) throws
+                                                             @Nonnull Class<? extends E> type, Context context) throws
             DataStoreException;
 
     @SuppressWarnings("rawtypes")
-    public <E extends IEntity> Collection<E> search(@Nonnull String query, @Nonnull Class<? extends E> type, Object... params) throws
+    public <E extends IEntity> Collection<E> search(@Nonnull String query, @Nonnull Class<? extends E> type,Context context) throws
             DataStoreException {
-        return search(query, 0, maxResults, type, params);
+        return search(query, 0, maxResults, type, context);
     }
 
     @SuppressWarnings("rawtypes")
     public <E extends IEntity> Collection<E> search(@Nonnull String query,
                                                     Map<String, Object> parameters,
-                                                    @Nonnull Class<? extends E> type, Object... params) throws
+                                                    @Nonnull Class<? extends E> type, Context context) throws
             DataStoreException {
-        return search(query, 0, maxResults, parameters, type, params);
+        return search(query, 0, maxResults, parameters, type, context);
     }
 
 }

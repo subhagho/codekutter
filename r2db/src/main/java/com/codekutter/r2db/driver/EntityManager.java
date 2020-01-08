@@ -17,6 +17,7 @@
 
 package com.codekutter.r2db.driver;
 
+import com.codekutter.common.Context;
 import com.codekutter.common.model.IEntity;
 import com.codekutter.common.stores.*;
 import com.codekutter.common.stores.annotations.MappedStores;
@@ -55,7 +56,8 @@ public class EntityManager implements IConfigurable {
 
     public <T extends IEntity> List<T> textSearch(@Nonnull Query query,
                                                   @Nonnull Class<? extends T> type,
-                                                  Class<? extends AbstractDataStore<T>> storeType) throws DataStoreException {
+                                                  Class<? extends AbstractDataStore<T>> storeType,
+                                                  Context context) throws DataStoreException {
         AbstractDataStore<T> dataStore = findStore(type, storeType);
         if (dataStore == null) {
             throw new DataStoreException(String.format("No data store found for entity. [type=%s]", type.getCanonicalName()));
@@ -63,12 +65,13 @@ public class EntityManager implements IConfigurable {
         if (!(dataStore instanceof ISearchable)) {
             throw new DataStoreException(String.format("Specified store type doesn't support text search. [data store=%s]", storeType.getCanonicalName()));
         }
-        return ((ISearchable) dataStore).textSearch(query, type);
+        return ((ISearchable) dataStore).textSearch(query, type, context);
     }
 
     public <T extends IEntity> List<T> textSearch(@Nonnull Query query, int batchSize, int offset,
                                                   @Nonnull Class<? extends T> type,
-                                                  Class<? extends AbstractDataStore<T>> storeType) throws DataStoreException {
+                                                  Class<? extends AbstractDataStore<T>> storeType,
+                                                  Context context) throws DataStoreException {
         AbstractDataStore<T> dataStore = findStore(type, storeType);
         if (dataStore == null) {
             throw new DataStoreException(String.format("No data store found for entity. [type=%s]", type.getCanonicalName()));
@@ -76,12 +79,13 @@ public class EntityManager implements IConfigurable {
         if (!(dataStore instanceof ISearchable)) {
             throw new DataStoreException(String.format("Specified store type doesn't support text search. [data store=%s]", storeType.getCanonicalName()));
         }
-        return ((ISearchable) dataStore).textSearch(query, batchSize, offset, type);
+        return ((ISearchable) dataStore).textSearch(query, batchSize, offset, type, context);
     }
 
     public <T extends IEntity> List<T> textSearch(@Nonnull String query,
                                                   @Nonnull Class<? extends T> type,
-                                                  Class<? extends AbstractDataStore<T>> storeType) throws DataStoreException {
+                                                  Class<? extends AbstractDataStore<T>> storeType,
+                                                  Context context) throws DataStoreException {
         AbstractDataStore<T> dataStore = findStore(type, storeType);
         if (dataStore == null) {
             throw new DataStoreException(String.format("No data store found for entity. [type=%s]", type.getCanonicalName()));
@@ -89,12 +93,13 @@ public class EntityManager implements IConfigurable {
         if (!(dataStore instanceof ISearchable)) {
             throw new DataStoreException(String.format("Specified store type doesn't support text search. [data store=%s]", storeType.getCanonicalName()));
         }
-        return ((ISearchable) dataStore).textSearch(query, type);
+        return ((ISearchable) dataStore).textSearch(query, type, context);
     }
 
     public <T extends IEntity> List<T> textSearch(@Nonnull String query, int batchSize, int offset,
                                                   @Nonnull Class<? extends T> type,
-                                                  Class<? extends AbstractDataStore<T>> storeType) throws DataStoreException {
+                                                  Class<? extends AbstractDataStore<T>> storeType,
+                                                  Context context) throws DataStoreException {
         AbstractDataStore<T> dataStore = findStore(type, storeType);
         if (dataStore == null) {
             throw new DataStoreException(String.format("No data store found for entity. [type=%s]", type.getCanonicalName()));
@@ -102,7 +107,7 @@ public class EntityManager implements IConfigurable {
         if (!(dataStore instanceof ISearchable)) {
             throw new DataStoreException(String.format("Specified store type doesn't support text search. [data store=%s]", storeType.getCanonicalName()));
         }
-        return ((ISearchable) dataStore).textSearch(query, batchSize, offset, type);
+        return ((ISearchable) dataStore).textSearch(query, batchSize, offset, type, context);
     }
 
     public <T> void beingTransaction(@Nonnull Class<? extends IEntity> type, Class<? extends AbstractDataStore<T>> storeType) throws DataStoreException {
@@ -145,7 +150,8 @@ public class EntityManager implements IConfigurable {
 
     public <T, E extends IEntity> E create(@Nonnull E entity,
                                            @Nonnull Class<? extends IEntity> type,
-                                           Class<? extends AbstractDataStore<T>> storeType) throws DataStoreException {
+                                           Class<? extends AbstractDataStore<T>> storeType,
+                                           Context context) throws DataStoreException {
         Object shardKey = null;
         if (entity instanceof IShardedEntity) {
             shardKey = ((IShardedEntity) entity).getShardKey();
@@ -156,12 +162,13 @@ public class EntityManager implements IConfigurable {
         if (dataStore == null) {
             throw new DataStoreException(String.format("No data store found for entity. [type=%s]", type.getCanonicalName()));
         }
-        return dataStore.create(entity, type);
+        return dataStore.create(entity, type, context);
     }
 
     public <T, E extends IEntity> E update(@Nonnull E entity,
                                            @Nonnull Class<? extends IEntity> type,
-                                           Class<? extends AbstractDataStore<T>> storeType) throws DataStoreException {
+                                           Class<? extends AbstractDataStore<T>> storeType,
+                                           Context context) throws DataStoreException {
         Object shardKey = null;
         if (entity instanceof IShardedEntity) {
             shardKey = ((IShardedEntity) entity).getShardKey();
@@ -170,12 +177,13 @@ public class EntityManager implements IConfigurable {
         if (dataStore == null) {
             throw new DataStoreException(String.format("No data store found for entity. [type=%s]", type.getCanonicalName()));
         }
-        return dataStore.update(entity, type);
+        return dataStore.update(entity, type, context);
     }
 
     public <T, K, E extends IEntity<K>> boolean delete(@Nonnull E entity,
                                                        @Nonnull Class<? extends E> type,
-                                                       Class<? extends AbstractDataStore<T>> storeType) throws DataStoreException {
+                                                       Class<? extends AbstractDataStore<T>> storeType,
+                                                       Context context) throws DataStoreException {
         Object shardKey = null;
         if (entity instanceof IShardedEntity) {
             shardKey = ((IShardedEntity) entity).getShardKey();
@@ -184,11 +192,12 @@ public class EntityManager implements IConfigurable {
         if (dataStore == null) {
             throw new DataStoreException(String.format("No data store found for entity. [type=%s]", type.getCanonicalName()));
         }
-        return dataStore.delete(entity.getKey(), type);
+        return dataStore.delete(entity.getKey(), type, context);
     }
 
     public <T, E extends IEntity> E find(@Nonnull Object key, @Nonnull Class<? extends E> type,
-                                         Class<? extends AbstractDataStore<T>> storeType) throws DataStoreException {
+                                         Class<? extends AbstractDataStore<T>> storeType,
+                                         Context context) throws DataStoreException {
         AbstractDataStore<T> dataStore = findStore(type, storeType);
         if (dataStore == null) {
             throw new DataStoreException(String.format("No data store found for entity. [type=%s]", type.getCanonicalName()));
@@ -196,12 +205,13 @@ public class EntityManager implements IConfigurable {
         if (ReflectionUtils.implementsInterface(IShardedEntity.class, type)) {
             throw new DataStoreException(String.format("Sharded entity should be called with shard key. [type=%s]", type.getCanonicalName()));
         }
-        return dataStore.find(key, type);
+        return dataStore.find(key, type, context);
     }
 
     public <T, E extends IEntity> Collection<E> search(@Nonnull String query,
                                                        @Nonnull Class<? extends E> type,
-                                                       Class<? extends AbstractDataStore<T>> storeType) throws DataStoreException {
+                                                       Class<? extends AbstractDataStore<T>> storeType,
+                                                       Context context) throws DataStoreException {
         AbstractDataStore<T> dataStore = findStore(type, storeType);
         if (dataStore == null) {
             throw new DataStoreException(String.format("No data store found for entity. [type=%s]", type.getCanonicalName()));
@@ -209,12 +219,13 @@ public class EntityManager implements IConfigurable {
         if (ReflectionUtils.implementsInterface(IShardedEntity.class, type)) {
             throw new DataStoreException(String.format("Sharded entity should be called with shard key. [type=%s]", type.getCanonicalName()));
         }
-        return dataStore.search(query, type);
+        return dataStore.search(query, type, context);
     }
 
     public <T, E extends IEntity> Collection<E> search(@Nonnull String query, int offset, int maxResults,
                                                        @Nonnull Class<? extends E> type,
-                                                       Class<? extends AbstractDataStore<T>> storeType) throws DataStoreException {
+                                                       Class<? extends AbstractDataStore<T>> storeType,
+                                                       Context context) throws DataStoreException {
         AbstractDataStore<T> dataStore = findStore(type, storeType);
         if (dataStore == null) {
             throw new DataStoreException(String.format("No data store found for entity. [type=%s]", type.getCanonicalName()));
@@ -222,13 +233,14 @@ public class EntityManager implements IConfigurable {
         if (ReflectionUtils.implementsInterface(IShardedEntity.class, type)) {
             throw new DataStoreException(String.format("Sharded entity should be called with shard key. [type=%s]", type.getCanonicalName()));
         }
-        return dataStore.search(query, offset, maxResults, type);
+        return dataStore.search(query, offset, maxResults, type, context);
     }
 
     public <T, E extends IEntity> Collection<E> search(@Nonnull String query,
                                                        Map<String, Object> params,
                                                        @Nonnull Class<? extends E> type,
-                                                       Class<? extends AbstractDataStore<T>> storeType) throws DataStoreException {
+                                                       Class<? extends AbstractDataStore<T>> storeType,
+                                                       Context context) throws DataStoreException {
         AbstractDataStore<T> dataStore = findStore(type, storeType);
         if (dataStore == null) {
             throw new DataStoreException(String.format("No data store found for entity. [type=%s]", type.getCanonicalName()));
@@ -236,7 +248,7 @@ public class EntityManager implements IConfigurable {
         if (ReflectionUtils.implementsInterface(IShardedEntity.class, type)) {
             throw new DataStoreException(String.format("Sharded entity should be called with shard key. [type=%s]", type.getCanonicalName()));
         }
-        return dataStore.search(query, params, type);
+        return dataStore.search(query, params, type, context);
     }
 
     @SuppressWarnings("unchecked")
@@ -244,7 +256,8 @@ public class EntityManager implements IConfigurable {
                                                        @Nonnull String query,
                                                        Map<String, Object> params,
                                                        @Nonnull Class<? extends E> type,
-                                                       Class<? extends AbstractDataStore<T>> storeType) throws DataStoreException {
+                                                       Class<? extends AbstractDataStore<T>> storeType,
+                                                       Context context) throws DataStoreException {
         if (!ReflectionUtils.implementsInterface(IShardedEntity.class, type)) {
             throw new DataStoreException(String.format("Not a sharded entity. [type=%s]", type.getCanonicalName()));
         }
@@ -253,12 +266,12 @@ public class EntityManager implements IConfigurable {
             if (dataStore == null) {
                 throw new DataStoreException(String.format("No data store found for entity. [type=%s]", type.getCanonicalName()));
             }
-            return dataStore.search(query, params, type);
+            return dataStore.search(query, params, type, context);
         } else {
             List<AbstractDataStore<T>> dataStores = dataStoreManager.getShards(storeType, (Class<? extends IShardedEntity>) type);
             List<E> values = new ArrayList<>();
             for (AbstractDataStore<T> dataStore : dataStores) {
-                List<E> result = (List<E>) dataStore.search(query, params, type);
+                List<E> result = (List<E>) dataStore.search(query, params, type, context);
                 if (result != null && !result.isEmpty()) {
                     values.addAll(result);
                 }
@@ -272,7 +285,8 @@ public class EntityManager implements IConfigurable {
     public <T, E extends IEntity> Collection<E> search(@Nonnull String query, int offset, int maxResults,
                                                        Map<String, Object> params,
                                                        @Nonnull Class<? extends E> type,
-                                                       Class<? extends AbstractDataStore<T>> storeType) throws DataStoreException {
+                                                       Class<? extends AbstractDataStore<T>> storeType,
+                                                       Context context) throws DataStoreException {
         AbstractDataStore<T> dataStore = findStore(type, storeType);
         if (dataStore == null) {
             throw new DataStoreException(String.format("No data store found for entity. [type=%s]", type.getCanonicalName()));
@@ -280,7 +294,7 @@ public class EntityManager implements IConfigurable {
         if (ReflectionUtils.implementsInterface(IShardedEntity.class, type)) {
             throw new DataStoreException(String.format("Sharded entity should be called with shard key. [type=%s]", type.getCanonicalName()));
         }
-        return dataStore.search(query, offset, maxResults, params, type);
+        return dataStore.search(query, offset, maxResults, params, type, context);
     }
 
     public void close() throws IOException {

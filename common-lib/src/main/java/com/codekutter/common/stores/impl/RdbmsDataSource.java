@@ -17,12 +17,10 @@
 
 package com.codekutter.common.stores.impl;
 
+import com.codekutter.common.Context;
 import com.codekutter.common.model.IEntity;
-import com.codekutter.common.stores.AbstractConnection;
-import com.codekutter.common.stores.DataStoreManager;
+import com.codekutter.common.stores.*;
 import com.codekutter.common.stores.impl.HibernateConnection;
-import com.codekutter.common.stores.DataStoreException;
-import com.codekutter.common.stores.TransactionDataStore;
 import com.codekutter.zconfig.common.ConfigurationException;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
@@ -85,7 +83,7 @@ public class RdbmsDataSource extends TransactionDataStore<Session, Transaction> 
     @SuppressWarnings("rawtypes")
     public <E extends IEntity> E create(@Nonnull E entity,
                                         @Nonnull Class<? extends IEntity> type,
-                                        Object... params) throws
+                                        Context context) throws
             DataStoreException {
         Preconditions.checkState(session != null);
         Preconditions.checkState(isInTransaction());
@@ -102,7 +100,7 @@ public class RdbmsDataSource extends TransactionDataStore<Session, Transaction> 
     @SuppressWarnings("rawtypes")
     public <E extends IEntity> E update(@Nonnull E entity,
                                         @Nonnull Class<? extends IEntity> type,
-                                        Object... params) throws
+                                        Context context) throws
             DataStoreException {
         Preconditions.checkState(session != null);
         Preconditions.checkState(isInTransaction());
@@ -119,13 +117,13 @@ public class RdbmsDataSource extends TransactionDataStore<Session, Transaction> 
     @SuppressWarnings("rawtypes")
     public <E extends IEntity> boolean delete(@Nonnull Object key,
                                               @Nonnull Class<? extends E> type,
-                                              Object... params) throws
+                                              Context context) throws
             DataStoreException {
         Preconditions.checkState(session != null);
         Preconditions.checkState(isInTransaction());
         checkThread();
 
-        E entity = find(key, type);
+        E entity = find(key, type, context);
         if (entity != null) {
             session.delete(entity);
             return true;
@@ -137,7 +135,7 @@ public class RdbmsDataSource extends TransactionDataStore<Session, Transaction> 
     @SuppressWarnings("rawtypes")
     public <E extends IEntity> E find(@Nonnull Object key,
                                       @Nonnull Class<? extends E> type,
-                                      Object... params) throws
+                                      Context context) throws
             DataStoreException {
         Preconditions.checkState(session != null);
         checkThread();
@@ -150,7 +148,7 @@ public class RdbmsDataSource extends TransactionDataStore<Session, Transaction> 
     public <E extends IEntity> Collection<E> search(@Nonnull String query,
                                                     int offset, int maxResults,
                                                     @Nonnull Class<? extends E> type,
-                                                    Object... params)
+                                                    Context context)
             throws DataStoreException {
         Preconditions.checkState(readSession != null);
         checkThread();
@@ -169,7 +167,7 @@ public class RdbmsDataSource extends TransactionDataStore<Session, Transaction> 
                                                     int offset, int maxResults,
                                                     Map<String, Object> parameters,
                                                     @Nonnull Class<? extends E> type,
-                                                    Object... params)
+                                                    Context context)
             throws DataStoreException {
         Preconditions.checkState(readSession != null);
         checkThread();
@@ -190,28 +188,33 @@ public class RdbmsDataSource extends TransactionDataStore<Session, Transaction> 
     @Override
     public void configure(@Nonnull DataStoreManager dataStoreManager) throws ConfigurationException {
         Preconditions.checkArgument(config() instanceof RdbmsConfig);
+
         AbstractConnection<Session> connection =
                 dataStoreManager.getConnection(config().connectionName(), Session.class);
         if (!(connection instanceof HibernateConnection)) {
             throw new ConfigurationException(String.format("No connection found for name. [name=%s]", config().connectionName()));
         }
         withConnection(connection);
-        HibernateConnection hibernateConnection = (HibernateConnection) connection;
-        session = hibernateConnection.connection();
-        HibernateConnection readConnection = null;
-        if (!Strings.isNullOrEmpty(((RdbmsConfig) config()).readConnectionName())) {
-            AbstractConnection<Session> rc =
-                    (AbstractConnection<Session>) dataStoreManager.getConnection(((RdbmsConfig) config()).readConnectionName(), Session.class);
-            if (!(rc instanceof HibernateConnection)) {
-                throw new ConfigurationException(String.format("No connection found for name. [name=%s]", ((RdbmsConfig) config()).readConnectionName()));
+        try {
+            HibernateConnection hibernateConnection = (HibernateConnection) connection;
+            session = hibernateConnection.connection();
+            HibernateConnection readConnection = null;
+            if (!Strings.isNullOrEmpty(((RdbmsConfig) config()).readConnectionName())) {
+                AbstractConnection<Session> rc =
+                        (AbstractConnection<Session>) dataStoreManager.getConnection(((RdbmsConfig) config()).readConnectionName(), Session.class);
+                if (!(rc instanceof HibernateConnection)) {
+                    throw new ConfigurationException(String.format("No connection found for name. [name=%s]", ((RdbmsConfig) config()).readConnectionName()));
+                }
+                readConnection = (HibernateConnection) rc;
             }
-            readConnection = (HibernateConnection) rc;
-        }
-        if (readConnection != null) {
-            readSession = readConnection.connection();
-            readSession.setDefaultReadOnly(true);
-        } else {
-            readSession = session;
+            if (readConnection != null) {
+                readSession = readConnection.connection();
+                readSession.setDefaultReadOnly(true);
+            } else {
+                readSession = session;
+            }
+        } catch (ConnectionException ex) {
+            throw new ConfigurationException(ex);
         }
     }
 

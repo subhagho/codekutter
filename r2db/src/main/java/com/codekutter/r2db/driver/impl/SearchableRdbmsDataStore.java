@@ -17,6 +17,7 @@
 
 package com.codekutter.r2db.driver.impl;
 
+import com.codekutter.common.Context;
 import com.codekutter.common.stores.AbstractConnection;
 import com.codekutter.common.stores.DataStoreException;
 import com.codekutter.common.stores.DataStoreManager;
@@ -40,7 +41,7 @@ import java.util.List;
 public class SearchableRdbmsDataStore extends RdbmsDataSource implements ISearchable {
     @Override
     @SuppressWarnings("unchecked")
-    public <T> List<T> textSearch(@Nonnull Query query, @Nonnull Class<? extends T> type, Object... params) throws DataStoreException {
+    public <T> List<T> textSearch(@Nonnull Query query, @Nonnull Class<? extends T> type, Context context) throws DataStoreException {
         Preconditions.checkState(readSession != null);
         checkThread();
 
@@ -55,7 +56,7 @@ public class SearchableRdbmsDataStore extends RdbmsDataSource implements ISearch
 
     @Override
     @SuppressWarnings("unchecked")
-    public <T> List<T> textSearch(@Nonnull Query query, int batchSize, int offset, @Nonnull Class<? extends T> type, Object... params) throws DataStoreException {
+    public <T> List<T> textSearch(@Nonnull Query query, int batchSize, int offset, @Nonnull Class<? extends T> type, Context context) throws DataStoreException {
         Preconditions.checkState(readSession != null);
         checkThread();
 
@@ -70,7 +71,7 @@ public class SearchableRdbmsDataStore extends RdbmsDataSource implements ISearch
 
     @Override
     @SuppressWarnings("unchecked")
-    public <T> List<T> textSearch(@Nonnull String query, @Nonnull Class<? extends T> type, Object... params) throws DataStoreException {
+    public <T> List<T> textSearch(@Nonnull String query, @Nonnull Class<? extends T> type, Context context) throws DataStoreException {
         Preconditions.checkState(readSession != null);
         Preconditions.checkArgument(!Strings.isNullOrEmpty(query));
         checkThread();
@@ -88,7 +89,7 @@ public class SearchableRdbmsDataStore extends RdbmsDataSource implements ISearch
 
     @Override
     @SuppressWarnings("unchecked")
-    public <T> List<T> textSearch(@Nonnull String query, int batchSize, int offset, @Nonnull Class<? extends T> type, Object... params) throws DataStoreException {
+    public <T> List<T> textSearch(@Nonnull String query, int batchSize, int offset, @Nonnull Class<? extends T> type, Context context) throws DataStoreException {
         Preconditions.checkState(readSession != null);
         Preconditions.checkArgument(!Strings.isNullOrEmpty(query));
         checkThread();
@@ -113,22 +114,26 @@ public class SearchableRdbmsDataStore extends RdbmsDataSource implements ISearch
             throw new ConfigurationException(String.format("No connection found for name. [name=%s]", config().connectionName()));
         }
         withConnection(connection);
-        SearchableHibernateConnection hibernateConnection = (SearchableHibernateConnection)connection;
-        session = hibernateConnection.connection();
-        SearchableHibernateConnection readConnection = null;
-        if (!Strings.isNullOrEmpty(((RdbmsConfig)config()).readConnectionName())) {
-            AbstractConnection<Session> rc =
-                    (AbstractConnection<Session>) dataStoreManager.getConnection(((RdbmsConfig) config()).readConnectionName(), Session.class);
-            if (!(rc instanceof SearchableHibernateConnection)) {
-                throw new ConfigurationException(String.format("No connection found for name. [name=%s]", ((RdbmsConfig) config()).readConnectionName()));
+        try {
+            SearchableHibernateConnection hibernateConnection = (SearchableHibernateConnection) connection;
+            session = hibernateConnection.connection();
+            SearchableHibernateConnection readConnection = null;
+            if (!Strings.isNullOrEmpty(((RdbmsConfig) config()).readConnectionName())) {
+                AbstractConnection<Session> rc =
+                        (AbstractConnection<Session>) dataStoreManager.getConnection(((RdbmsConfig) config()).readConnectionName(), Session.class);
+                if (!(rc instanceof SearchableHibernateConnection)) {
+                    throw new ConfigurationException(String.format("No connection found for name. [name=%s]", ((RdbmsConfig) config()).readConnectionName()));
+                }
+                readConnection = (SearchableHibernateConnection) rc;
             }
-            readConnection = (SearchableHibernateConnection)rc;
-        }
-        if (readConnection != null) {
-            readSession = readConnection.connection();
-            readSession.setDefaultReadOnly(true);
-        } else {
-            readSession = session;
+            if (readConnection != null) {
+                readSession = readConnection.connection();
+                readSession.setDefaultReadOnly(true);
+            } else {
+                readSession = session;
+            }
+        } catch (Exception ex) {
+            throw new ConfigurationException(ex);
         }
     }
 }

@@ -69,6 +69,8 @@ public class ZkLockAllocator extends AbstractLockAllocator<CuratorFramework> {
 
             return new DistributedZkLock(id).withMutex(mutex).
                     withLockExpiryTimeout(lockExpiryTimeout()).withLockGetTimeout(lockTimeout());
+        } catch (Exception ex) {
+            throw new LockException(ex);
         } finally {
             lock.unlock();
         }
@@ -77,6 +79,7 @@ public class ZkLockAllocator extends AbstractLockAllocator<CuratorFramework> {
     private String getLockPath(LockId id) {
         return String.format("%s/__LOCKS/%s/%s", zkLockPath, id.getNamespace(), id.getName());
     }
+
     /**
      * Configure this type instance.
      *

@@ -18,6 +18,7 @@
 package com.codekutter.r2db.driver.impl;
 
 import com.codekutter.common.model.IEntity;
+import com.codekutter.common.stores.ConnectionException;
 import com.codekutter.common.stores.EConnectionState;
 import com.codekutter.common.stores.impl.HibernateConnection;
 import com.codekutter.common.utils.ConfigUtils;
@@ -64,7 +65,7 @@ public class SearchableHibernateConnection extends HibernateConnection {
     private EncryptedValue elasticSearchPassword;
 
     @Override
-    public Session connection() {
+    public Session connection() throws ConnectionException {
         return super.connection();
     }
 

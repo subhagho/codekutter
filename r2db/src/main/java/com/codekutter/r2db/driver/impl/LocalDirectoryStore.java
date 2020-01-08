@@ -17,7 +17,8 @@
 
 package com.codekutter.r2db.driver.impl;
 
-import com.codekutter.common.model.FileEntity;
+import com.codekutter.common.Context;
+import com.codekutter.r2db.driver.model.FileEntity;
 import com.codekutter.common.model.IEntity;
 import com.codekutter.common.model.StringEntity;
 import com.codekutter.common.stores.AbstractConnection;
@@ -55,7 +56,7 @@ public class LocalDirectoryStore extends AbstractDirectoryStore<File> {
     private String directory;
 
     @Override
-    public <S, T> void move(S source, T target, Object... params) throws DataStoreException {
+    public <S, T> void move(S source, T target, Context context) throws DataStoreException {
         if (source instanceof File) {
             File td = null;
             if (target instanceof File) {
@@ -91,7 +92,7 @@ public class LocalDirectoryStore extends AbstractDirectoryStore<File> {
     }
 
     @Override
-    public <E extends IEntity> E create(@Nonnull E entity, @Nonnull Class<? extends IEntity> type, Object... params) throws DataStoreException {
+    public <E extends IEntity> E create(@Nonnull E entity, @Nonnull Class<? extends IEntity> type, Context context) throws DataStoreException {
         FileEntity e = null;
         if (entity instanceof FileEntity) {
             e = (FileEntity) entity;
@@ -114,12 +115,12 @@ public class LocalDirectoryStore extends AbstractDirectoryStore<File> {
     }
 
     @Override
-    public <E extends IEntity> E update(@Nonnull E entity, @Nonnull Class<? extends IEntity> type, Object... params) throws DataStoreException {
-        return create(entity, type, params);
+    public <E extends IEntity> E update(@Nonnull E entity, @Nonnull Class<? extends IEntity> type, Context context) throws DataStoreException {
+        return create(entity, type, context);
     }
 
     @Override
-    public <E extends IEntity> boolean delete(@Nonnull Object key, @Nonnull Class<? extends E> type, Object... params) throws DataStoreException {
+    public <E extends IEntity> boolean delete(@Nonnull Object key, @Nonnull Class<? extends E> type, Context context) throws DataStoreException {
         try {
             if (key instanceof String) {
                 File file = new File((String) key);
@@ -141,7 +142,7 @@ public class LocalDirectoryStore extends AbstractDirectoryStore<File> {
 
     @Override
     @SuppressWarnings("unchecked")
-    public <E extends IEntity> E find(@Nonnull Object key, @Nonnull Class<? extends E> type, Object... params) throws DataStoreException {
+    public <E extends IEntity> E find(@Nonnull Object key, @Nonnull Class<? extends E> type, Context context) throws DataStoreException {
         if (key instanceof String) {
             File file = new File((String) key);
             if (file.exists()) {
@@ -159,31 +160,35 @@ public class LocalDirectoryStore extends AbstractDirectoryStore<File> {
                                                     int offset,
                                                     int maxResults,
                                                     @Nonnull Class<? extends E> type,
-                                                    Object... params) throws DataStoreException {
+                                                    Context context) throws DataStoreException {
         if (!ReflectionUtils.isSuperType(FileEntity.class, type)) {
             throw new DataStoreException(String.format("Unsupported entity type. [type=%s]", type.getCanonicalName()));
         }
-        FileFilter filter = null;
-        if (query.trim().compareTo("*") != 0) {
-            filter = new RegexFileFilter(query);
-        }
-        List<FileEntity> array = new ArrayList<>();
-        array = findRecursive(connection().connection(), filter, array);
-        if (offset > 0) {
-            if (offset < array.size()) {
-                array = array.subList(offset, (array.size() - 1));
+        try {
+            FileFilter filter = null;
+            if (query.trim().compareTo("*") != 0) {
+                filter = new RegexFileFilter(query);
             }
+            List<FileEntity> array = new ArrayList<>();
+            array = findRecursive(connection().connection(), filter, array);
+            if (offset > 0) {
+                if (offset < array.size()) {
+                    array = array.subList(offset, (array.size() - 1));
+                }
+            }
+            if (maxResults <= 0) {
+                maxResults = maxResults();
+            }
+            if (array.size() > maxResults) {
+                array = array.subList(0, maxResults - 1);
+            }
+            if (!array.isEmpty()) {
+                return (Collection<E>) array;
+            }
+            return null;
+        } catch (Exception ex) {
+            throw new DataStoreException(ex);
         }
-        if (maxResults <= 0) {
-            maxResults = maxResults();
-        }
-        if (array.size() > maxResults) {
-            array = array.subList(0, maxResults - 1);
-        }
-        if (!array.isEmpty()) {
-            return (Collection<E>) array;
-        }
-        return null;
     }
 
     private List<FileEntity> findRecursive(File dir, FileFilter filter, List<FileEntity> array) {
@@ -210,8 +215,8 @@ public class LocalDirectoryStore extends AbstractDirectoryStore<File> {
                                                     int maxResults,
                                                     Map<String, Object> parameters,
                                                     @Nonnull Class<? extends E> type,
-                                                    Object... params) throws DataStoreException {
-        return search(query, offset, maxResults, type, params);
+                                                    Context context) throws DataStoreException {
+        return search(query, offset, maxResults, type, context);
     }
 
     @Override

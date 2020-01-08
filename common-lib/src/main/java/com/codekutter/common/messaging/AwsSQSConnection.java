@@ -23,6 +23,7 @@ import com.amazon.sqs.javamessaging.SQSConnectionFactory;
 import com.amazonaws.ClientConfiguration;
 import com.amazonaws.services.sqs.AmazonSQSClientBuilder;
 import com.codekutter.common.stores.AbstractConnection;
+import com.codekutter.common.stores.ConnectionException;
 import com.codekutter.common.stores.EConnectionState;
 import com.codekutter.common.utils.ConfigUtils;
 import com.codekutter.common.utils.LogUtils;
@@ -43,6 +44,7 @@ import lombok.experimental.Accessors;
 import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Getter
 @Setter
@@ -51,11 +53,20 @@ public class AwsSQSConnection extends AbstractConnection<SQSConnection> {
     @ConfigAttribute(required = true)
     private String region;
     @Setter(AccessLevel.NONE)
+    @Getter(AccessLevel.NONE)
+    private SQSConnectionFactory connectionFactory = null;
+    @Getter(AccessLevel.NONE)
+    @Setter(AccessLevel.NONE)
     private SQSConnection connection;
 
     @Override
-    public SQSConnection connection() {
-        return connection;
+    public SQSConnection connection() throws ConnectionException {
+        try {
+            state().checkOpened();
+            return connection;
+        } catch (Throwable t) {
+            throw new ConnectionException(t, getClass());
+        }
     }
 
     @Override
@@ -79,7 +90,7 @@ public class AwsSQSConnection extends AbstractConnection<SQSConnection> {
                 throw new ConfigurationException(String.format("Invalid connection configuration. [node=%s]", node.getAbsolutePath()));
             }
             ClientConfiguration config = configBuilder((ConfigPathNode) cnode);
-            SQSConnectionFactory connectionFactory = new SQSConnectionFactory(
+            connectionFactory = new SQSConnectionFactory(
                     new ProviderConfiguration(),
                     AmazonSQSClientBuilder.standard()
                             .withRegion(region).withClientConfiguration(config)
@@ -102,9 +113,9 @@ public class AwsSQSConnection extends AbstractConnection<SQSConnection> {
             for (String f : values.keySet()) {
                 boolean ret = ReflectionUtils.setValueFromString(values.get(f).getValue(), config, ClientConfiguration.class, f);
                 if (!ret) {
-                    LogUtils.warn(getClass(), String.format("Ignored Invalid configuration : [property=%s]", f));
+                    LogUtils.warn(AwsSQSConnection.class, String.format("Ignored Invalid configuration : [property=%s]", f));
                 } else {
-                    LogUtils.debug(getClass(), String.format("Set client configuration [property=%s]", f));
+                    LogUtils.debug(AwsSQSConnection.class, String.format("Set client configuration [property=%s]", f));
                 }
             }
         }
@@ -113,6 +124,9 @@ public class AwsSQSConnection extends AbstractConnection<SQSConnection> {
 
     @Override
     public void close() throws IOException {
+        if (state().isOpen()) {
+            state().setState(EConnectionState.Closed);
+        }
         try {
             if (connection != null) {
                 connection.close();

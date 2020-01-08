@@ -31,10 +31,13 @@
         <updatedBy user="subho" tiemstamp="1552835341000"/>
     </header>
     <configuration>
+        <properties>
+            <TEMPDIR>C:/Users/subho/Work/temp</TEMPDIR>
+        </properties>
         <env>
             <monitoring enableJmx="true" enableSlf4j="false" enableFileLogging="true"
                         namespace="com.codekutter.metrics">
-                <fileLoggerDir>C:/Users/subho/Work/temp/codekutter/metrics</fileLoggerDir>
+                <fileLoggerDir>${TEMPDIR}/codekutter/metrics</fileLoggerDir>
                 <enableMemoryStats>true</enableMemoryStats>
                 <enableGcStats>false</enableGcStats>
             </monitoring>

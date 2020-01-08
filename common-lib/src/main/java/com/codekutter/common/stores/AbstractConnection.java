@@ -60,7 +60,7 @@ public abstract class AbstractConnection<T> implements IConfigurable, Closeable 
         supportedTypes.add(type);
     }
 
-    public abstract T connection();
+    public abstract T connection() throws ConnectionException;
 
     public abstract boolean hasTransactionSupport();
 }
