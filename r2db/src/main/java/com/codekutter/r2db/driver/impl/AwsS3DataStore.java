@@ -18,32 +18,34 @@
 package com.codekutter.r2db.driver.impl;
 
 import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.model.CopyObjectRequest;
+import com.amazonaws.services.s3.model.*;
 import com.codekutter.common.Context;
 import com.codekutter.common.model.IEntity;
+import com.codekutter.common.stores.AbstractConnection;
 import com.codekutter.common.stores.AbstractDirectoryStore;
 import com.codekutter.common.stores.DataStoreException;
 import com.codekutter.common.stores.DataStoreManager;
+import com.codekutter.common.utils.IOUtils;
+import com.codekutter.common.utils.LogUtils;
+import com.codekutter.common.utils.ReflectionUtils;
 import com.codekutter.r2db.driver.model.S3FileEntity;
 import com.codekutter.r2db.driver.model.S3FileKey;
 import com.codekutter.zconfig.common.ConfigurationException;
-import com.codekutter.zconfig.common.model.annotations.ConfigAttribute;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import lombok.Getter;
-import lombok.Setter;
 import lombok.experimental.Accessors;
+import org.apache.commons.io.FileUtils;
 
 import javax.annotation.Nonnull;
+import java.io.File;
 import java.io.IOException;
-import java.util.Collection;
-import java.util.Map;
+import java.util.*;
 
 @Getter
-@Setter
 @Accessors(fluent = true)
 public class AwsS3DataStore extends AbstractDirectoryStore<AmazonS3> {
-    @ConfigAttribute(required = true)
+    private File workDirectory;
     private String bucket;
     private AwsS3Connection connection = null;
 
@@ -53,8 +55,8 @@ public class AwsS3DataStore extends AbstractDirectoryStore<AmazonS3> {
         Preconditions.checkArgument(target instanceof S3FileKey);
         Preconditions.checkArgument(connection != null && connection.state().isOpen());
 
-        S3FileKey sk = (S3FileKey)source;
-        S3FileKey tk = (S3FileKey)target;
+        S3FileKey sk = (S3FileKey) source;
+        S3FileKey tk = (S3FileKey) target;
         try {
             CopyObjectRequest copyObjRequest = new CopyObjectRequest(sk.bucket(), sk.key(), tk.bucket(), tk.key());
             connection.connection().copyObject(copyObjRequest);
@@ -65,7 +67,33 @@ public class AwsS3DataStore extends AbstractDirectoryStore<AmazonS3> {
 
     @Override
     public void configure(@Nonnull DataStoreManager dataStoreManager) throws ConfigurationException {
+        Preconditions.checkState(config() instanceof S3StoreConfig);
+        try {
+            AbstractConnection<AmazonS3> connection =
+                    dataStoreManager.getConnection(config().connectionName(), AmazonS3.class);
+            if (!(connection instanceof AwsS3Connection)) {
+                throw new ConfigurationException(String.format("No connection found for name. [name=%s]", config().connectionName()));
+            }
+            withConnection(connection);
 
+            S3StoreConfig config = (S3StoreConfig) config();
+            this.bucket = config.bucket();
+            String wd = config.tempDirectory();
+            if (Strings.isNullOrEmpty(wd)) {
+                wd = IOUtils.getTempDirectory(UUID.randomUUID().toString());
+            } else {
+                wd = String.format("%s/%s", wd, UUID.randomUUID().toString());
+            }
+            workDirectory = new File(wd);
+            if (!workDirectory.exists()) {
+                if (!workDirectory.mkdirs()) {
+                    throw new ConfigurationException(String.format("Error creating working directory. [path=%s]", workDirectory.getAbsolutePath()));
+                }
+            }
+
+        } catch (Throwable t) {
+            throw new ConfigurationException(t);
+        }
     }
 
     @Override
@@ -74,9 +102,9 @@ public class AwsS3DataStore extends AbstractDirectoryStore<AmazonS3> {
         Preconditions.checkArgument(connection != null && connection.state().isOpen());
 
         try {
-            String key = ((S3FileEntity)entity).withClient(connection.connection()).copyToRemote();
+            String key = ((S3FileEntity) entity).withClient(connection.connection()).copyToRemote();
             if (Strings.isNullOrEmpty(key)) {
-                throw new DataStoreException(String.format("Error uploading file to S3. [key=%s]", ((S3FileEntity)entity.getKey())));
+                throw new DataStoreException(String.format("Error uploading file to S3. [key=%s]", ((S3FileEntity) entity.getKey())));
             }
         } catch (Exception ex) {
             throw new DataStoreException(ex);
@@ -90,12 +118,12 @@ public class AwsS3DataStore extends AbstractDirectoryStore<AmazonS3> {
         Preconditions.checkArgument(connection != null && connection.state().isOpen());
 
         try {
-            if (!((S3FileEntity)entity).remoteExists()) {
+            if (!((S3FileEntity) entity).remoteExists()) {
                 throw new DataStoreException(String.format("Specified file doesn't exist. [key=%s]", entity.getKey().toString()));
             }
-            String key = ((S3FileEntity)entity).withClient(connection.connection()).copyToRemote();
+            String key = ((S3FileEntity) entity).withClient(connection.connection()).copyToRemote();
             if (Strings.isNullOrEmpty(key)) {
-                throw new DataStoreException(String.format("Error uploading file to S3. [key=%s]", ((S3FileEntity)entity.getKey())));
+                throw new DataStoreException(String.format("Error uploading file to S3. [key=%s]", ((S3FileEntity) entity.getKey())));
             }
         } catch (Exception ex) {
             throw new DataStoreException(ex);
@@ -112,27 +140,102 @@ public class AwsS3DataStore extends AbstractDirectoryStore<AmazonS3> {
             if (entity == null) {
                 return false;
             }
-            if (!((S3FileEntity)entity).remoteExists()) {
-                throw new DataStoreException(String.format("Specified file doesn't exist. [key=%s]", entity.getKey().toString()));
+            S3FileEntity fe = (S3FileEntity) entity;
+            if (fe.exists()) {
+                if (!fe.delete()) {
+                    LogUtils.warn(getClass(), String.format("Error deleting local copy. [path=%s]", fe.getAbsolutePath()));
+                }
             }
+            if (fe.remoteExists()) {
+                fe.remoteDelete();
+            }
+            return true;
         } catch (Exception ex) {
             throw new DataStoreException(ex);
         }
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public <E extends IEntity> E find(@Nonnull Object key, @Nonnull Class<? extends E> type, Context context) throws DataStoreException {
-        return null;
+        Preconditions.checkArgument(key instanceof S3FileKey);
+        Preconditions.checkArgument(ReflectionUtils.isSuperType(S3FileEntity.class, type));
+        try {
+            S3FileKey fk = (S3FileKey) key;
+            S3Object obj = connection.connection().getObject(fk.bucket(), fk.key());
+            if (obj != null) {
+                String lfname = getLocalFileName(fk);
+                S3FileEntity entity = new S3FileEntity(fk.bucket(), fk.key(), lfname).
+                        withClient(connection.connection());
+                File lf = entity.copyToLocal();
+                if (!lf.exists()) {
+                    throw new DataStoreException(String.format("Local file not found. [path=%s]", lf.getAbsolutePath()));
+                }
+                return (E) entity;
+            }
+            return null;
+        } catch (Throwable t) {
+            throw new DataStoreException(t);
+        }
     }
 
     @Override
-    public <E extends IEntity> Collection<E> search(@Nonnull String query, int offset, int maxResults, @Nonnull Class<? extends E> type, Context context) throws DataStoreException {
-        return null;
+    @SuppressWarnings("unchecked")
+    public <E extends IEntity> Collection<E> search(@Nonnull String query, int offset, int maxResults,
+                                                    @Nonnull Class<? extends E> type,
+                                                    Context context) throws DataStoreException {
+        Preconditions.checkArgument(ReflectionUtils.isSuperType(S3FileEntity.class, type));
+        try {
+            S3StoreContext ctx = (S3StoreContext) context;
+
+            AmazonS3 client = connection.connection();
+            ListObjectsV2Request request = new ListObjectsV2Request();
+            request.setBucketName(bucket);
+            if (!Strings.isNullOrEmpty(query)) {
+                request.setPrefix(query);
+            }
+            request.setMaxKeys(maxResults > 0 ? maxResults : maxResults());
+            if (ctx != null) {
+                String ckey = ctx.continuationKey();
+                if (!Strings.isNullOrEmpty(ckey)) {
+                    request.setContinuationToken(ckey);
+                }
+            }
+            ListObjectsV2Result result = client.listObjectsV2(request);
+            if (result != null) {
+                List<S3ObjectSummary> objs = result.getObjectSummaries();
+                if (objs != null && !objs.isEmpty()) {
+                    List<E> array = new ArrayList<>();
+                    for (S3ObjectSummary obj : objs) {
+                        S3FileKey key = new S3FileKey();
+                        key.bucket(obj.getBucketName());
+                        key.key(obj.getKey());
+
+                        S3FileEntity entity = find(key, S3FileEntity.class, null);
+                        if (entity == null) {
+                            throw new DataStoreException(String.format("invalid key : [key=%s]", key.key()));
+                        }
+                        array.add((E) entity);
+                    }
+                    return array;
+                }
+            }
+            return null;
+        } catch (Throwable t) {
+            throw new DataStoreException(t);
+        }
     }
 
     @Override
-    public <E extends IEntity> Collection<E> search(@Nonnull String query, int offset, int maxResults, Map<String, Object> parameters, @Nonnull Class<? extends E> type, Context context) throws DataStoreException {
-        return null;
+    public <E extends IEntity> Collection<E> search(@Nonnull String query, int offset, int maxResults,
+                                                    Map<String, Object> parameters,
+                                                    @Nonnull Class<? extends E> type,
+                                                    Context context) throws DataStoreException {
+        return search(query, offset, maxResults, type, context);
+    }
+
+    private String getLocalFileName(S3FileKey key) {
+        return String.format("%s/bucket-%s/%s", workDirectory.getAbsolutePath(), key.bucket(), key.key());
     }
 
     @Override

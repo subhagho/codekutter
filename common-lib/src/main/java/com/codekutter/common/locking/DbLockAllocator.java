@@ -39,6 +39,10 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.locks.ReentrantLock;
 
+/**
+ * Distributed Lock allocator implementation that uses a JDBC data base backend
+ * to persist the lock state.
+ */
 @Getter
 @Setter
 public class DbLockAllocator extends AbstractLockAllocator<Session> {
@@ -49,6 +53,14 @@ public class DbLockAllocator extends AbstractLockAllocator<Session> {
     @Setter(AccessLevel.NONE)
     private ReentrantLock lock = new ReentrantLock();
 
+    /**
+     * Create/Get a new instance of this type of Distributed Lock.
+     *
+     * @param id - Unique Lock ID to Create/Get instance.
+     *
+     * @return - Lock instance.
+     * @throws LockException
+     */
     @Override
     protected DistributedLock createInstance(@Nonnull LockId id) throws LockException {
         lock.lock();

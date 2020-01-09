@@ -36,11 +36,72 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Factory class to read lock configurations and provision
+ * distributed lock instances.
+ *
+ * <pre>
+ *     <distributed-locks>
+ *                 <lock-allocator class="com.codekutter.common.locking.ZkLockAllocator"
+ *                                 lockType="com.codekutter.common.locking.DistributedZkLock">
+ *                                 <!-- ZooKeeper lock configuration -->
+ *                     <lockPath>[ZooKeeper node path]</lockPath>
+ *                     <lockExpiryTimeout>[lock expiry window (milliseconds)]</lockExpiryTimeout>
+ *                     <lockGetTimeout>[Lock Acquire timeout (milliseconds)]</lockGetTimeout>
+ *                     <!-- ZooKeeper connection configuration -->
+ *                     <connection name="[connection name]" class="com.codekutter.common.stores.impl.ZookeeperConnection">
+ *                         <host>[hostname or IP address]</host>
+ *                         <port>[port]</port>
+ *                         <username>[username]</username>
+ *                         <password encrypted="true">
+ *                             <value>[encrypted password]</value>
+ *                         </password>
+ *                         <maxRetries>[max operation retries]</maxRetries>
+ *                         <retryInterval>[retry interval]</retryInterval>
+ *                     </connection>
+ *                 </lock-allocator>
+ *                 <lock-allocator class="com.codekutter.common.locking.DbLockAllocator"
+ *                                 lockType="com.codekutter.common.locking.DistributedDbLock">
+ *                                 <!-- Database lock configuration -->
+ *                     <lockExpiryTimeout>[lock expiry window (milliseconds)]</lockExpiryTimeout>
+ *                     <lockGetTimeout>[Lock Acquire timeout (milliseconds)]</lockGetTimeout>
+ *                     <!-- Hibernate DB connection configuration -->
+ *                     <connection name="[connection name]" class="com.codekutter.common.stores.impl.HibernateConnection"
+ *                                 driver="[jdbc driver]" dialect="[hibernate db dialect]">
+ *                         <url>[jdbc url]</url>
+ *                         <port>[port]</port>
+ *                         <username>[username]</username>
+ *                         <password encrypted="true">
+ *                             <value>[encrypted password]</value>
+ *                         </password>
+ *                         <classes>
+ *                             <class>com.codekutter.common.model.DbLockRecord</class>
+ *                         </classes>
+ *                     </connection>
+ *                 </lock-allocator>
+ *     </distributed-locks>
+ * </pre>
+ */
 @ConfigPath(path = "distributed-locks")
 public class DistributedLockFactory implements IConfigurable {
+    /**
+     * Map of configured lock allocators.
+     */
     private Map<Class<? extends DistributedLock>, AbstractLockAllocator<?>> allocators = new HashMap<>();
+    /**
+     * Factory State
+     */
     private ObjectState state = new ObjectState();
 
+    /**
+     * Get a lock instance for the specified type and name.
+     *
+     * @param type      - Requested Lock type.
+     * @param namespace - Lock namespace
+     * @param name      - Lock name.
+     * @return - Lock instance, if configured else null.
+     * @throws LockException
+     */
     public DistributedLock getLock(@Nonnull Class<? extends DistributedLock> type,
                                    @Nonnull String namespace,
                                    @Nonnull String name) throws LockException {
@@ -58,10 +119,26 @@ public class DistributedLockFactory implements IConfigurable {
         }
     }
 
+    /**
+     * Get an instance of a Database backed lock, if configured else null.
+     *
+     * @param namespace - Lock namespace.
+     * @param name      - Lock name.
+     * @return - DB Lock instance.
+     * @throws LockException
+     */
     public DistributedLock getDbLock(@Nonnull String namespace, @Nonnull String name) throws LockException {
         return getLock(DistributedDbLock.class, namespace, name);
     }
 
+    /**
+     * Get an instance of a ZooKeeper backed lock, if configured else null.
+     *
+     * @param namespace - Lock namespace.
+     * @param name      - Lock name.
+     * @return - ZooKeeper Lock instance.
+     * @throws LockException
+     */
     public DistributedLock getZkLock(@Nonnull String namespace, @Nonnull String name) throws LockException {
         return getLock(DistributedZkLock.class, namespace, name);
     }
@@ -94,6 +171,13 @@ public class DistributedLockFactory implements IConfigurable {
         }
     }
 
+    /**
+     * Create and configure a new lock allocator instance based on the
+     * allocator configuration node.
+     *
+     * @param node - Allocator configuration node.
+     * @throws ConfigurationException
+     */
     @SuppressWarnings({"unchecked", "rawtypes"})
     private void createAllocator(ConfigPathNode node) throws ConfigurationException {
         AbstractConfigNode cnode = ConfigUtils.getPathNode(AbstractLockAllocator.class, node);
@@ -115,11 +199,14 @@ public class DistributedLockFactory implements IConfigurable {
         }
     }
 
+    /**
+     * Dispose this instance of the Lock Factory.
+     */
     private void dispose() {
         if (state.getState() == EObjectState.Available) {
             state.setState(EObjectState.Disposed);
         }
-        for(AbstractLockAllocator<?> allocator : allocators.values()) {
+        for (AbstractLockAllocator<?> allocator : allocators.values()) {
             try {
                 allocator.close();
             } catch (Exception ex) {
@@ -128,16 +215,33 @@ public class DistributedLockFactory implements IConfigurable {
         }
     }
 
+    /**
+     * Lock Factory singleton instance.
+     */
     private final static DistributedLockFactory factory = new DistributedLockFactory();
 
+    /**
+     * Setup the lock factory singleton.
+     *
+     * @param node - Configuration node to setup with.
+     * @throws ConfigurationException
+     */
     public static void setup(@Nonnull AbstractConfigNode node) throws ConfigurationException {
         factory.configure(node);
     }
 
+    /**
+     * Close and dispose the factory singleton.
+     */
     public static void close() {
         factory.dispose();
     }
 
+    /**
+     * Get the handle to the factory singleton.
+     *
+     * @return - Lock Factory instance.
+     */
     public static DistributedLockFactory get() {
         return factory;
     }

@@ -42,12 +42,22 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.locks.ReentrantLock;
 
+/**
+ * Distributed Lock allocator implementation that uses a ZooKeeper backend
+ * to persist the lock state.
+ */
 @Getter
 @Setter
 @Accessors(fluent = true)
 public class ZkLockAllocator extends AbstractLockAllocator<CuratorFramework> {
+    /**
+     * Root ZooKeeper path to create locks under.
+     */
     @ConfigValue(name = "lockPath", required = true)
     private String zkLockPath = null;
+    /**
+     * Map of lock instances created.
+     */
     @Setter(AccessLevel.NONE)
     @Getter(AccessLevel.NONE)
     private Map<LockId, InterProcessMutex> locks = new HashMap<>();
@@ -55,6 +65,14 @@ public class ZkLockAllocator extends AbstractLockAllocator<CuratorFramework> {
     @Getter(AccessLevel.NONE)
     private ReentrantLock lock = new ReentrantLock();
 
+    /**
+     * Create a new instance of the specified ZooKeeper backed lock.
+     *
+     * @param id - Unique Lock ID to Create/Get instance.
+     *
+     * @return - Lock instance.
+     * @throws LockException
+     */
     @Override
     protected DistributedLock createInstance(@Nonnull LockId id) throws LockException {
         lock.lock();

@@ -33,45 +33,76 @@ import javax.persistence.LockModeType;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * Distributed Lock implementation that uses a Data base backend to
+ * persist and synchronize lock(s) and state(s).
+ */
 public class DistributedDbLock extends DistributedLock {
     private static final class Metrics {
         private static final String METRIC_LATENCY_LOCK = String.format("%s.%s.%s.LOCK", DistributedDbLock.class.getName(), "%s", "%s");
-        private static final String METRIC_LATENCY_UNLOCK = String.format("%s.%s.%s.UNLOCK", DistributedDbLock.class.getName(), "%s", "%s" );
+        private static final String METRIC_LATENCY_UNLOCK = String.format("%s.%s.%s.UNLOCK", DistributedDbLock.class.getName(), "%s", "%s");
         private static final String METRIC_COUNTER_ERROR = String.format("%s.%s.%s.ERRORS", DistributedDbLock.class.getName(), "%s", "%s");
         private static final String METRIC_COUNTER_CALLS = String.format("%s.%s.%s.CALLS", DistributedDbLock.class.getName(), "%s", "%s");
     }
 
+    /**
+     * Default Sleep interval between lock queries to check for DB lock.
+     */
     private static final long DEFAULT_SLEEP_INTERVAL = 300;
 
+    /**
+     * Hibernate DB session.
+     */
     private Session session;
+    /**
+     * Local variable to indicate if this instance has
+     * already acquired the lock.
+     */
     private boolean locked = false;
-    private Timer lockLatency = null;
-    private Timer unlockLatency = null;
-    private Id callCounter = null;
-    private Id errorCounter = null;
 
+    /**
+     * Create Lock instance with the specified namespace/name.
+     *
+     * @param namespace - Lock namespace.
+     * @param name      - Lock name
+     */
     public DistributedDbLock(@Nonnull String namespace, @Nonnull String name) {
         super(namespace, name);
-        setupMetrics();
+        setupMetrics(Metrics.METRIC_LATENCY_LOCK,
+                Metrics.METRIC_LATENCY_UNLOCK,
+                Metrics.METRIC_COUNTER_CALLS,
+                Metrics.METRIC_COUNTER_ERROR);
     }
 
+    /**
+     * Create lock instance with the specified lock ID.
+     *
+     * @param id - Lock Instance ID
+     */
     public DistributedDbLock(@Nonnull LockId id) {
         super(id);
-        setupMetrics();
+        setupMetrics(Metrics.METRIC_LATENCY_LOCK,
+                Metrics.METRIC_LATENCY_UNLOCK,
+                Metrics.METRIC_COUNTER_CALLS,
+                Metrics.METRIC_COUNTER_ERROR);
     }
 
-    private void setupMetrics() {
-        lockLatency = Monitoring.addTimer(String.format(Metrics.METRIC_LATENCY_LOCK, id().getNamespace(), id().getName()));
-        unlockLatency = Monitoring.addTimer(String.format(Metrics.METRIC_LATENCY_UNLOCK, id().getNamespace(), id().getName()));
-        callCounter = Monitoring.addCounter(String.format(Metrics.METRIC_COUNTER_ERROR, id().getNamespace(), id().getName()));
-        errorCounter = Monitoring.addCounter(String.format(Metrics.METRIC_COUNTER_CALLS, id().getNamespace(), id().getName()));
-    }
-
+    /**
+     * Set the DB session to be used to persist this lock instance.
+     *
+     * @param session - Hibernate DB session.
+     * @return - Self
+     */
     public DistributedDbLock withSession(@Nonnull Session session) {
         this.session = session;
         return this;
     }
 
+    /**
+     * Acquire the lock. Use the default lock timeout.
+     * Will throw exception if lock not acquired within the
+     * default timeout window.
+     */
     @Override
     public void lock() {
         Preconditions.checkState(session != null);
@@ -81,6 +112,12 @@ public class DistributedDbLock extends DistributedLock {
         }
     }
 
+    /**
+     * Try to acquire the lock, will return false if
+     * lock acquire failed.
+     *
+     * @return - Locked?
+     */
     @Override
     public boolean tryLock() {
         Preconditions.checkState(session != null);
@@ -119,6 +156,14 @@ public class DistributedDbLock extends DistributedLock {
         }
     }
 
+    /**
+     * Try to acquire the lock within the specified
+     * timeout window. Will return false if lock not acquired.
+     *
+     * @param timeout - Timeout value
+     * @param unit    - Time Unit for timeout.
+     * @return - Locked?
+     */
     @Override
     public boolean tryLock(long timeout, TimeUnit unit) {
         Preconditions.checkState(session != null);
@@ -165,6 +210,10 @@ public class DistributedDbLock extends DistributedLock {
         }
     }
 
+    /**
+     * Release the lock. Will throw exception if
+     * lock not acquired by current caller thread.
+     */
     @Override
     public void unlock() {
         Preconditions.checkState(session != null);
@@ -178,11 +227,11 @@ public class DistributedDbLock extends DistributedLock {
                         throw new LockException(String.format("[%s][%s][%s] Lock record not found.", id().getNamespace(), id().getName(), threadId()));
                     }
                     if (record.isLocked() && instanceId().compareTo(record.getInstanceId()) == 0) {
-                            record.setLocked(false);
-                            record.setInstanceId(null);
-                            record.setTimestamp(-1);
+                        record.setLocked(false);
+                        record.setInstanceId(null);
+                        record.setTimestamp(-1);
 
-                            session.save(record);
+                        session.save(record);
                     } else {
                         throw new LockException(String.format("[%s][%s] Lock not held by current thread. [thread=%d]", id().getNamespace(), id().getName(), threadId()));
                     }
@@ -198,13 +247,28 @@ public class DistributedDbLock extends DistributedLock {
         });
     }
 
+    /**
+     * Close this lock handle.
+     *
+     * @throws IOException - Throws exception if error.
+     */
     @Override
     public void close() throws IOException {
-        if (session != null) {
-            session.close();
+        try {
+            if (session != null) {
+                session.close();
+            }
+        } catch (Throwable t) {
+            throw new IOException(t);
         }
     }
 
+    /**
+     * Check if this lock has been acquired, either by the
+     * caller thread or some other process.
+     *
+     * @return - Is locked?
+     */
     @Override
     public boolean isLocked() {
         if (super.isLocked()) return true;
@@ -230,6 +294,7 @@ public class DistributedDbLock extends DistributedLock {
         }
         return record;
     }
+
     private DbLockRecord fetch(Session session, boolean create) throws LockException {
         DbLockRecord record = session.find(DbLockRecord.class, id(), LockModeType.PESSIMISTIC_WRITE);
         if (record == null && create) {

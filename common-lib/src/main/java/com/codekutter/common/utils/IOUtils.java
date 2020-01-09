@@ -41,6 +41,7 @@ import java.util.UUID;
  * Utility methods to perform IO.
  */
 public class IOUtils {
+    private static final String DEFAULT_TEMP_DIR_NAME = "codekutter";
     private static final String NON_ASCII_RANGE = "[^\\x00-\\x7F]";
 
     /**
@@ -151,7 +152,8 @@ public class IOUtils {
      */
     public static String getTempDirectory(String subpath) {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(subpath));
-        String path = String.format("%s/zconfig/%s", System.getProperty("java.io.tmpdir"),
+        String path = String.format("%s/%s/%s", System.getProperty("java.io.tmpdir"),
+                DEFAULT_TEMP_DIR_NAME,
                 subpath);
         File file = new File(path);
         if (!file.exists()) {
@@ -167,7 +169,7 @@ public class IOUtils {
      * @return - Absolute path.
      */
     public static String getTempDirectory() {
-        String path = String.format("%s/zconfig", System.getProperty("java.io.tmpdir"));
+        String path = String.format("%s/%s", System.getProperty("java.io.tmpdir"), DEFAULT_TEMP_DIR_NAME);
         File file = new File(path);
         if (!file.exists()) {
             file.mkdirs();
@@ -181,7 +183,7 @@ public class IOUtils {
      * @return - Temp file path.
      */
     public static String getTempFile() {
-        return String.format("%s/zconfig/%s", System.getProperty("java.io.tempdir"),
+        return String.format("%s/%s", getTempDirectory(),
                 UUID.randomUUID().toString());
     }
 

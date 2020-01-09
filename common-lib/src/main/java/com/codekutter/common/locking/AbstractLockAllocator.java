@@ -37,6 +37,12 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+/**
+ * Abstract base class to define Lock Allocators. Allocators create instances of
+ * the specific types of distributed locks.
+ *
+ * @param <T> - Connection handle type for persisting the lock instance.
+ */
 @Getter
 @Setter
 @Accessors(fluent = true)
@@ -44,21 +50,49 @@ import java.util.concurrent.ConcurrentHashMap;
 public abstract class AbstractLockAllocator<T> implements IConfigurable, Closeable {
     private static final long DEFAULT_LOCK_TIMEOUT = 60 * 60 * 1000; // 1 Hr.
 
+    /**
+     * Timeout for expiring locks - used to prevent lock starvation
+     * due to lock instances that haven't been released.
+     */
     @ConfigValue(name = "lockExpiryTimeout")
     private long lockExpiryTimeout = DEFAULT_LOCK_TIMEOUT;
+    /**
+     * Max Timeout to acquire a lock - Default timeout for getting a lock.
+     */
     @ConfigValue(name = "lockGetTimeout")
     private long lockTimeout = -1;
+    /**
+     * Class type of the lock instance.
+     */
     @ConfigAttribute(name = "lockType", required = true)
     private Class<? extends DistributedLock> lockType;
+    /**
+     * Connection instance used to persist the lock.
+     */
     @Setter(AccessLevel.NONE)
     protected AbstractConnection<T> connection;
+    /**
+     * Map containing the thread instances of this lock.
+     */
     @Setter(AccessLevel.NONE)
     @Getter(AccessLevel.NONE)
     private Map<Long, Map<LockId, DistributedLock>> threadLocks = new ConcurrentHashMap<>();
+    /**
+     * State of this lock instance.
+     */
     @Setter(AccessLevel.NONE)
     private ObjectState state = new ObjectState();
 
 
+    /**
+     * Allocate a new instance of this lock. Locks are not thread safe hence
+     * lock instance usage is per thread.
+     *
+     * @param namespace - Namespace of the Lock.
+     * @param name      -Lock name.
+     * @return - New or Thread Local Lock instance.
+     * @throws LockException
+     */
     public DistributedLock allocate(@Nonnull String namespace, @Nonnull String name) throws LockException {
         try {
             state.check(EObjectState.Available, getClass());
@@ -83,6 +117,14 @@ public abstract class AbstractLockAllocator<T> implements IConfigurable, Closeab
         }
     }
 
+    /**
+     * Release a specific instance of a lock.
+     *
+     * @param id - Unique Lock instance ID
+     *
+     * @return - Lock is released?
+     * @throws LockException
+     */
     public boolean release(@Nonnull LockId id) throws LockException {
         boolean ret = false;
         try {
@@ -111,7 +153,7 @@ public abstract class AbstractLockAllocator<T> implements IConfigurable, Closeab
         }
     }
 
-    public DistributedLock checkThreadCache(@Nonnull LockId id) {
+    private DistributedLock checkThreadCache(@Nonnull LockId id) {
         long threadId = Thread.currentThread().getId();
         if (threadLocks.containsKey(threadId)) {
             Map<LockId, DistributedLock> locks = threadLocks.get(threadId);
@@ -122,6 +164,12 @@ public abstract class AbstractLockAllocator<T> implements IConfigurable, Closeab
         return null;
     }
 
+    /**
+     * Close a thread local instance of a
+     * Distributed Lock.
+     *
+     * @throws IOException
+     */
     @Override
     public void close() throws IOException {
         state.setState(EObjectState.Disposed);
@@ -140,5 +188,13 @@ public abstract class AbstractLockAllocator<T> implements IConfigurable, Closeab
         }
     }
 
+    /**
+     * Create/Get a new instance of this type of Distributed Lock.
+     *
+     * @param id - Unique Lock ID to Create/Get instance.
+     *
+     * @return - Lock instance.
+     * @throws LockException
+     */
     protected abstract DistributedLock createInstance(@Nonnull LockId id) throws LockException;
 }

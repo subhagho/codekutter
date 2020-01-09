@@ -28,37 +28,42 @@ import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * Distributed Lock implementation that uses ZooKeeper inter-process lock backend to
+ * persist and synchronize lock(s) and state(s).
+ */
 public class DistributedZkLock extends DistributedLock {
     private static final class Metrics {
         private static final String METRIC_LATENCY_LOCK = String.format("%s.%s.%s.LOCK", DistributedZkLock.class.getName(), "%s", "%s");
-        private static final String METRIC_LATENCY_UNLOCK = String.format("%s.%s.%s.UNLOCK", DistributedZkLock.class.getName(), "%s", "%s" );
+        private static final String METRIC_LATENCY_UNLOCK = String.format("%s.%s.%s.UNLOCK", DistributedZkLock.class.getName(), "%s", "%s");
         private static final String METRIC_COUNTER_ERROR = String.format("%s.%s.%s.ERRORS", DistributedZkLock.class.getName(), "%s", "%s");
         private static final String METRIC_COUNTER_CALLS = String.format("%s.%s.%s.CALLS", DistributedZkLock.class.getName(), "%s", "%s");
     }
 
+    /**
+     * Default Lock get timeout.
+     */
     private static final int DEFAULT_LOCK_TIMEOUT = 500;
 
+    /**
+     * ZooKeeper Inter-process Mutex instance.
+     */
     private InterProcessMutex mutex = null;
-    private Timer lockLatency = null;
-    private Timer unlockLatency = null;
-    private Id callCounter = null;
-    private Id errorCounter = null;
 
     public DistributedZkLock(@Nonnull String namespace, @Nonnull String name) {
         super(namespace, name);
-        setupMetrics();
+        setupMetrics(Metrics.METRIC_LATENCY_LOCK,
+                Metrics.METRIC_LATENCY_UNLOCK,
+                Metrics.METRIC_COUNTER_CALLS,
+                Metrics.METRIC_COUNTER_ERROR);
     }
 
     public DistributedZkLock(@Nonnull LockId id) {
         super(id);
-        setupMetrics();
-    }
-
-    private void setupMetrics() {
-        lockLatency = Monitoring.addTimer(String.format(Metrics.METRIC_LATENCY_LOCK, id().getNamespace(), id().getName()));
-        unlockLatency = Monitoring.addTimer(String.format(Metrics.METRIC_LATENCY_UNLOCK, id().getNamespace(), id().getName()));
-        callCounter = Monitoring.addCounter(String.format(Metrics.METRIC_COUNTER_ERROR, id().getNamespace(), id().getName()));
-        errorCounter = Monitoring.addCounter(String.format(Metrics.METRIC_COUNTER_CALLS, id().getNamespace(), id().getName()));
+        setupMetrics(Metrics.METRIC_LATENCY_LOCK,
+                Metrics.METRIC_LATENCY_UNLOCK,
+                Metrics.METRIC_COUNTER_CALLS,
+                Metrics.METRIC_COUNTER_ERROR);
     }
 
     public DistributedZkLock withMutex(@Nonnull InterProcessMutex mutex) {

@@ -23,7 +23,7 @@ import com.codekutter.common.stores.DataStoreException;
 import com.codekutter.common.stores.DataStoreManager;
 import com.codekutter.common.stores.ISearchable;
 import com.codekutter.common.stores.impl.RdbmsConfig;
-import com.codekutter.common.stores.impl.RdbmsDataSource;
+import com.codekutter.common.stores.impl.RdbmsDataStore;
 import com.codekutter.zconfig.common.ConfigurationException;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
@@ -38,7 +38,7 @@ import org.hibernate.search.query.engine.spi.QueryDescriptor;
 import javax.annotation.Nonnull;
 import java.util.List;
 
-public class SearchableRdbmsDataStore extends RdbmsDataSource implements ISearchable {
+public class SearchableRdbmsDataStore extends RdbmsDataStore implements ISearchable {
     @Override
     @SuppressWarnings("unchecked")
     public <T> List<T> textSearch(@Nonnull Query query, @Nonnull Class<? extends T> type, Context context) throws DataStoreException {

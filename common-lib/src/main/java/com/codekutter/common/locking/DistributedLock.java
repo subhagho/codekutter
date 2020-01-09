@@ -18,28 +18,81 @@
 package com.codekutter.common.locking;
 
 import com.codekutter.common.model.LockId;
+import com.codekutter.common.utils.Monitoring;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.common.base.Preconditions;
+import com.netflix.spectator.api.Id;
+import com.netflix.spectator.api.Timer;
 import lombok.Getter;
 import lombok.experimental.Accessors;
+import org.apache.curator.framework.recipes.locks.InterProcessMutex;
 
 import javax.annotation.Nonnull;
 import java.io.Closeable;
 import java.util.UUID;
 import java.util.concurrent.locks.ReentrantLock;
 
+/**
+ * Extension of Reentrant Locks to support inter process locking.
+ * Locks, like reentrant locks, are expected to be thread local and
+ * will raise exceptions if shared between threads.
+ */
 @Getter
 @Accessors(fluent = true)
 public abstract class DistributedLock extends ReentrantLock implements Closeable {
     private static final long DEFAULT_LOCK_TIMEOUT = 15 * 60 * 1000; // 15 mins.
 
+    /**
+     * Unique ID for each lock instance.
+     */
     private String instanceId;
+    /**
+     * Globally Unique lock ID (namespace + name)
+     */
     private LockId id;
+    /**
+     * Lock instance owner thread ID
+     */
     private long threadId;
+    /**
+     * Timeout for getting a lock.
+     */
     private long lockGetTimeout = DEFAULT_LOCK_TIMEOUT;
+    /**
+     * Timeout to expire locks, if lock is held for
+     * more than the timeout window it will be expired and
+     * can be acquired by other processes.
+     */
     private long lockExpiryTimeout = -1;
 
-    public DistributedLock(@Nonnull String namespace, @Nonnull String name) {
+    /**
+     * ZooKeeper Inter-process Mutex instance.
+     */
+    private InterProcessMutex mutex = null;
+    /**
+     * Timer to measure Lock latency.
+     */
+    protected Timer lockLatency = null;
+    /**
+     * Timer to measure unlock latency.
+     */
+    protected Timer unlockLatency = null;
+    /**
+     * Counter to measure total # of lock/Unlock errors.
+     */
+    protected Id callCounter = null;
+    /**
+     * Counter to measure total # of lock/Unlock errors.
+     */
+    protected Id errorCounter = null;
+
+    /**
+     * Lock Constructor with namespace and name.
+     *
+     * @param namespace - Lock namespace.
+     * @param name      - Lock name,
+     */
+    DistributedLock(@Nonnull String namespace, @Nonnull String name) {
         id = new LockId();
         id.setNamespace(namespace);
         id.setName(name);
@@ -48,36 +101,68 @@ public abstract class DistributedLock extends ReentrantLock implements Closeable
         threadId = Thread.currentThread().getId();
     }
 
-    public DistributedLock(@Nonnull LockId id) {
+    /**
+     * Constructor with Lock ID.
+     *
+     * @param id - Unique Lock ID
+     */
+    DistributedLock(@Nonnull LockId id) {
         this.id = id;
 
         instanceId = UUID.randomUUID().toString();
         threadId = Thread.currentThread().getId();
     }
 
-    protected void checkThread() throws LockException {
+    /**
+     * Check if this lock instance was created by the calling thread.
+     *
+     * @throws LockException - If not owned by current thread.
+     */
+    void checkThread() throws LockException {
         if (threadId != Thread.currentThread().getId()) {
             throw new LockException(String.format("Lock not owned by current thread. [owner thread id=%d]", threadId));
         }
     }
 
+    /**
+     * Set the Lock acquire timeout.
+     *
+     * @param lockGetTimeout - Lock Acquire timeout.
+     * @return - Self.
+     */
     public DistributedLock withLockGetTimeout(long lockGetTimeout) {
         if (lockGetTimeout > 0)
             this.lockGetTimeout = lockGetTimeout;
         return this;
     }
 
+    /**
+     * Set the Lock expiry window.
+     *
+     * @param lockExpiryTimeout - Lock Expiry window.
+     * @return - Self
+     */
     public DistributedLock withLockExpiryTimeout(long lockExpiryTimeout) {
         if (lockExpiryTimeout > 0)
             this.lockExpiryTimeout = lockExpiryTimeout;
         return this;
     }
 
+    /**
+     * Get this lock keys. (namespace + name)
+     *
+     * @return - Lock Key
+     */
     @JsonIgnore
     public String getKey() {
         return String.format("%s::%s", id.getNamespace(), id.getName());
     }
 
+    /**
+     * Check if this lock instance is held by the current thread.
+     *
+     * @return - Held by current thread?
+     */
     @Override
     public boolean isHeldByCurrentThread() {
         if (super.isHeldByCurrentThread()) {
@@ -85,4 +170,15 @@ public abstract class DistributedLock extends ReentrantLock implements Closeable
         }
         return false;
     }
+
+    protected void setupMetrics(String metricLockLatency,
+                              String metricUnlockLatency,
+                              String counterLocked,
+                              String counterError) {
+        lockLatency = Monitoring.addTimer(String.format(metricLockLatency, id().getNamespace(), id().getName()));
+        unlockLatency = Monitoring.addTimer(String.format(metricUnlockLatency, id().getNamespace(), id().getName()));
+        callCounter = Monitoring.addCounter(String.format(counterLocked, id().getNamespace(), id().getName()));
+        errorCounter = Monitoring.addCounter(String.format(counterError, id().getNamespace(), id().getName()));
+    }
+
 }

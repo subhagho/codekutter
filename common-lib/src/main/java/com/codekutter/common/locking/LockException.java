@@ -17,17 +17,42 @@
 
 package com.codekutter.common.locking;
 
+/**
+ * Exception class used to escalate distributed lock errors.
+ * <p>
+ * Note: Is a RuntimeException hence needs to be handle
+ * accordingly.
+ */
 public class LockException extends RuntimeException {
+    /**
+     * Error message prefix.
+     */
     private static final String __PREFIX = "Distributed Lock Error : %s";
 
+    /**
+     * Constructor with the specified error message.
+     *
+     * @param message - Error message.
+     */
     public LockException(String message) {
         super(String.format(__PREFIX, message));
     }
 
+    /**
+     * Constructor with error message and inner exception.
+     *
+     * @param message - Error message
+     * @param cause   - Inner exception.
+     */
     public LockException(String message, Throwable cause) {
         super(String.format(__PREFIX, message), cause);
     }
 
+    /**
+     * Constructor with inner exception.
+     *
+     * @param cause - Inner exception.
+     */
     public LockException(Throwable cause) {
         super(String.format(__PREFIX, cause.getLocalizedMessage()), cause);
     }
