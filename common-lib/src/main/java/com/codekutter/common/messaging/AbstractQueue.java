@@ -18,10 +18,13 @@
 package com.codekutter.common.messaging;
 
 import com.codekutter.common.stores.AbstractConnection;
+import com.codekutter.common.utils.Monitoring;
 import com.codekutter.zconfig.common.IConfigurable;
 import com.codekutter.zconfig.common.model.annotations.ConfigAttribute;
 import com.codekutter.zconfig.common.model.annotations.ConfigPath;
 import com.codekutter.zconfig.common.model.annotations.ConfigValue;
+import com.netflix.spectator.api.Id;
+import com.netflix.spectator.api.Timer;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
@@ -32,33 +35,155 @@ import javax.jms.JMSException;
 import java.io.Closeable;
 import java.util.List;
 
+/**
+ * Wrapper class for creating JMS based messaging instances.
+ * Only support Queue interfaces.
+ *
+ * @param <C> - Queue Connection type
+ * @param <M> - Message Type
+ */
 @Getter
 @Setter
 @Accessors(fluent = true)
 @ConfigPath(path = "queue")
 public abstract class AbstractQueue<C, M> implements IConfigurable, Closeable {
+    /**
+     * Default Queue receive message timeout.
+     */
     private static final long DEFAULT_RECEIVE_TIMEOUT = 30 * 1000;
 
+    /**
+     * Message queue name.
+     */
     @ConfigAttribute(required = true)
     private String name;
+    /**
+     * Queue receive message timeout.
+     */
     @ConfigValue(name = "receiveTimeout")
     private long receiveTimeout = DEFAULT_RECEIVE_TIMEOUT;
+    /**
+     * Queue connection handle.
+     */
     @Setter(AccessLevel.NONE)
     private AbstractConnection<C> connection;
 
+    /**
+     * Metrics - Send Latency
+     */
+    @Setter(AccessLevel.NONE)
+    @Getter(AccessLevel.NONE)
+    protected Timer sendLatency = null;
+    /**
+     * Metrics - Receive Latency
+     */
+    @Setter(AccessLevel.NONE)
+    @Getter(AccessLevel.NONE)
+    protected Timer receiveLatency = null;
+    /**
+     * Counter - Send events
+     */
+    @Setter(AccessLevel.NONE)
+    @Getter(AccessLevel.NONE)
+    protected Id sendCounter = null;
+    /**
+     * Counter - Receive events.
+     */
+    @Setter(AccessLevel.NONE)
+    @Getter(AccessLevel.NONE)
+    protected Id receiveCounter = null;
+    /**
+     * Counter - Receive Error events.
+     */
+    @Setter(AccessLevel.NONE)
+    @Getter(AccessLevel.NONE)
+    protected Id receiveErrorCounter = null;
+    /**
+     * Counter - Send Error events.
+     */
+    @Setter(AccessLevel.NONE)
+    @Getter(AccessLevel.NONE)
+    protected Id sendErrorCounter = null;
+
+    /**
+     * Send a message to the queue.
+     *
+     * @param message - Message handle.
+     * @throws JMSException
+     */
     public abstract void send(@Nonnull M message) throws JMSException;
 
+    /**
+     * Receive a message from the queue.
+     *
+     * @param timeout - Message receive timeout.
+     * @return - Received message.
+     * @throws JMSException
+     */
     public abstract M receive(long timeout) throws JMSException;
 
+    /**
+     * Acknowledge the receipt of the message with the
+     * specified JMS message ID.
+     *
+     * @param messageId - JMS Message ID.
+     * @return - ACK successful?
+     * @throws JMSException
+     */
     public abstract boolean ack(@Nonnull String messageId) throws JMSException;
 
+    /**
+     * Receive a batch of messages, with the specified batch size and
+     * receive timeout.
+     * <p>
+     * Call will return if batch size is met or timeout occurred.
+     *
+     * @param maxResults - Batch size of messages to fetch.
+     * @param timeout    - Max read timeout.
+     * @return - List of read messages.
+     * @throws JMSException
+     */
     public abstract List<M> receiveBatch(int maxResults, long timeout) throws JMSException;
 
+
+    /**
+     * Receive a batch of messages, with the specified batch size and
+     * the default receive timeout.
+     * <p>
+     * Call will return if batch size is met or timeout occurred.
+     *
+     * @param maxResults - Batch size of messages to fetch.
+     * @return - List of read messages.
+     * @throws JMSException
+     */
     public List<M> receiveBatch(int maxResults) throws JMSException {
         return receiveBatch(maxResults, receiveTimeout);
     }
 
+    /**
+     * Read next message available in the queue. If no message immediately available
+     * in the queue the call will wait for the default receive timeout for a
+     * message to arrive.
+     *
+     * @return - Read message or NULL if queue is empty
+     * @throws JMSException
+     */
     public M receive() throws JMSException {
         return receive(receiveTimeout);
+    }
+
+    protected void setupMetrics(String metricSendLatency,
+                                String metricReceiveLatency,
+                                String counterSend,
+                                String counterReceive,
+                                String counterSendError,
+                                String counterReceiveError,
+                                String queue) {
+        sendLatency = Monitoring.addTimer(String.format(metricSendLatency, name(), queue));
+        receiveLatency = Monitoring.addTimer(String.format(metricReceiveLatency, name(), queue));
+        sendCounter = Monitoring.addCounter(String.format(counterSend, name(), queue));
+        receiveCounter = Monitoring.addCounter(String.format(counterReceive, name(), queue));
+        receiveErrorCounter = Monitoring.addCounter(String.format(counterReceiveError, name(), queue));
+        sendErrorCounter = Monitoring.addCounter(String.format(counterSendError, name(), queue));
     }
 }

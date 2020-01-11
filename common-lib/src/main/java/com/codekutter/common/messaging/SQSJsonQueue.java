@@ -80,37 +80,12 @@ public class SQSJsonQueue extends AbstractQueue<SQSConnection, DefaultStringMess
     private MessageConsumer consumer;
     @Setter(AccessLevel.NONE)
     @Getter(AccessLevel.NONE)
-    private Timer sendLatency = null;
-    @Setter(AccessLevel.NONE)
-    @Getter(AccessLevel.NONE)
-    private Timer receiveLatency = null;
-    @Setter(AccessLevel.NONE)
-    @Getter(AccessLevel.NONE)
-    private Id sendCounter = null;
-    @Setter(AccessLevel.NONE)
-    @Getter(AccessLevel.NONE)
-    private Id receiveCounter = null;
-    @Setter(AccessLevel.NONE)
-    @Getter(AccessLevel.NONE)
-    private Id receiveErrorCounter = null;
-    @Setter(AccessLevel.NONE)
-    @Getter(AccessLevel.NONE)
-    private Id sendErrorCounter = null;
-    @Setter(AccessLevel.NONE)
-    @Getter(AccessLevel.NONE)
     private Map<String, Message> messageCache = new ConcurrentHashMap<>();
 
     public SQSJsonQueue() {
     }
 
-    private void setupMetrics() {
-        sendLatency = Monitoring.addTimer(String.format(Metrics.METRIC_LATENCY_SEND, name(), queue));
-        receiveLatency = Monitoring.addTimer(String.format(Metrics.METRIC_LATENCY_RECEIVE, name(), queue));
-        sendCounter = Monitoring.addCounter(String.format(Metrics.METRIC_COUNTER_SEND, name(), queue));
-        receiveCounter = Monitoring.addCounter(String.format(Metrics.METRIC_COUNTER_RECV, name(), queue));
-        receiveErrorCounter = Monitoring.addCounter(String.format(Metrics.METRIC_COUNTER_RECV_ERROR, name(), queue));
-        sendErrorCounter = Monitoring.addCounter(String.format(Metrics.METRIC_COUNTER_SEND_ERROR, name(), queue));
-    }
+
 
     @Override
     public void send(@Nonnull DefaultStringMessage message) throws JMSException {
@@ -240,12 +215,18 @@ public class SQSJsonQueue extends AbstractQueue<SQSConnection, DefaultStringMess
             if (!(conn instanceof AwsSQSConnection)) {
                 throw new ConfigurationException(String.format("Invalid SQS connection returned. [type=%s]", conn.getClass().getCanonicalName()));
             }
-
+            connection = (AwsSQSConnection) conn;
             if (autoAck)
                 session = connection.connection().createSession(false, Session.AUTO_ACKNOWLEDGE);
             else
                 session = connection.connection().createSession(false, Session.CLIENT_ACKNOWLEDGE);
-            setupMetrics();
+            setupMetrics(Metrics.METRIC_LATENCY_SEND,
+                    Metrics.METRIC_LATENCY_RECEIVE,
+                    Metrics.METRIC_COUNTER_SEND,
+                    Metrics.METRIC_COUNTER_RECV,
+                    Metrics.METRIC_COUNTER_SEND_ERROR,
+                    Metrics.METRIC_COUNTER_RECV_ERROR,
+                    queue);
         } catch (Throwable t) {
             throw new ConfigurationException(t);
         }

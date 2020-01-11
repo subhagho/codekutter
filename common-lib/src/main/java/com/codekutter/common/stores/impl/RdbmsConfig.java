@@ -28,6 +28,6 @@ import lombok.experimental.Accessors;
 @Setter
 @Accessors(fluent = true)
 public class RdbmsConfig extends DataStoreConfig {
-    @ConfigAttribute(name = "readConnection", required = true)
+    @ConfigAttribute(name = "readConnection", required = false)
     private String readConnectionName;
 }

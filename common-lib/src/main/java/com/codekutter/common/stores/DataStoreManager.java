@@ -69,6 +69,13 @@ public class DataStoreManager implements IConfigurable {
     private Map<Class<? extends IShardedEntity>, ShardConfig> shardConfigs = new HashMap<>();
     private Map<Long, Map<String, AbstractDataStore>> openedStores = new ConcurrentHashMap<>();
 
+    public boolean isTypeSupported(@Nonnull Class<?> type) {
+        if (ReflectionUtils.implementsInterface(IEntity.class, type)) {
+            return entityIndex.containsKey(type);
+        }
+        return false;
+    }
+
     @SuppressWarnings("unchecked")
     public <T> AbstractConnection<T> getConnection(@Nonnull String name, Class<? extends T> type) {
         return (AbstractConnection<T>) connections.get(name);
@@ -255,7 +262,7 @@ public class DataStoreManager implements IConfigurable {
         AbstractConfigNode cnode = dnode.find(CONFIG_NODE_DATA_STORES);
         if (cnode != null) {
             if (cnode instanceof ConfigPathNode) {
-                AbstractConfigNode csnode = ConfigUtils.getPathNode(AbstractDataStore.class,
+                AbstractConfigNode csnode = ConfigUtils.getPathNode(DataStoreConfig.class,
                         (ConfigPathNode) cnode);
                 if (csnode instanceof ConfigPathNode) {
                     readDataStoreConfig((ConfigPathNode) csnode);
@@ -339,7 +346,7 @@ public class DataStoreManager implements IConfigurable {
                     (ConfigPathNode) cnode, config);
             dataStoreConfigs.put(
                     config.name(), config);
-            AbstractConnection<?> connection = ConnectionManager.get().readConnection((ConfigPathNode) cnode);
+            AbstractConnection<?> connection = ConnectionManager.get().connection(config.connectionName());
             if (connection == null) {
                 throw new ConfigurationException(String.format("No connection found. [store=%s][node=%s]", config.name(), cnode.getAbsolutePath()));
             }

@@ -42,6 +42,38 @@ import java.util.*;
  * 11:10:30 AM
  */
 public class ReflectionUtils {
+
+    /**
+     * Get the nested Field for the dot notation name.
+     * (name="a.b.c")
+     *
+     * @param type - Class type to search the field for.
+     * @param name - Nested field name.
+     * @return - Key Value Pair (Class<?>, Field)
+     */
+    public static KeyValuePair<String, Field> findNestedField(@Nonnull Class<?> type,
+                                                                @Nonnull String name) {
+        String[] parts = name.split("\\.");
+        Class<?> ntype = type;
+        int index = 0;
+        KeyValuePair<String, Field> kv = null;
+        while (index < parts.length) {
+            Field field = findField(ntype, parts[index]);
+            if (field == null) {
+                kv = null;
+                break;
+            }
+            if (kv == null) {
+                kv = new KeyValuePair<>();
+            }
+            kv.key(name);
+            kv.value(field);
+            ntype = field.getType();
+            index++;
+        }
+        return kv;
+    }
+
     /**
      * Find the field with the specified name in this type or a parent type.
      *
@@ -54,17 +86,31 @@ public class ReflectionUtils {
         Preconditions.checkArgument(type != null);
         Preconditions.checkArgument(!Strings.isNullOrEmpty(name));
 
-        Field[] fields = type.getDeclaredFields();
-        if (fields != null && fields.length > 0) {
-            for (Field field : fields) {
-                if (field.getName().compareTo(name) == 0) {
-                    return field;
+        if (name.indexOf('.') > 0) {
+            String[] parts = name.split("\\.");
+            int indx = 0;
+            Class<?> ct = type;
+            Field f = null;
+            while (indx < parts.length) {
+                f = findField(ct, parts[indx]);
+                if (f == null) break;
+                ct = f.getType();
+                indx++;
+            }
+            return f;
+        } else {
+            Field[] fields = type.getDeclaredFields();
+            if (fields != null && fields.length > 0) {
+                for (Field field : fields) {
+                    if (field.getName().compareTo(name) == 0) {
+                        return field;
+                    }
                 }
             }
-        }
-        Class<?> parent = type.getSuperclass();
-        if (parent != null && !parent.equals(Object.class)) {
-            return findField(parent, name);
+            Class<?> parent = type.getSuperclass();
+            if (parent != null && !parent.equals(Object.class)) {
+                return findField(parent, name);
+            }
         }
         return null;
     }
@@ -167,6 +213,28 @@ public class ReflectionUtils {
             return String.valueOf(v);
         }
         return null;
+    }
+
+    public static Object getNestedFieldValue(@Nonnull Object source,
+                                             @Nonnull String name) throws Exception {
+        String[] parts = name.split("\\.");
+        Object value = source;
+        Class<?> type = source.getClass();
+        int index = 0;
+        while(index < parts.length) {
+            Field field = findField(type, parts[index]);
+            if (field == null) {
+                throw new Exception(String.format("Field not found. [type=%s][field=%s]",
+                        type.getCanonicalName(), parts[index]));
+            }
+            value = getFieldValue(value, field);
+            if (value == null) {
+                break;
+            }
+            type = field.getType();
+            index++;
+        }
+        return value;
     }
 
     /**

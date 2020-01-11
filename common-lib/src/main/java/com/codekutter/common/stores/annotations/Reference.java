@@ -18,10 +18,10 @@
 package com.codekutter.common.stores.annotations;
 
 import com.codekutter.common.model.IEntity;
+import joptsimple.internal.Strings;
 
 import javax.persistence.CascadeType;
 import javax.persistence.JoinColumns;
-import javax.persistence.OneToMany;
 import java.lang.annotation.*;
 
 @Retention(RetentionPolicy.RUNTIME)
@@ -61,4 +61,11 @@ public @interface Reference {
      * @since Java Persistence 2.0
      */
     boolean orphanRemoval() default false;
+
+    /**
+     * Query to be applied to the join condition.
+     *
+     * @return - Query String.
+     */
+    String query() default Strings.EMPTY;
 }

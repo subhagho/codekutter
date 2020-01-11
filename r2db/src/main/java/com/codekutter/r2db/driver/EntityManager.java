@@ -46,7 +46,7 @@ import java.util.*;
 @Getter
 @Setter
 @Accessors(fluent = true)
-@ConfigPath(path = "entityManager")
+@ConfigPath(path = "entity-manager")
 @SuppressWarnings("rawtypes")
 public class EntityManager implements IConfigurable {
     @ConfigAttribute(name = "name")
@@ -361,6 +361,8 @@ public class EntityManager implements IConfigurable {
         if (cnode == null) {
             throw new ConfigurationException(String.format("Configuration node not found. [node=%s]", node.getAbsolutePath()));
         }
+        ConnectionManager.setup(cnode);
+
         dataStoreManager = new DataStoreManager();
         dataStoreManager.configure(cnode);
     }

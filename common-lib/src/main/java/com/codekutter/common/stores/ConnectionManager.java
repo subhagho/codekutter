@@ -28,6 +28,7 @@ import com.codekutter.zconfig.common.model.nodes.AbstractConfigNode;
 import com.codekutter.zconfig.common.model.nodes.ConfigElementNode;
 import com.codekutter.zconfig.common.model.nodes.ConfigListElementNode;
 import com.codekutter.zconfig.common.model.nodes.ConfigPathNode;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -60,10 +61,12 @@ public class ConnectionManager implements IConfigurable, Closeable {
      * @throws ConfigurationException
      */
     @Override
-    public void configure(@Nonnull AbstractConfigNode node) throws ConfigurationException {
+    public void configure(@Nonnull AbstractConfigNode inode) throws ConfigurationException {
+        Preconditions.checkArgument(inode instanceof ConfigPathNode);
+        AbstractConfigNode node = ConfigUtils.getPathNode(getClass(), (ConfigPathNode) inode);
         if (node instanceof ConfigPathNode) {
             AbstractConfigNode cnode = ConfigUtils.getPathNode(AbstractConnection.class, (ConfigPathNode) node);
-            if (!(cnode instanceof ConfigPath)) {
+            if (!(cnode instanceof ConfigPathNode)) {
                 throw new ConfigurationException(String.format("Invalid connection configuration. [node=%s]", node.getAbsolutePath()));
             }
             AbstractConnection<?> connection = readConnection((ConfigPathNode) cnode);
@@ -84,11 +87,17 @@ public class ConnectionManager implements IConfigurable, Closeable {
     }
 
     @SuppressWarnings("unchecked")
-    public <T> AbstractConnection<T> readConnection(@Nonnull ConfigPathNode node) throws ConfigurationException {
+    public <T> AbstractConnection<T> readConnection(@Nonnull ConfigPathNode inode) throws ConfigurationException {
         try {
+            AbstractConfigNode node = ConfigUtils.getPathNode(AbstractConnection.class, inode);
+            if (!(node instanceof ConfigPathNode)) {
+                throw new ConfigurationException(String.format("Connection configuration node not found. [path=%s]",
+                        inode.getAbsolutePath()));
+            }
             String cname = ConfigUtils.getClassAttribute(node);
             if (Strings.isNullOrEmpty(cname)) {
-                throw new ConfigurationException(String.format("Connection name attribute not found. [path=%s]", node.getAbsolutePath()));
+                throw new ConfigurationException(String.format("Connection name attribute not found. [path=%s]",
+                        node.getAbsolutePath()));
             }
             Class<? extends AbstractConnection<?>> type = (Class<? extends AbstractConnection<?>>) Class.forName(cname);
             AbstractConnection<?> connection = type.newInstance();
