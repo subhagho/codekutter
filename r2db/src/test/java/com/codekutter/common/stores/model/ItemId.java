@@ -2,6 +2,7 @@ package com.codekutter.common.stores.model;
 
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
 
 import javax.persistence.Column;
 import javax.persistence.Embeddable;
@@ -9,6 +10,7 @@ import java.io.Serializable;
 
 @Getter
 @Setter
+@ToString
 @Embeddable
 public class ItemId implements Serializable {
     @Column(name = "order_id")

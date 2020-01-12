@@ -49,6 +49,16 @@ public class Order implements IEntity<String> {
         return id;
     }
 
+    /**
+     * Get a String representation of the key.
+     *
+     * @return - String Key
+     */
+    @Override
+    public String getStringKey() {
+        return getKey();
+    }
+
     @Override
     public int compare(String key) {
         return id.compareTo(key);

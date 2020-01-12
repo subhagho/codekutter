@@ -8,14 +8,7 @@ import com.codekutter.common.Context;
  *
  * @param <K> - Entity Unique Key type.
  */
-public interface IEntity<K> extends IValidate {
-    /**
-     * Get the unique Key for this entity.
-     *
-     * @return - Entity Key.
-     */
-    K getKey();
-
+public interface IEntity<K> extends IValidate, IKeyed<K> {
     /**
      * Compare the entity key with the key specified.
      *

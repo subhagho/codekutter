@@ -287,4 +287,14 @@ public class ApplicationGroup extends BaseEntity<String, ApplicationGroup>
     public void validate() throws ValidationExceptions {
 
     }
+
+    /**
+     * Get a String representation of the key.
+     *
+     * @return - String Key
+     */
+    @Override
+    public String getStringKey() {
+        return getKey();
+    }
 }

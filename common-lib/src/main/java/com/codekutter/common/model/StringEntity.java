@@ -44,6 +44,16 @@ public class StringEntity implements IEntity<String> {
     }
 
     /**
+     * Get a String representation of the key.
+     *
+     * @return - String Key
+     */
+    @Override
+    public String getStringKey() {
+        return value;
+    }
+
+    /**
      * Compare the entity key with the key specified.
      *
      * @param key - Target Key.
