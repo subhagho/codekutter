@@ -90,6 +90,15 @@
                 </queue>
             </queues>
         </env>
+        <audit>
+            <audit-manager>
+                <audit-logger name="TEST-AUDIT-LOGGER" class="com.codekutter.common.auditing.DBAuditLogger"
+                              default="true">
+                    <serializer>com.codekutter.common.auditing.JsonAuditSerDe</serializer>
+                    <dataStore name="TestDataStore" dataStoreClass="com.codekutter.common.stores.impl.RdbmsDataStore"/>
+                </audit-logger>
+            </audit-manager>
+        </audit>
         <r2db>
             <entity-manager>
                 <connections>

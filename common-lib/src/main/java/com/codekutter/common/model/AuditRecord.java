@@ -16,6 +16,7 @@ import java.util.UUID;
 public class AuditRecord implements IEntity<AuditRecordId> {
     @EmbeddedId
     private AuditRecordId id;
+    @Enumerated(EnumType.STRING)
     @Column(name = "audit_type")
     private EAuditType auditType;
     @Column(name = "entity_id")

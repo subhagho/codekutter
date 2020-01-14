@@ -1,5 +1,6 @@
 package com.codekutter.zconfig.common;
 
+import com.codekutter.common.auditing.AuditManager;
 import com.codekutter.common.stores.ConnectionManager;
 import com.codekutter.common.utils.LogUtils;
 import com.codekutter.r2db.driver.EntityManager;
@@ -13,6 +14,7 @@ import javax.annotation.Nonnull;
 
 public class R2dbEnv extends ExtendedZConfigEnv {
     public static final String CONFIG_PATH_ENTITY_MANAGER = "/configuration/r2db";
+    public static final String CONFIG_PATH_AUDIT_LOGGER = "/configuration/audit";
 
     private EntityManager entityManager = new EntityManager();
 
@@ -37,6 +39,12 @@ public class R2dbEnv extends ExtendedZConfigEnv {
             entityManager.configure(node);
         } else {
             LogUtils.warn(getClass(), "Entity Manager configuration not set.");
+        }
+
+        node = getConfiguration().getRootConfigNode().find(CONFIG_PATH_AUDIT_LOGGER);
+        if (node instanceof ConfigPathNode) {
+            AuditManager.get().withDataStoreManager(entityManager.dataStoreManager());
+            AuditManager.init(node);
         }
     }
 
