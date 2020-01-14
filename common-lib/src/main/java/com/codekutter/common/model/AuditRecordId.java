@@ -12,7 +12,7 @@ import java.io.Serializable;
 @Setter
 @ToString
 @Embeddable
-public class AuditRecordId implements Serializable {
+public class AuditRecordId implements IKey, Serializable {
     /**
      * Audit Record Type - Record Entity Class
      */
@@ -30,5 +30,15 @@ public class AuditRecordId implements Serializable {
             ret = recordId.compareTo(id.recordId);
         }
         return ret;
+    }
+
+    /**
+     * Get the String representation of the key.
+     *
+     * @return - Key String
+     */
+    @Override
+    public String stringKey() {
+        return String.format("%s::%s", recordType, recordId);
     }
 }

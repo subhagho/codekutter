@@ -25,6 +25,7 @@
 package com.codekutter.zconfig.core.zookeeper;
 
 import com.codekutter.common.model.ModifiedBy;
+import com.codekutter.common.model.StringKey;
 import com.codekutter.common.utils.ConfigUtils;
 import com.codekutter.common.utils.IUniqueIDGenerator;
 import com.codekutter.zconfig.common.ZConfigCoreEnv;
@@ -259,8 +260,8 @@ public class ZkConfigDAO implements IConfigDAO {
                                        ModifiedBy modifiedBy)
             throws ServiceEnvException {
         try {
-            configNode.setId(ZConfigCoreEnv.coreEnv().getIdGenerator()
-                    .generateStringId(null));
+            configNode.setId(new StringKey(ZConfigCoreEnv.coreEnv().getIdGenerator()
+                    .generateStringId(null)));
             configNode.setApplication(application);
             configNode.setName(configuration.getName());
             configNode.setDescription(configuration.getDescription());
@@ -406,7 +407,7 @@ public class ZkConfigDAO implements IConfigDAO {
             zkNode = new PersistedConfigValueNode();
             IUniqueIDGenerator idGenerator =
                     ZConfigCoreEnv.coreEnv().getIdGenerator();
-            zkNode.setId(idGenerator.generateStringId(null));
+            zkNode.setId(new StringKey(idGenerator.generateStringId(null)));
             zkNode.setName(node.getName());
             String desc = ConfigUtils.getDescription(node);
             if (!Strings.isNullOrEmpty(desc))

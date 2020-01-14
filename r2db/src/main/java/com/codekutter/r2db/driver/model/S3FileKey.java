@@ -17,6 +17,7 @@
 
 package com.codekutter.r2db.driver.model;
 
+import com.codekutter.common.model.IKey;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -28,7 +29,7 @@ import javax.annotation.Nonnull;
 @Setter
 @ToString
 @Accessors(fluent = true)
-public class S3FileKey implements Comparable<S3FileKey> {
+public class S3FileKey implements IKey, Comparable<S3FileKey> {
     private String bucket;
     private String key;
 
@@ -40,5 +41,15 @@ public class S3FileKey implements Comparable<S3FileKey> {
             ret = key.compareTo(s3FileKey.key);
         }
         return ret;
+    }
+
+    /**
+     * Get the String representation of the key.
+     *
+     * @return - Key String
+     */
+    @Override
+    public String stringKey() {
+        return String.format("%s::%s", bucket, key);
     }
 }

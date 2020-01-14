@@ -149,6 +149,12 @@
             <version>1.0.4</version>
             <type>jar</type>
         </dependency>
+        <!-- https://mvnrepository.com/artifact/com.flipkart.zjsonpatch/zjsonpatch -->
+        <dependency>
+            <groupId>com.flipkart.zjsonpatch</groupId>
+            <artifactId>zjsonpatch</artifactId>
+            <version>0.4.9</version>
+        </dependency>
     </dependencies>
 
 

@@ -24,6 +24,7 @@
 
 package com.codekutter.zconfig.core.model;
 
+import com.codekutter.common.model.IKey;
 import com.codekutter.common.model.ModifiedBy;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.google.common.base.Preconditions;
@@ -39,7 +40,7 @@ import javax.annotation.Nonnull;
  */
 @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, include = JsonTypeInfo.As.PROPERTY,
               property = "@class")
-public abstract class BaseEntity<K, T> extends PersistedEntity<K, T> {
+public abstract class BaseEntity<K extends IKey, T> extends PersistedEntity<K, T> {
     /**
      * Owner of this application group.
      */

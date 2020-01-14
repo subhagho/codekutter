@@ -8,7 +8,7 @@ import com.codekutter.common.Context;
  *
  * @param <K> - Entity Unique Key type.
  */
-public interface IEntity<K> extends IValidate, IKeyed<K> {
+public interface IEntity<K extends IKey> extends IValidate, IKeyed<K> {
     /**
      * Compare the entity key with the key specified.
      *

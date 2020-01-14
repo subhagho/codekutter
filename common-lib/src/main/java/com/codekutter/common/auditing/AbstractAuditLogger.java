@@ -12,6 +12,7 @@ import com.codekutter.zconfig.common.model.annotations.ConfigPath;
 import com.codekutter.zconfig.common.model.annotations.ConfigValue;
 import com.codekutter.zconfig.common.model.nodes.AbstractConfigNode;
 import com.codekutter.zconfig.common.model.nodes.ConfigPathNode;
+import com.codekutter.zconfig.common.transformers.StringListParser;
 import com.google.common.base.Preconditions;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -45,6 +46,8 @@ public abstract class AbstractAuditLogger<C> implements IConfigurable, Closeable
     private String dataStoreName;
     @ConfigAttribute(name = "dataStore@class", required = true)
     private Class<? extends AbstractDataStore> dataStoreType;
+    @ConfigValue(name = "classes", parser = StringListParser.class)
+    private List<String> classes;
     @Setter(AccessLevel.NONE)
     private AbstractDataStore<C> dataStore;
     @Setter(AccessLevel.NONE)
@@ -166,7 +169,7 @@ public abstract class AbstractAuditLogger<C> implements IConfigurable, Closeable
             record.setAuditType(type);
             byte[] data = serializer.serialize(entity, entityType);
             record.setEntityData(data);
-            record.setEntityId(entity.getStringKey());
+            record.setEntityId(entity.getKey().stringKey());
 
             return record;
         } catch (Throwable ex) {
@@ -185,7 +188,7 @@ public abstract class AbstractAuditLogger<C> implements IConfigurable, Closeable
      * @return - List of extracted entity records.
      * @throws AuditException
      */
-    public <K, T extends IKeyed<K>> List<T> fetch(@Nonnull K key,
+    public <K extends IKey, T extends IKeyed<K>> List<T> fetch(@Nonnull K key,
                                                   @Nonnull Class<? extends T> entityType) throws AuditException {
         Preconditions.checkState(serializer != null);
         return fetch(key, entityType, serializer);
@@ -204,7 +207,7 @@ public abstract class AbstractAuditLogger<C> implements IConfigurable, Closeable
      * @throws AuditException
      */
     @SuppressWarnings("unchecked")
-    public <K, T extends IKeyed<K>> List<T> fetch(@Nonnull K key,
+    public <K extends IKey, T extends IKeyed<K>> List<T> fetch(@Nonnull K key,
                                                   @Nonnull Class<? extends T> entityType,
                                                   @Nonnull IAuditSerDe serializer) throws AuditException {
         Preconditions.checkState(dataStore != null);
@@ -265,6 +268,6 @@ public abstract class AbstractAuditLogger<C> implements IConfigurable, Closeable
      * @return - List of audit records.
      * @throws AuditException
      */
-    public abstract <K, T extends IKeyed<K>> Collection<AuditRecord> find(@Nonnull K key,
+    public abstract <K extends IKey, T extends IKeyed<K>> Collection<AuditRecord> find(@Nonnull K key,
                                                                           @Nonnull Class<? extends T> entityType) throws AuditException;
 }

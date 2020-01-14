@@ -1,5 +1,6 @@
 package com.codekutter.common.stores.model;
 
+import com.codekutter.common.model.IKey;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -12,7 +13,7 @@ import java.io.Serializable;
 @Setter
 @ToString
 @Embeddable
-public class ItemId implements Serializable {
+public class ItemId implements IKey, Serializable {
     @Column(name = "order_id")
     private String orderId;
     @Column(name = "product_id")
@@ -24,5 +25,15 @@ public class ItemId implements Serializable {
             ret = productId.compareTo(key.productId);
         }
         return ret;
+    }
+
+    /**
+     * Get the String representation of the key.
+     *
+     * @return - Key String
+     */
+    @Override
+    public String stringKey() {
+        return String.format("%s::%s", orderId, productId);
     }
 }

@@ -30,7 +30,7 @@ import java.io.Serializable;
 @Getter
 @Setter
 @ToString
-public class LockId implements Serializable {
+public class LockId implements IKey, Serializable {
     @Column(name = "namespace")
     private String namespace;
     @Column(name = "name")
@@ -52,5 +52,15 @@ public class LockId implements Serializable {
             }
         }
         return false;
+    }
+
+    /**
+     * Get the String representation of the key.
+     *
+     * @return - Key String
+     */
+    @Override
+    public String stringKey() {
+        return String.format("%s.%s", namespace, name);
     }
 }

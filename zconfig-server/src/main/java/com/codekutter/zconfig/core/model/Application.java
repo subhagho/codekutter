@@ -27,6 +27,7 @@ package com.codekutter.zconfig.core.model;
 import com.codekutter.common.Context;
 import com.codekutter.common.model.CopyException;
 import com.codekutter.common.model.IEntity;
+import com.codekutter.common.model.StringKey;
 import com.codekutter.common.model.ValidationExceptions;
 import com.codekutter.common.utils.IUniqueIDGenerator;
 import com.codekutter.zconfig.core.utils.EntityUtils;
@@ -43,7 +44,7 @@ import javax.annotation.Nonnull;
  */
 @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, include = JsonTypeInfo.As.PROPERTY,
               property = "@class")
-public class Application extends BaseEntity<String, Application>
+public class Application extends BaseEntity<StringKey, Application>
         implements IZkNode {
     /**
      * Name of this application group.
@@ -146,7 +147,7 @@ public class Application extends BaseEntity<String, Application>
      * @return - (<0 key < source.key) (0 key == source.key) (>0 key > source.key)
      */
     @Override
-    public int compareKey(PersistedEntity<String, Application> source) {
+    public int compareKey(PersistedEntity<StringKey, Application> source) {
         return getId().compareTo(source.getId());
     }
 
@@ -157,7 +158,7 @@ public class Application extends BaseEntity<String, Application>
      */
     @Override
     public int getHashCode() {
-        return EntityUtils.getStringHashCode(getId());
+        return EntityUtils.getStringHashCode(getId().getKey());
     }
     /**
      * Get the path name of this node.
@@ -191,7 +192,7 @@ public class Application extends BaseEntity<String, Application>
      * @return - Comparision.
      */
     @Override
-    public int compare(String key) {
+    public int compare(StringKey key) {
         return getKey().compareTo(key);
     }
 
@@ -213,7 +214,7 @@ public class Application extends BaseEntity<String, Application>
      * @throws CopyException
      */
     @Override
-    public IEntity<String> copyChanges(IEntity<String> source, Context context) throws CopyException {
+    public IEntity<StringKey> copyChanges(IEntity<StringKey> source, Context context) throws CopyException {
         try {
             return EntityUtils.copyChanges(source, this);
         } catch (EntityException e) {
@@ -229,7 +230,7 @@ public class Application extends BaseEntity<String, Application>
      * @throws CopyException
      */
     @Override
-    public IEntity<String> clone(Context context) throws CopyException {
+    public IEntity<StringKey> clone(Context context) throws CopyException {
         return null;
     }
 
@@ -241,15 +242,5 @@ public class Application extends BaseEntity<String, Application>
     @Override
     public void validate() throws ValidationExceptions {
 
-    }
-
-    /**
-     * Get a String representation of the key.
-     *
-     * @return - String Key
-     */
-    @Override
-    public String getStringKey() {
-        return getKey();
     }
 }

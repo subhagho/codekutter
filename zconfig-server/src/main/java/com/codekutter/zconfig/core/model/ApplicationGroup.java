@@ -27,6 +27,7 @@ package com.codekutter.zconfig.core.model;
 import com.codekutter.common.Context;
 import com.codekutter.common.model.CopyException;
 import com.codekutter.common.model.IEntity;
+import com.codekutter.common.model.StringKey;
 import com.codekutter.common.model.ValidationExceptions;
 import com.codekutter.common.utils.IUniqueIDGenerator;
 import com.codekutter.zconfig.core.utils.EntityUtils;
@@ -46,7 +47,7 @@ import java.util.Map;
  */
 @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, include = JsonTypeInfo.As.PROPERTY,
               property = "@class")
-public class ApplicationGroup extends BaseEntity<String, ApplicationGroup>
+public class ApplicationGroup extends BaseEntity<StringKey, ApplicationGroup>
         implements IZkNode {
 
     /**
@@ -193,7 +194,7 @@ public class ApplicationGroup extends BaseEntity<String, ApplicationGroup>
      * @return - (<0 key < source.key) (0 key == source.key) (>0 key > source.key)
      */
     @Override
-    public int compareKey(PersistedEntity<String, ApplicationGroup> source) {
+    public int compareKey(PersistedEntity<StringKey, ApplicationGroup> source) {
         return getId().compareTo(source.getId());
     }
 
@@ -204,7 +205,7 @@ public class ApplicationGroup extends BaseEntity<String, ApplicationGroup>
      */
     @Override
     public int getHashCode() {
-        return EntityUtils.getStringHashCode(getId());
+        return EntityUtils.getStringHashCode(getId().getKey());
     }
 
     /**
@@ -236,7 +237,7 @@ public class ApplicationGroup extends BaseEntity<String, ApplicationGroup>
      * @return - Comparision.
      */
     @Override
-    public int compare(String key) {
+    public int compare(StringKey key) {
         return getKey().compareTo(key);
     }
 
@@ -258,7 +259,7 @@ public class ApplicationGroup extends BaseEntity<String, ApplicationGroup>
      * @throws CopyException
      */
     @Override
-    public IEntity<String> copyChanges(IEntity<String> source, Context context) throws CopyException {
+    public IEntity<StringKey> copyChanges(IEntity<StringKey> source, Context context) throws CopyException {
         try {
             return EntityUtils.copyChanges(source, this);
         } catch (EntityException e) {
@@ -274,7 +275,7 @@ public class ApplicationGroup extends BaseEntity<String, ApplicationGroup>
      * @throws CopyException
      */
     @Override
-    public IEntity<String> clone(Context context) throws CopyException {
+    public IEntity<StringKey> clone(Context context) throws CopyException {
         return null;
     }
 
@@ -286,15 +287,5 @@ public class ApplicationGroup extends BaseEntity<String, ApplicationGroup>
     @Override
     public void validate() throws ValidationExceptions {
 
-    }
-
-    /**
-     * Get a String representation of the key.
-     *
-     * @return - String Key
-     */
-    @Override
-    public String getStringKey() {
-        return getKey();
     }
 }

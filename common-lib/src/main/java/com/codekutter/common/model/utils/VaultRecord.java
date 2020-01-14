@@ -14,9 +14,9 @@ import java.util.UUID;
 @Data
 @Entity
 @Table(name = "tb_key_vault")
-public class VaultRecord implements IEntity<String> {
-    @Column(name = "key")
-    private String key;
+public class VaultRecord implements IEntity<StringKey> {
+    @EmbeddedId
+    private StringKey key;
     @Column(name = "data")
     private byte[] data;
     @AttributeOverrides({
@@ -39,19 +39,10 @@ public class VaultRecord implements IEntity<String> {
      * @return - Entity Key.
      */
     @Override
-    public String getKey() {
+    public StringKey getKey() {
         return key;
     }
 
-    /**
-     * Get a String representation of the key.
-     *
-     * @return - String Key
-     */
-    @Override
-    public String getStringKey() {
-        return key;
-    }
 
     /**
      * Compare the entity key with the key specified.
@@ -60,7 +51,7 @@ public class VaultRecord implements IEntity<String> {
      * @return - Comparision.
      */
     @Override
-    public int compare(String key) {
+    public int compare(StringKey key) {
         return this.key.compareTo(key);
     }
 
@@ -82,7 +73,7 @@ public class VaultRecord implements IEntity<String> {
      * @throws CopyException
      */
     @Override
-    public IEntity<String> copyChanges(IEntity<String> source, Context context) throws CopyException {
+    public IEntity<StringKey> copyChanges(IEntity<StringKey> source, Context context) throws CopyException {
         Preconditions.checkArgument(source instanceof VaultRecord);
         VaultRecord r = (VaultRecord)source;
         this.data = r.data;
@@ -91,7 +82,6 @@ public class VaultRecord implements IEntity<String> {
 
         return this;
     }
-
     /**
      * Clone this instance of Entity.
      *
@@ -100,9 +90,9 @@ public class VaultRecord implements IEntity<String> {
      * @throws CopyException
      */
     @Override
-    public IEntity<String> clone(Context context) throws CopyException {
+    public IEntity<StringKey> clone(Context context) throws CopyException {
         VaultRecord r = new VaultRecord();
-        r.key = UUID.randomUUID().toString();
+        r.key = new StringKey(UUID.randomUUID().toString());
         r.data = this.data;
         r.createdBy = new ModifiedBy(this.createdBy);
         r.modifiedBy = new ModifiedBy(this.modifiedBy);

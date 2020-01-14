@@ -20,12 +20,13 @@ package com.codekutter.r2db.driver.model;
 import com.codekutter.common.Context;
 import com.codekutter.common.model.CopyException;
 import com.codekutter.common.model.IEntity;
+import com.codekutter.common.model.StringKey;
 import com.codekutter.common.model.ValidationExceptions;
 
 import java.io.File;
 import java.net.URI;
 
-public class FileEntity extends File implements IEntity<String> {
+public class FileEntity extends File implements IEntity<StringKey> {
     public FileEntity(String pathname) {
         super(pathname);
     }
@@ -48,19 +49,10 @@ public class FileEntity extends File implements IEntity<String> {
      * @return - Entity Key.
      */
     @Override
-    public String getKey() {
-        return getAbsolutePath();
+    public StringKey getKey() {
+        return new StringKey(getAbsolutePath());
     }
 
-    /**
-     * Get a String representation of the key.
-     *
-     * @return - String Key
-     */
-    @Override
-    public String getStringKey() {
-        return getKey();
-    }
 
     /**
      * Compare the entity key with the key specified.
@@ -69,8 +61,8 @@ public class FileEntity extends File implements IEntity<String> {
      * @return - Comparision.
      */
     @Override
-    public int compare(String key) {
-        return getAbsolutePath().compareTo(key);
+    public int compare(StringKey key) {
+        return getAbsolutePath().compareTo(key.getKey());
     }
 
     /**
@@ -91,7 +83,7 @@ public class FileEntity extends File implements IEntity<String> {
      * @throws CopyException
      */
     @Override
-    public IEntity<String> copyChanges(IEntity<String> source, Context context) throws CopyException {
+    public IEntity<StringKey> copyChanges(IEntity<StringKey> source, Context context) throws CopyException {
         if (source instanceof FileEntity) {
             return this;
         }
@@ -106,7 +98,7 @@ public class FileEntity extends File implements IEntity<String> {
      * @throws CopyException
      */
     @Override
-    public IEntity<String> clone(Context context) throws CopyException {
+    public IEntity<StringKey> clone(Context context) throws CopyException {
         return new FileEntity(getAbsolutePath());
     }
 

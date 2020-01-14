@@ -3,6 +3,7 @@ package com.codekutter.common.stores.model;
 import com.codekutter.common.Context;
 import com.codekutter.common.model.CopyException;
 import com.codekutter.common.model.IEntity;
+import com.codekutter.common.model.StringKey;
 import com.codekutter.common.model.ValidationExceptions;
 import lombok.Getter;
 import lombok.Setter;
@@ -16,7 +17,7 @@ import javax.persistence.Table;
 @Setter
 @Entity
 @Table(name = "tb_product")
-public class Product implements IEntity<String> {
+public class Product implements IEntity<StringKey> {
     @Id
     @Column(name = "product_id")
     private String id;
@@ -30,32 +31,23 @@ public class Product implements IEntity<String> {
     private long createdDate;
 
     @Override
-    public String getKey() {
-        return id;
+    public StringKey getKey() {
+        return new StringKey(id);
     }
 
-    /**
-     * Get a String representation of the key.
-     *
-     * @return - String Key
-     */
+
     @Override
-    public String getStringKey() {
-        return getKey();
+    public int compare(StringKey key) {
+        return id.compareTo(key.getKey());
     }
 
     @Override
-    public int compare(String key) {
-        return id.compareTo(key);
-    }
-
-    @Override
-    public IEntity<String> copyChanges(IEntity<String> source, Context context) throws CopyException {
+    public IEntity<StringKey> copyChanges(IEntity<StringKey> source, Context context) throws CopyException {
         return null;
     }
 
     @Override
-    public IEntity<String> clone(Context context) throws CopyException {
+    public IEntity<StringKey> clone(Context context) throws CopyException {
         return null;
     }
 

@@ -165,16 +165,6 @@ public class S3FileEntity extends RemoteFileEntity<S3FileKey, AmazonS3> {
     }
 
     /**
-     * Get a String representation of the key.
-     *
-     * @return - String Key
-     */
-    @Override
-    public String getStringKey() {
-        return key.toString();
-    }
-
-    /**
      * Compare the entity key with the key specified.
      *
      * @param key - Target Key.

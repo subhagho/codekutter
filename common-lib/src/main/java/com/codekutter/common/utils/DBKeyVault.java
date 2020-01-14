@@ -2,6 +2,7 @@ package com.codekutter.common.utils;
 
 import com.codekutter.common.IKeyVault;
 import com.codekutter.common.model.ModifiedBy;
+import com.codekutter.common.model.StringKey;
 import com.codekutter.common.model.utils.VaultRecord;
 import com.codekutter.common.stores.impl.HibernateConnection;
 import com.codekutter.zconfig.common.ConfigurationAnnotationProcessor;
@@ -64,7 +65,7 @@ public class DBKeyVault implements IKeyVault {
                     VaultRecord record = session.find(VaultRecord.class, name);
                     if (record == null) {
                         record = new VaultRecord();
-                        record.setKey(name);
+                        record.setKey(new StringKey(name));
                         record.setData(encrypted);
                         record.setCreatedBy(new ModifiedBy(userId));
                         record.setModifiedBy(record.getCreatedBy());

@@ -22,6 +22,7 @@ import javax.annotation.Nonnull;
 import java.io.Closeable;
 import java.io.IOException;
 import java.security.Principal;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -33,6 +34,8 @@ import java.util.concurrent.ConcurrentHashMap;
 public class AuditManager implements IConfigurable, Closeable {
     @Setter(AccessLevel.NONE)
     private Map<String, AbstractAuditLogger> loggers = new ConcurrentHashMap<>();
+    @Setter(AccessLevel.NONE)
+    private Map<Class<? extends IKeyed>, AbstractAuditLogger> entityIndex = new HashMap<>();
     @Setter(AccessLevel.NONE)
     private AbstractAuditLogger defaultLogger = null;
     @Setter(AccessLevel.NONE)
@@ -50,8 +53,9 @@ public class AuditManager implements IConfigurable, Closeable {
     public <T extends IKeyed> AuditRecord audit(@Nonnull EAuditType type,
                                                 @Nonnull T entity,
                                                 @Nonnull Principal user) throws AuditException {
-        if (defaultLogger != null) {
-            return defaultLogger.write(type, entity, entity.getClass(), user);
+        AbstractAuditLogger logger = getLogger(entity.getClass());
+        if (logger != null) {
+            return logger.write(type, entity, entity.getClass(), user);
         }
         return null;
     }
@@ -60,8 +64,9 @@ public class AuditManager implements IConfigurable, Closeable {
                                                 @Nonnull T entity,
                                                 @Nonnull Principal user,
                                                 @Nonnull IAuditSerDe serializer) throws AuditException {
-        if (defaultLogger != null) {
-            return defaultLogger.write(type, entity, entity.getClass(), user, serializer);
+        AbstractAuditLogger logger = getLogger(entity.getClass());
+        if (logger != null) {
+            return logger.write(type, entity, entity.getClass(), user, serializer);
         }
         return null;
     }
@@ -87,6 +92,18 @@ public class AuditManager implements IConfigurable, Closeable {
         return null;
     }
 
+    public AbstractAuditLogger getLogger(Class<? extends IKeyed> type) {
+        if (entityIndex.containsKey(type)) {
+            return entityIndex.get(type);
+        } else if (type.isAnnotationPresent(Audited.class)) {
+            Audited a = type.getAnnotation(Audited.class);
+            if (loggers.containsKey(a.logger())) {
+                return loggers.get(a.logger());
+            }
+        }
+        return defaultLogger;
+    }
+
     /**
      * Configure this type instance.
      *
@@ -108,7 +125,7 @@ public class AuditManager implements IConfigurable, Closeable {
                 } else if (pnode instanceof ConfigListElementNode) {
                     List<ConfigElementNode> nodes = ((ConfigListElementNode) pnode).getValues();
                     if (nodes != null && !nodes.isEmpty()) {
-                        for(ConfigElementNode en : nodes) {
+                        for (ConfigElementNode en : nodes) {
                             readLoggerConfig((ConfigPathNode) en);
                         }
                     }
@@ -142,6 +159,13 @@ public class AuditManager implements IConfigurable, Closeable {
             if (logger.defaultLogger()) {
                 defaultLogger = logger;
             }
+            List<String> classes = logger.classes();
+            if (classes != null && !classes.isEmpty()) {
+                for (String c : classes) {
+                    Class<? extends IKeyed> type = (Class<? extends IKeyed>) Class.forName(c);
+                    entityIndex.put(type, logger);
+                }
+            }
             LogUtils.info(getClass(), String.format("Configured logger. [name=%s][type=%s][default=%s]",
                     logger.name(), logger.getClass().getCanonicalName(), logger.defaultLogger()));
         } catch (Exception ex) {
@@ -152,7 +176,7 @@ public class AuditManager implements IConfigurable, Closeable {
     @Override
     public void close() throws IOException {
         if (!loggers.isEmpty()) {
-            for(String key : loggers.keySet()) {
+            for (String key : loggers.keySet()) {
                 loggers.get(key).close();
             }
             loggers.clear();

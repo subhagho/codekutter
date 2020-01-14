@@ -3,6 +3,7 @@ package com.codekutter.common.stores.model;
 import com.codekutter.common.Context;
 import com.codekutter.common.model.CopyException;
 import com.codekutter.common.model.IEntity;
+import com.codekutter.common.model.StringKey;
 import com.codekutter.common.model.ValidationExceptions;
 import com.codekutter.common.stores.annotations.Reference;
 import lombok.Getter;
@@ -18,7 +19,7 @@ import java.util.List;
 @Setter
 @Entity
 @Table(name = "tb_orders")
-public class Order implements IEntity<String> {
+public class Order implements IEntity<StringKey> {
     @Id
     @Column(name = "order_id")
     private String id;
@@ -45,32 +46,22 @@ public class Order implements IEntity<String> {
     }
 
     @Override
-    public String getKey() {
-        return id;
-    }
-
-    /**
-     * Get a String representation of the key.
-     *
-     * @return - String Key
-     */
-    @Override
-    public String getStringKey() {
-        return getKey();
+    public StringKey getKey() {
+        return new StringKey(id);
     }
 
     @Override
-    public int compare(String key) {
-        return id.compareTo(key);
+    public int compare(StringKey key) {
+        return id.compareTo(key.getKey());
     }
 
     @Override
-    public IEntity<String> copyChanges(IEntity<String> source, Context context) throws CopyException {
+    public IEntity<StringKey> copyChanges(IEntity<StringKey> source, Context context) throws CopyException {
         return null;
     }
 
     @Override
-    public IEntity<String> clone(Context context) throws CopyException {
+    public IEntity<StringKey> clone(Context context) throws CopyException {
         return null;
     }
 

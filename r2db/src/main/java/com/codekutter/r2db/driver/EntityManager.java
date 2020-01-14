@@ -19,6 +19,7 @@ package com.codekutter.r2db.driver;
 
 import com.codekutter.common.Context;
 import com.codekutter.common.model.IEntity;
+import com.codekutter.common.model.IKey;
 import com.codekutter.common.stores.*;
 import com.codekutter.common.stores.annotations.MappedStores;
 import com.codekutter.common.stores.annotations.SchemaSharded;
@@ -180,10 +181,10 @@ public class EntityManager implements IConfigurable {
         return dataStore.update(entity, type, context);
     }
 
-    public <T, K, E extends IEntity<K>> boolean delete(@Nonnull E entity,
-                                                       @Nonnull Class<? extends E> type,
-                                                       Class<? extends AbstractDataStore<T>> storeType,
-                                                       Context context) throws DataStoreException {
+    public <T, K extends IKey, E extends IEntity<K>> boolean delete(@Nonnull E entity,
+                                                                    @Nonnull Class<? extends E> type,
+                                                                    Class<? extends AbstractDataStore<T>> storeType,
+                                                                    Context context) throws DataStoreException {
         Object shardKey = null;
         if (entity instanceof IShardedEntity) {
             shardKey = ((IShardedEntity) entity).getShardKey();

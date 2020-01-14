@@ -3,20 +3,13 @@ package com.codekutter.common.model;
 /**
  * Interface represents a object instance with a key.
  *
- * @param <K> - Key type.
+ * @param <K> - Key class.
  */
-public interface IKeyed<K> {
+public interface IKeyed<K extends IKey> {
     /**
      * Get the object instance Key.
      *
      * @return - Key
      */
     K getKey();
-
-    /**
-     * Get a String representation of the key.
-     *
-     * @return - String Key
-     */
-    String getStringKey();
 }

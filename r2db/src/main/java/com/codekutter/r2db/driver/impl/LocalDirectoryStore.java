@@ -102,7 +102,7 @@ public class LocalDirectoryStore extends AbstractDirectoryStore<File> {
         if (entity instanceof FileEntity) {
             e = (FileEntity) entity;
         } else if (entity instanceof StringEntity) {
-            String path = ((StringEntity) entity).getValue();
+            String path = ((StringEntity) entity).getValue().getKey();
             if (!Strings.isNullOrEmpty(path))
                 e = new FileEntity(path);
         } else {

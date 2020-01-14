@@ -26,11 +26,11 @@ import javax.annotation.Nonnull;
 
 @Getter
 @Setter
-public class StringEntity implements IEntity<String> {
-    private String value;
+public class StringEntity implements IEntity<StringKey> {
+    private StringKey value;
 
     public StringEntity(@Nonnull String value) {
-        this.value = value;
+        this.value = new StringKey(value);
     }
 
     /**
@@ -39,19 +39,10 @@ public class StringEntity implements IEntity<String> {
      * @return - Entity Key.
      */
     @Override
-    public String getKey() {
+    public StringKey getKey() {
         return value;
     }
 
-    /**
-     * Get a String representation of the key.
-     *
-     * @return - String Key
-     */
-    @Override
-    public String getStringKey() {
-        return value;
-    }
 
     /**
      * Compare the entity key with the key specified.
@@ -60,7 +51,7 @@ public class StringEntity implements IEntity<String> {
      * @return - Comparision.
      */
     @Override
-    public int compare(String key) {
+    public int compare(StringKey key) {
         return value.compareTo(key);
     }
 
@@ -82,9 +73,9 @@ public class StringEntity implements IEntity<String> {
      * @throws CopyException
      */
     @Override
-    public IEntity<String> copyChanges(IEntity<String> source, Context context) throws CopyException {
-        Preconditions.checkArgument(source instanceof StringEntity);
-        this.value = ((StringEntity) source).value;
+    public IEntity<StringKey> copyChanges(IEntity<StringKey> source, Context context) throws CopyException {
+        Preconditions.checkArgument(source != null);
+        this.value.setKey(source.getKey().getKey());
         return this;
     }
 
@@ -96,8 +87,8 @@ public class StringEntity implements IEntity<String> {
      * @throws CopyException
      */
     @Override
-    public IEntity<String> clone(Context context) throws CopyException {
-        return new StringEntity(value);
+    public IEntity<StringKey> clone(Context context) throws CopyException {
+        return new StringEntity(value.getKey());
     }
 
     /**

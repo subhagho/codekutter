@@ -25,6 +25,7 @@
 package com.codekutter.zconfig.core.utils;
 
 import com.codekutter.common.model.IEntity;
+import com.codekutter.common.model.IKey;
 import com.codekutter.common.utils.ReflectionUtils;
 import com.codekutter.zconfig.core.model.EntityException;
 import com.google.common.base.Preconditions;
@@ -59,8 +60,8 @@ public class EntityUtils {
      * @return - Updated Target entity.
      * @throws EntityException
      */
-    public static <K, T extends IEntity<K>> T copyChanges(@Nonnull T source,
-                                                    @Nonnull T target)
+    public static <K extends IKey, T extends IEntity<K>> T copyChanges(@Nonnull T source,
+                                                                       @Nonnull T target)
     throws EntityException {
         Preconditions.checkArgument(
                 ReflectionUtils.isSuperType(target.getClass(), source.getClass()));

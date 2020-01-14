@@ -2,12 +2,9 @@ package com.codekutter.common.auditing;
 
 import com.codekutter.common.model.AuditRecord;
 import com.codekutter.common.model.EObjectState;
+import com.codekutter.common.model.IKey;
 import com.codekutter.common.model.IKeyed;
 import com.codekutter.common.utils.LogUtils;
-import com.codekutter.zconfig.common.ConfigurationAnnotationProcessor;
-import com.codekutter.zconfig.common.ConfigurationException;
-import com.codekutter.zconfig.common.model.nodes.AbstractConfigNode;
-import com.codekutter.zconfig.common.model.nodes.ConfigPathNode;
 import com.google.common.base.Preconditions;
 import org.hibernate.Session;
 
@@ -63,8 +60,8 @@ public class DBAuditLogger extends AbstractAuditLogger<Session> {
      * @throws AuditException
      */
     @Override
-    public <K, T extends IKeyed<K>> Collection<AuditRecord> find(@Nonnull K key,
-                                                           @Nonnull Class<? extends T> entityType) throws AuditException {
+    public <K extends IKey, T extends IKeyed<K>> Collection<AuditRecord> find(@Nonnull K key,
+                                                                          @Nonnull Class<? extends T> entityType) throws AuditException {
         Preconditions.checkState(dataStore() != null);
         try {
             state().check(EObjectState.Available, getClass());

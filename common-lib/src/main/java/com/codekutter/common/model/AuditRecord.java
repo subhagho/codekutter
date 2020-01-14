@@ -58,16 +58,6 @@ public class AuditRecord implements IEntity<AuditRecordId> {
     }
 
     /**
-     * Get a String representation of the key.
-     *
-     * @return - String Key
-     */
-    @Override
-    public String getStringKey() {
-        return id.toString();
-    }
-
-    /**
      * Compare the entity key with the key specified.
      *
      * @param key - Target Key.

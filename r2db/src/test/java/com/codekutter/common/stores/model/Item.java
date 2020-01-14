@@ -26,16 +26,6 @@ public class Item implements IEntity<ItemId> {
         return id;
     }
 
-    /**
-     * Get a String representation of the key.
-     *
-     * @return - String Key
-     */
-    @Override
-    public String getStringKey() {
-        return id.toString();
-    }
-
     @Override
     public int compare(ItemId key) {
         return id.compareTo(key);
