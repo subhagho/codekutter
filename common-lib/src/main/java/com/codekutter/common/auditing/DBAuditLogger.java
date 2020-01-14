@@ -84,30 +84,6 @@ public class DBAuditLogger extends AbstractAuditLogger<Session> {
         }
     }
 
-    /**
-     * Configure this type instance.
-     *
-     * @param node - Handle to the configuration node.
-     * @throws ConfigurationException
-     */
-    @Override
-    public void configure(@Nonnull AbstractConfigNode node) throws ConfigurationException {
-        Preconditions.checkArgument(node instanceof ConfigPathNode);
-        try {
-            ConfigurationAnnotationProcessor.readConfigAnnotations(getClass(), (ConfigPathNode) node, this);
-            if (serializerClass() != null) {
-                IAuditSerDe serializer = serializerClass().newInstance();
-                withSerializer(serializer);
-            }
-
-            state().setState(EObjectState.Available);
-            LogUtils.info(getClass(), String.format("Initialized DataBase Audit Logger. [name=%s]", name()));
-        } catch (Throwable ex) {
-            state().setError(ex);
-            throw new ConfigurationException(ex);
-        }
-    }
-
     @Override
     public void close() throws IOException {
         if (state().getState() == EObjectState.Available) {

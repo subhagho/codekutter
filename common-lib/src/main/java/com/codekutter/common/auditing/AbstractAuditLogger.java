@@ -4,10 +4,14 @@ import com.codekutter.common.StateException;
 import com.codekutter.common.model.*;
 import com.codekutter.common.stores.AbstractDataStore;
 import com.codekutter.common.utils.LogUtils;
+import com.codekutter.zconfig.common.ConfigurationAnnotationProcessor;
+import com.codekutter.zconfig.common.ConfigurationException;
 import com.codekutter.zconfig.common.IConfigurable;
 import com.codekutter.zconfig.common.model.annotations.ConfigAttribute;
 import com.codekutter.zconfig.common.model.annotations.ConfigPath;
 import com.codekutter.zconfig.common.model.annotations.ConfigValue;
+import com.codekutter.zconfig.common.model.nodes.AbstractConfigNode;
+import com.codekutter.zconfig.common.model.nodes.ConfigPathNode;
 import com.google.common.base.Preconditions;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -68,6 +72,31 @@ public abstract class AbstractAuditLogger<C> implements IConfigurable, Closeable
     public AbstractAuditLogger<C> withSerializer(@Nonnull IAuditSerDe serializer) {
         this.serializer = serializer;
         return this;
+    }
+
+    /**
+     * Configure this type instance.
+     *
+     * @param node - Handle to the configuration node.
+     * @throws ConfigurationException
+     */
+    @Override
+    public void configure(@Nonnull AbstractConfigNode node) throws ConfigurationException {
+        Preconditions.checkArgument(node instanceof ConfigPathNode);
+        try {
+            ConfigurationAnnotationProcessor.readConfigAnnotations(getClass(), (ConfigPathNode) node, this);
+            if (serializerClass() != null) {
+                IAuditSerDe serializer = serializerClass().newInstance();
+                withSerializer(serializer);
+                LogUtils.info(getClass(), String.format("Using default serializer. [type=%s]", serializer.getClass().getCanonicalName()));
+            }
+
+            state().setState(EObjectState.Available);
+            LogUtils.info(getClass(), String.format("Initialized DataBase Audit Logger. [name=%s]", name()));
+        } catch (Throwable ex) {
+            state().setError(ex);
+            throw new ConfigurationException(ex);
+        }
     }
 
     /**
