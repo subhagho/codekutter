@@ -23,6 +23,8 @@ public class AuditRecord implements IEntity<AuditRecordId> {
     private String entityId;
     @Column(name = "entity_data")
     private byte[] entityData;
+    @Column(name = "change_delta")
+    private byte[] changeDelta;
     @AttributeOverrides({
             @AttributeOverride(name = "modifiedBy", column = @Column(name = "user_id")),
             @AttributeOverride(name = "timestamp", column = @Column(name = "timestamp"))

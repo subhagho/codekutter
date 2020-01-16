@@ -52,21 +52,23 @@ public class AuditManager implements IConfigurable, Closeable {
 
     public <T extends IKeyed> AuditRecord audit(@Nonnull EAuditType type,
                                                 @Nonnull T entity,
+                                                String changeDelta,
                                                 @Nonnull Principal user) throws AuditException {
         AbstractAuditLogger logger = getLogger(entity.getClass());
         if (logger != null) {
-            return logger.write(type, entity, entity.getClass(), user);
+            return logger.write(type, entity, entity.getClass(), changeDelta, user);
         }
         return null;
     }
 
     public <T extends IKeyed> AuditRecord audit(@Nonnull EAuditType type,
                                                 @Nonnull T entity,
+                                                String changeDelta,
                                                 @Nonnull Principal user,
                                                 @Nonnull IAuditSerDe serializer) throws AuditException {
         AbstractAuditLogger logger = getLogger(entity.getClass());
         if (logger != null) {
-            return logger.write(type, entity, entity.getClass(), user, serializer);
+            return logger.write(type, entity, entity.getClass(), changeDelta,user, serializer);
         }
         return null;
     }
@@ -74,9 +76,10 @@ public class AuditManager implements IConfigurable, Closeable {
     public <T extends IKeyed> AuditRecord audit(@Nonnull String logger,
                                                 @Nonnull EAuditType type,
                                                 @Nonnull T entity,
+                                                String changeDelta,
                                                 @Nonnull Principal user) throws AuditException {
         if (loggers.containsKey(logger)) {
-            return loggers.get(logger).write(type, entity, entity.getClass(), user);
+            return loggers.get(logger).write(type, entity, entity.getClass(), changeDelta, user);
         }
         return null;
     }
@@ -84,10 +87,11 @@ public class AuditManager implements IConfigurable, Closeable {
     public <T extends IKeyed> AuditRecord audit(@Nonnull String logger,
                                                 @Nonnull EAuditType type,
                                                 @Nonnull T entity,
+                                                String changeDelta,
                                                 @Nonnull IAuditSerDe serializer,
                                                 @Nonnull Principal user) throws AuditException {
         if (loggers.containsKey(logger)) {
-            return loggers.get(logger).write(type, entity, entity.getClass(), user, serializer);
+            return loggers.get(logger).write(type, entity, entity.getClass(), changeDelta, user, serializer);
         }
         return null;
     }

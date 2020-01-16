@@ -38,6 +38,7 @@ CREATE TABLE `tb_audit_records` (
   `entity_data` blob DEFAULT NULL,
   `user_id` varchar(128) NOT NULL,
   `timestamp` decimal(24,0) NOT NULL,
+  `change_delta` blob DEFAULT NULL,
   PRIMARY KEY (`record_type`,`record_id`),
   KEY `tb_audit_records_record_type_IDX` (`record_type`,`entity_id`) USING BTREE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='Data base table to persist audit log records';

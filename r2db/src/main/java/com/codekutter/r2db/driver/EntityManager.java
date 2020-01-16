@@ -18,13 +18,17 @@
 package com.codekutter.r2db.driver;
 
 import com.codekutter.common.Context;
+import com.codekutter.common.auditing.AuditManager;
+import com.codekutter.common.auditing.Audited;
+import com.codekutter.common.auditing.IChange;
+import com.codekutter.common.model.AuditRecord;
+import com.codekutter.common.model.EAuditType;
 import com.codekutter.common.model.IEntity;
 import com.codekutter.common.model.IKey;
 import com.codekutter.common.stores.*;
-import com.codekutter.common.stores.annotations.MappedStores;
-import com.codekutter.common.stores.annotations.SchemaSharded;
-import com.codekutter.common.stores.annotations.TableSharded;
+import com.codekutter.common.stores.annotations.*;
 import com.codekutter.common.utils.ConfigUtils;
+import com.codekutter.common.utils.LogUtils;
 import com.codekutter.common.utils.ReflectionUtils;
 import com.codekutter.zconfig.common.ConfigurationAnnotationProcessor;
 import com.codekutter.zconfig.common.ConfigurationException;
@@ -33,16 +37,27 @@ import com.codekutter.zconfig.common.model.annotations.ConfigAttribute;
 import com.codekutter.zconfig.common.model.annotations.ConfigPath;
 import com.codekutter.zconfig.common.model.nodes.AbstractConfigNode;
 import com.codekutter.zconfig.common.model.nodes.ConfigPathNode;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.Multimap;
+import com.sun.org.apache.xpath.internal.operations.Mult;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 import org.apache.lucene.search.Query;
+import org.elasticsearch.common.Strings;
+import org.hibernate.mapping.Join;
 
 import javax.annotation.Nonnull;
+import javax.persistence.JoinColumn;
 import java.io.IOException;
+import java.lang.reflect.Array;
+import java.lang.reflect.Field;
+import java.security.Principal;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Getter
 @Setter
@@ -50,10 +65,15 @@ import java.util.*;
 @ConfigPath(path = "entity-manager")
 @SuppressWarnings("rawtypes")
 public class EntityManager implements IConfigurable {
+    private static final int DEFAULT_BATCH_SIZE = 1000;
+    private static final String KEY_SEPARATOR = "~||~";
+
     @ConfigAttribute(name = "name")
     private String name;
     @Setter(AccessLevel.NONE)
     private DataStoreManager dataStoreManager;
+    @Setter(AccessLevel.NONE)
+    private Map<Class<? extends IShardProvider>, IShardProvider> shardProviders = new ConcurrentHashMap<>();
 
     public <T extends IEntity> List<T> textSearch(@Nonnull Query query,
                                                   @Nonnull Class<? extends T> type,
@@ -149,70 +169,325 @@ public class EntityManager implements IConfigurable {
         }
     }
 
+    @SuppressWarnings("unchecked")
     public <T, E extends IEntity> E create(@Nonnull E entity,
                                            @Nonnull Class<? extends IEntity> type,
                                            Class<? extends AbstractDataStore<T>> storeType,
+                                           @Nonnull Principal user,
                                            Context context) throws DataStoreException {
-        Object shardKey = null;
-        if (entity instanceof IShardedEntity) {
-            shardKey = ((IShardedEntity) entity).getShardKey();
-        } else if (type.isAnnotationPresent(TableSharded.class)) {
+        try {
+            Object shardKey = null;
+            if (entity instanceof IShardedEntity) {
+                shardKey = ((IShardedEntity) entity).getShardKey();
+            }
+            AbstractDataStore<T> dataStore = findStore(type, storeType, shardKey);
+            if (dataStore == null) {
+                throw new DataStoreException(String.format("No data store found for entity. [type=%s]",
+                        type.getCanonicalName()));
+            }
+            entity = (E) formatEntity(entity, context);
+            entity = dataStore.create(entity, type, context);
+            if (type.isAnnotationPresent(Audited.class)) {
+                AuditRecord record = AuditManager.get().audit(EAuditType.Create, entity, null, user);
+                if (record == null) {
+                    LogUtils.error(getClass(), String.format("Audit Log failed for type. [type=%s]", type.getCanonicalName()));
+                }
+            }
 
+            return createReferences(entity, type, user, context);
+        } catch (Exception ex) {
+            throw new DataStoreException(ex);
         }
-        AbstractDataStore<T> dataStore = findStore(type, storeType, shardKey);
-        if (dataStore == null) {
-            throw new DataStoreException(String.format("No data store found for entity. [type=%s]", type.getCanonicalName()));
-        }
-        return dataStore.create(entity, type, context);
     }
 
+    private <E extends IEntity> E createReferences(E entity,
+                                                   Class<? extends IEntity> entityType,
+                                                   Principal user,
+                                                   Context context) throws DataStoreException {
+        try {
+            List<Field> fields = getReferenceFields(entityType);
+            if (fields != null && !fields.isEmpty()) {
+                for (Field f : fields) {
+                    Object value = ReflectionUtils.getFieldValue(entity, f);
+                    if (value != null) {
+                        Class<?> type = f.getType();
+                        if (ReflectionUtils.implementsInterface(List.class, type)) {
+                            type = ReflectionUtils.getGenericListType(f);
+                            Collection values = (Collection) value;
+                            for (Object v : values) {
+                                Object t = create((IEntity) v, (Class<? extends IEntity>) type, null, user, context);
+                                if (t == null) {
+                                    throw new DataStoreException(
+                                            String.format("Error creating nested entity. [type=%s][key=%s]",
+                                                    type.getCanonicalName(), ((IEntity) v).getKey().stringKey()));
+                                }
+                            }
+                        } else if (ReflectionUtils.implementsInterface(Set.class, type)) {
+                            type = ReflectionUtils.getGenericSetType(f);
+                            Collection values = (Collection) value;
+                            for (Object v : values) {
+                                Object t = create((IEntity) v, (Class<? extends IEntity>) type, null, user, context);
+                                if (t == null) {
+                                    throw new DataStoreException(
+                                            String.format("Error creating nested entity. [type=%s][key=%s]",
+                                                    type.getCanonicalName(), ((IEntity) v).getKey().stringKey()));
+                                }
+                            }
+                        } else {
+                            Object t = create((IEntity) value, (Class<? extends IEntity>) type, null, user, context);
+                            if (t == null) {
+                                throw new DataStoreException(
+                                        String.format("Error creating nested entity. [type=%s][key=%s]",
+                                                type.getCanonicalName(), ((IEntity) value).getKey().stringKey()));
+                            }
+                        }
+                    }
+                }
+            }
+            return entity;
+        } catch (Exception ex) {
+            throw new DataStoreException(ex);
+        }
+    }
+
+    private List<Field> getReferenceFields(Class<? extends IEntity> entityType) throws DataStoreException {
+        try {
+            List<Field> fields = null;
+            Field[] source = ReflectionUtils.getAllFields(entityType);
+            for (Field f : source) {
+                if (f.isAnnotationPresent(Reference.class)) {
+                    Class<?> type = f.getType();
+                    if (ReflectionUtils.implementsInterface(List.class, type)) {
+                        type = ReflectionUtils.getGenericListType(f);
+                    } else if (ReflectionUtils.implementsInterface(Set.class, type)) {
+                        type = ReflectionUtils.getGenericSetType(f);
+                    }
+                    if (!ReflectionUtils.implementsInterface(IEntity.class, type)) {
+                        throw new DataStoreException(
+                                String.format("Invalid reference definition. [type=%s][field=%s][field type=%s]",
+                                        entityType.getCanonicalName(), f.getName(), type.getCanonicalName()));
+                    }
+                    if (fields == null) {
+                        fields = new ArrayList<>();
+                    }
+                    fields.add(f);
+                }
+            }
+            return fields;
+        } catch (Exception ex) {
+            throw new DataStoreException(ex);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
     public <T, E extends IEntity> E update(@Nonnull E entity,
                                            @Nonnull Class<? extends IEntity> type,
                                            Class<? extends AbstractDataStore<T>> storeType,
+                                           @Nonnull Principal user,
                                            Context context) throws DataStoreException {
-        Object shardKey = null;
-        if (entity instanceof IShardedEntity) {
-            shardKey = ((IShardedEntity) entity).getShardKey();
+        try {
+            Object shardKey = null;
+            if (entity instanceof IShardedEntity) {
+                shardKey = ((IShardedEntity) entity).getShardKey();
+            }
+            AbstractDataStore<T> dataStore = findStore(type, storeType, shardKey);
+            if (dataStore == null) {
+                throw new DataStoreException(String.format("No data store found for entity. [type=%s]", type.getCanonicalName()));
+            }
+            E prev = null;
+            if (type.isAnnotationPresent(Audited.class)) {
+                prev = (E) find(entity.getKey(), type, shardKey, storeType, context);
+                if (prev == null) {
+                    throw new DataStoreException(String.format("Current entity record not found. [type=%s][key=%s]",
+                            type.getCanonicalName(), entity.getKey().stringKey()));
+                }
+            }
+            entity = (E) formatEntity(entity, context);
+            entity = dataStore.update(entity, type, context);
+            if (type.isAnnotationPresent(Audited.class)) {
+                String delta = null;
+                if (entity instanceof IChange) {
+                    JsonNode node = ((IChange) entity).getChange(prev);
+                    if (node != null) {
+                        delta = node.toPrettyString();
+                    }
+                }
+                AuditRecord record = AuditManager.get().audit(EAuditType.Update, entity, delta, user);
+                if (record == null) {
+                    LogUtils.error(getClass(), String.format("Audit Log failed for type. [type=%s]", type.getCanonicalName()));
+                }
+            }
+            return updateReferences(entity, type, user, context);
+        } catch (Exception ex) {
+            throw new DataStoreException(ex);
         }
-        AbstractDataStore<T> dataStore = findStore(type, storeType, shardKey);
-        if (dataStore == null) {
-            throw new DataStoreException(String.format("No data store found for entity. [type=%s]", type.getCanonicalName()));
+    }
+
+    private <E extends IEntity> E updateReferences(E entity,
+                                                   Class<? extends IEntity> entityType,
+                                                   Principal user,
+                                                   Context context) throws DataStoreException {
+        try {
+            List<Field> fields = getReferenceFields(entityType);
+            if (fields != null && !fields.isEmpty()) {
+                for (Field f : fields) {
+                    Object value = ReflectionUtils.getFieldValue(entity, f);
+                    if (value != null) {
+                        Class<?> type = f.getType();
+                        if (ReflectionUtils.implementsInterface(List.class, type)) {
+                            type = ReflectionUtils.getGenericListType(f);
+                            Collection values = (Collection) value;
+                            for (Object v : values) {
+                                Object t = create((IEntity) v, (Class<? extends IEntity>) type, null, user, context);
+                                if (t == null) {
+                                    throw new DataStoreException(
+                                            String.format("Error creating nested entity. [type=%s][key=%s]",
+                                                    type.getCanonicalName(), ((IEntity) v).getKey().stringKey()));
+                                }
+                            }
+                        } else if (ReflectionUtils.implementsInterface(Set.class, type)) {
+                            type = ReflectionUtils.getGenericSetType(f);
+                            Collection values = (Collection) value;
+                            for (Object v : values) {
+                                Object t = create((IEntity) v, (Class<? extends IEntity>) type, null, user, context);
+                                if (t == null) {
+                                    throw new DataStoreException(
+                                            String.format("Error creating nested entity. [type=%s][key=%s]",
+                                                    type.getCanonicalName(), ((IEntity) v).getKey().stringKey()));
+                                }
+                            }
+                        } else {
+                            Object t = create((IEntity) value, (Class<? extends IEntity>) type, null, user, context);
+                            if (t == null) {
+                                throw new DataStoreException(
+                                        String.format("Error creating nested entity. [type=%s][key=%s]",
+                                                type.getCanonicalName(), ((IEntity) value).getKey().stringKey()));
+                            }
+                        }
+                    }
+                }
+            }
+            return entity;
+        } catch (Exception ex) {
+            throw new DataStoreException(ex);
         }
-        return dataStore.update(entity, type, context);
     }
 
     public <T, K extends IKey, E extends IEntity<K>> boolean delete(@Nonnull E entity,
                                                                     @Nonnull Class<? extends E> type,
                                                                     Class<? extends AbstractDataStore<T>> storeType,
+                                                                    @Nonnull Principal user,
                                                                     Context context) throws DataStoreException {
-        Object shardKey = null;
-        if (entity instanceof IShardedEntity) {
-            shardKey = ((IShardedEntity) entity).getShardKey();
+        try {
+            Object shardKey = null;
+            if (entity instanceof IShardedEntity) {
+                shardKey = ((IShardedEntity) entity).getShardKey();
+            }
+            AbstractDataStore<T> dataStore = findStore(type, storeType, shardKey);
+            if (dataStore == null) {
+                throw new DataStoreException(String.format("No data store found for entity. [type=%s]", type.getCanonicalName()));
+            }
+            E prev = null;
+            if (type.isAnnotationPresent(Audited.class)) {
+                prev = (E) find(entity.getKey(), type, shardKey, storeType, context);
+                if (prev == null) {
+                    throw new DataStoreException(String.format("Current entity record not found. [type=%s][key=%s]",
+                            type.getCanonicalName(), entity.getKey().stringKey()));
+                }
+            }
+            entity = (E) formatEntity(entity, context);
+            boolean ret = dataStore.delete(entity.getKey(), type, context);
+            if (type.isAnnotationPresent(Audited.class)) {
+                AuditRecord record = AuditManager.get().audit(EAuditType.Delete, entity, null, user);
+                if (record == null) {
+                    LogUtils.error(getClass(), String.format("Audit Log failed for type. [type=%s]", type.getCanonicalName()));
+                }
+            }
+            return ret;
+        } catch (Exception ex) {
+            throw new DataStoreException(ex);
         }
-        AbstractDataStore<T> dataStore = findStore(type, storeType, shardKey);
-        if (dataStore == null) {
-            throw new DataStoreException(String.format("No data store found for entity. [type=%s]", type.getCanonicalName()));
-        }
-        return dataStore.delete(entity.getKey(), type, context);
     }
 
-    public <T, E extends IEntity> E find(@Nonnull Object key, @Nonnull Class<? extends E> type,
+    @SuppressWarnings("unchecked")
+    private <K extends IKey, E extends IEntity<K>> E formatEntity(@Nonnull E entity, Context context) throws DataStoreException {
+        try {
+            Class<? extends E> type = (Class<? extends E>) entity.getClass();
+            if (entity instanceof IShardedEntity) {
+                if (type.isAnnotationPresent(TableSharded.class)) {
+                    Object shardKey = ((IShardedEntity) entity).getShardKey();
+                    if (shardKey == null) {
+                        throw new DataStoreException(String.format("Shard Key is null. [type=%s][key=%s]",
+                                type.getCanonicalName(), entity.getKey().stringKey()));
+                    }
+                    TableSharded ts = type.getAnnotation(TableSharded.class);
+                    IShardProvider provider = getShardProvider(ts.provider());
+                    int shard = provider.getShard(shardKey);
+                    Class<? extends E> ctype = null;
+                    for (TableShardSpec spec : ts.specs()) {
+                        if (spec.shard() == shard) {
+                            ctype = (Class<? extends E>) spec.mappedEntity();
+                            break;
+                        }
+                    }
+                    if (ctype == null) {
+                        throw new DataStoreException(String.format("Shard definition not found. [type=%s][shard=%d]",
+                                type.getCanonicalName(), shard));
+                    }
+                    E ne = ctype.newInstance();
+                    entity = (E) ne.copyChanges(entity, context);
+                }
+            }
+            return entity;
+        } catch (Exception ex) {
+            throw new DataStoreException(ex);
+        }
+    }
+
+    private @Nonnull
+    IShardProvider getShardProvider(Class<? extends IShardProvider> type) throws DataStoreException {
+        try {
+            if (!shardProviders.containsKey(type)) {
+                IShardProvider provider = type.newInstance();
+                shardProviders.put(type, provider);
+            }
+            return shardProviders.get(type);
+        } catch (Exception ex) {
+            throw new DataStoreException(ex);
+        }
+    }
+
+    public <T, E extends IEntity> E find(@Nonnull Object key,
+                                         @Nonnull Class<? extends E> type,
                                          Class<? extends AbstractDataStore<T>> storeType,
                                          Context context) throws DataStoreException {
-        AbstractDataStore<T> dataStore = findStore(type, storeType);
+        Preconditions.checkArgument(!type.isAnnotationPresent(SchemaSharded.class));
+        return find(key, type, null, storeType, context);
+    }
+
+    public <T, E extends IEntity> E find(@Nonnull Object key,
+                                         @Nonnull Class<? extends E> type,
+                                         Object shardKey,
+                                         Class<? extends AbstractDataStore<T>> storeType,
+                                         Context context) throws DataStoreException {
+        AbstractDataStore<T> dataStore = findStore(type, storeType, shardKey);
         if (dataStore == null) {
             throw new DataStoreException(String.format("No data store found for entity. [type=%s]", type.getCanonicalName()));
         }
         if (ReflectionUtils.implementsInterface(IShardedEntity.class, type)) {
             throw new DataStoreException(String.format("Sharded entity should be called with shard key. [type=%s]", type.getCanonicalName()));
         }
-        return dataStore.find(key, type, context);
+        E value = dataStore.find(key, type, context);
+        if (value != null)
+            findReferences(value, type, context);
+        return value;
     }
 
     public <T, E extends IEntity> Collection<E> search(@Nonnull String query,
                                                        @Nonnull Class<? extends E> type,
                                                        Class<? extends AbstractDataStore<T>> storeType,
                                                        Context context) throws DataStoreException {
+        Preconditions.checkArgument(!type.isAnnotationPresent(SchemaSharded.class));
         AbstractDataStore<T> dataStore = findStore(type, storeType);
         if (dataStore == null) {
             throw new DataStoreException(String.format("No data store found for entity. [type=%s]", type.getCanonicalName()));
@@ -220,13 +495,51 @@ public class EntityManager implements IConfigurable {
         if (ReflectionUtils.implementsInterface(IShardedEntity.class, type)) {
             throw new DataStoreException(String.format("Sharded entity should be called with shard key. [type=%s]", type.getCanonicalName()));
         }
-        return dataStore.search(query, type, context);
+        Collection<E> values = dataStore.search(query, type, context);
+        if (!values.isEmpty())
+            return findReferences(values, type, context);
+        return null;
     }
 
-    public <T, E extends IEntity> Collection<E> search(@Nonnull String query, int offset, int maxResults,
+    @SuppressWarnings("unchecked")
+    public <T, E extends IEntity> Collection<E> search(Object shardKey,
+                                                       @Nonnull String query,
                                                        @Nonnull Class<? extends E> type,
                                                        Class<? extends AbstractDataStore<T>> storeType,
                                                        Context context) throws DataStoreException {
+        if (!ReflectionUtils.implementsInterface(IShardedEntity.class, type)) {
+            throw new DataStoreException(String.format("Not a sharded entity. [type=%s]", type.getCanonicalName()));
+        }
+        if (shardKey != null) {
+            AbstractDataStore<T> dataStore = findStore(type, storeType, shardKey);
+            if (dataStore == null) {
+                throw new DataStoreException(String.format("No data store found for entity. [type=%s]", type.getCanonicalName()));
+            }
+            Collection<E> values = dataStore.search(query, type, context);
+            if (!values.isEmpty())
+                return findReferences(values, type, context);
+        } else {
+            List<AbstractDataStore<T>> dataStores = dataStoreManager.getShards(storeType, (Class<? extends IShardedEntity>) type);
+            List<E> values = new ArrayList<>();
+            for (AbstractDataStore<T> dataStore : dataStores) {
+                List<E> result = (List<E>) dataStore.search(query, type, context);
+                if (result != null && !result.isEmpty()) {
+                    values.addAll(result);
+                }
+            }
+            if (!values.isEmpty())
+                return findReferences(values, type, context);
+        }
+        return null;
+    }
+
+    public <T, E extends IEntity> Collection<E> search(@Nonnull String query,
+                                                       int offset,
+                                                       int maxResults,
+                                                       @Nonnull Class<? extends E> type,
+                                                       Class<? extends AbstractDataStore<T>> storeType,
+                                                       Context context) throws DataStoreException {
+        Preconditions.checkArgument(!type.isAnnotationPresent(SchemaSharded.class));
         AbstractDataStore<T> dataStore = findStore(type, storeType);
         if (dataStore == null) {
             throw new DataStoreException(String.format("No data store found for entity. [type=%s]", type.getCanonicalName()));
@@ -234,7 +547,45 @@ public class EntityManager implements IConfigurable {
         if (ReflectionUtils.implementsInterface(IShardedEntity.class, type)) {
             throw new DataStoreException(String.format("Sharded entity should be called with shard key. [type=%s]", type.getCanonicalName()));
         }
-        return dataStore.search(query, offset, maxResults, type, context);
+        Collection<E> values = dataStore.search(query, offset, maxResults, type, context);
+        if (!values.isEmpty())
+            return findReferences(values, type, context);
+        return null;
+    }
+
+
+    @SuppressWarnings("unchecked")
+    public <T, E extends IEntity> Collection<E> search(Object shardKey,
+                                                       @Nonnull String query,
+                                                       int offset,
+                                                       int maxResults,
+                                                       @Nonnull Class<? extends E> type,
+                                                       Class<? extends AbstractDataStore<T>> storeType,
+                                                       Context context) throws DataStoreException {
+        if (!ReflectionUtils.implementsInterface(IShardedEntity.class, type)) {
+            throw new DataStoreException(String.format("Not a sharded entity. [type=%s]", type.getCanonicalName()));
+        }
+        if (shardKey != null) {
+            AbstractDataStore<T> dataStore = findStore(type, storeType, shardKey);
+            if (dataStore == null) {
+                throw new DataStoreException(String.format("No data store found for entity. [type=%s]", type.getCanonicalName()));
+            }
+            Collection<E> values = dataStore.search(query, offset, maxResults, type, context);
+            if (!values.isEmpty())
+                return findReferences(values, type, context);
+        } else {
+            List<AbstractDataStore<T>> dataStores = dataStoreManager.getShards(storeType, (Class<? extends IShardedEntity>) type);
+            List<E> values = new ArrayList<>();
+            for (AbstractDataStore<T> dataStore : dataStores) {
+                List<E> result = (List<E>) dataStore.search(query, offset, maxResults, type, context);
+                if (result != null && !result.isEmpty()) {
+                    values.addAll(result);
+                }
+            }
+            if (!values.isEmpty())
+                return findReferences(values, type, context);
+        }
+        return null;
     }
 
     public <T, E extends IEntity> Collection<E> search(@Nonnull String query,
@@ -242,6 +593,7 @@ public class EntityManager implements IConfigurable {
                                                        @Nonnull Class<? extends E> type,
                                                        Class<? extends AbstractDataStore<T>> storeType,
                                                        Context context) throws DataStoreException {
+        Preconditions.checkArgument(!type.isAnnotationPresent(SchemaSharded.class));
         AbstractDataStore<T> dataStore = findStore(type, storeType);
         if (dataStore == null) {
             throw new DataStoreException(String.format("No data store found for entity. [type=%s]", type.getCanonicalName()));
@@ -249,7 +601,10 @@ public class EntityManager implements IConfigurable {
         if (ReflectionUtils.implementsInterface(IShardedEntity.class, type)) {
             throw new DataStoreException(String.format("Sharded entity should be called with shard key. [type=%s]", type.getCanonicalName()));
         }
-        return dataStore.search(query, params, type, context);
+        Collection<E> values = dataStore.search(query, params, type, context);
+        if (!values.isEmpty())
+            return findReferences(values, type, context);
+        return null;
     }
 
     @SuppressWarnings("unchecked")
@@ -267,7 +622,9 @@ public class EntityManager implements IConfigurable {
             if (dataStore == null) {
                 throw new DataStoreException(String.format("No data store found for entity. [type=%s]", type.getCanonicalName()));
             }
-            return dataStore.search(query, params, type, context);
+            Collection<E> values = dataStore.search(query, params, type, context);
+            if (!values.isEmpty())
+                return findReferences(values, type, context);
         } else {
             List<AbstractDataStore<T>> dataStores = dataStoreManager.getShards(storeType, (Class<? extends IShardedEntity>) type);
             List<E> values = new ArrayList<>();
@@ -278,16 +635,19 @@ public class EntityManager implements IConfigurable {
                 }
             }
             if (!values.isEmpty())
-                return values;
+                return findReferences(values, type, context);
         }
         return null;
     }
 
-    public <T, E extends IEntity> Collection<E> search(@Nonnull String query, int offset, int maxResults,
+    public <T, E extends IEntity> Collection<E> search(@Nonnull String query,
+                                                       int offset,
+                                                       int maxResults,
                                                        Map<String, Object> params,
                                                        @Nonnull Class<? extends E> type,
                                                        Class<? extends AbstractDataStore<T>> storeType,
                                                        Context context) throws DataStoreException {
+        Preconditions.checkArgument(!type.isAnnotationPresent(SchemaSharded.class));
         AbstractDataStore<T> dataStore = findStore(type, storeType);
         if (dataStore == null) {
             throw new DataStoreException(String.format("No data store found for entity. [type=%s]", type.getCanonicalName()));
@@ -295,7 +655,185 @@ public class EntityManager implements IConfigurable {
         if (ReflectionUtils.implementsInterface(IShardedEntity.class, type)) {
             throw new DataStoreException(String.format("Sharded entity should be called with shard key. [type=%s]", type.getCanonicalName()));
         }
-        return dataStore.search(query, offset, maxResults, params, type, context);
+        Collection<E> values = dataStore.search(query, offset, maxResults, params, type, context);
+        if (!values.isEmpty())
+            return findReferences(values, type, context);
+        return null;
+    }
+
+
+    @SuppressWarnings("unchecked")
+    public <T, E extends IEntity> Collection<E> search(Object shardKey,
+                                                       @Nonnull String query,
+                                                       int offset,
+                                                       int maxResults,
+                                                       Map<String, Object> params,
+                                                       @Nonnull Class<? extends E> type,
+                                                       Class<? extends AbstractDataStore<T>> storeType,
+                                                       Context context) throws DataStoreException {
+        if (!ReflectionUtils.implementsInterface(IShardedEntity.class, type)) {
+            throw new DataStoreException(String.format("Not a sharded entity. [type=%s]", type.getCanonicalName()));
+        }
+        if (shardKey != null) {
+            AbstractDataStore<T> dataStore = findStore(type, storeType, shardKey);
+            if (dataStore == null) {
+                throw new DataStoreException(String.format("No data store found for entity. [type=%s]", type.getCanonicalName()));
+            }
+            Collection<E> values = dataStore.search(query, offset, maxResults, params, type, context);
+            if (!values.isEmpty())
+                return findReferences(values, type, context);
+        } else {
+            List<AbstractDataStore<T>> dataStores = dataStoreManager.getShards(storeType, (Class<? extends IShardedEntity>) type);
+            List<E> values = new ArrayList<>();
+            for (AbstractDataStore<T> dataStore : dataStores) {
+                List<E> result = (List<E>) dataStore.search(query, offset, maxResults, params, type, context);
+                if (result != null && !result.isEmpty()) {
+                    values.addAll(result);
+                }
+            }
+            if (!values.isEmpty())
+                return findReferences(values, type, context);
+        }
+        return null;
+    }
+
+
+    @SuppressWarnings("unchecked")
+    private <E extends IEntity> Collection<E> findReferences(Collection<E> entities,
+                                                             @Nonnull Class<? extends E> entityType,
+                                                             Context context) throws DataStoreException {
+        try {
+            List<Field> fields = getReferenceFields(entityType);
+            if (fields != null && !fields.isEmpty()) {
+                for (Field f : fields) {
+                    Reference reference = f.getAnnotation(Reference.class);
+                    String query = JoinPredicateHelper.generateHibernateJoinQuery(reference, entities, f, dataStoreManager);
+                    if (Strings.isNullOrEmpty(query)) {
+                        throw new DataStoreException(String.format("NULL query returned. [type=%s][field=%s]",
+                                entityType.getCanonicalName(), f.getName()));
+                    }
+                    int offset = 0;
+                    Multimap<String, E> parentMap = (Multimap<String, E>) mapCollection(entities, reference, true);
+                    while (true) {
+                        Collection result = search(query,
+                                offset,
+                                DEFAULT_BATCH_SIZE,
+                                (Class<? extends IEntity>) f.getType(),
+                                null, context);
+                        if (result != null && !result.isEmpty()) {
+                            joinResults(parentMap, result, f, entityType, reference);
+                        }
+                        if (result == null || result.size() < DEFAULT_BATCH_SIZE) break;
+                        offset += result.size();
+                    }
+                }
+            }
+            return entities;
+        } catch (Exception ex) {
+            throw new DataStoreException(ex);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private <E extends IEntity> void joinResults(Multimap<String, E> sources,
+                                                 Collection result,
+                                                 Field field,
+                                                 Class<? extends IEntity> entityType,
+                                                 Reference reference) throws Exception {
+        Multimap<String, IEntity> resultMap = mapCollection(result, reference, false);
+        for (String key : resultMap.keySet()) {
+            if (!sources.containsKey(key)) {
+                throw new DataStoreException(String.format("Join key invalid. [type=%s][field=%s][key=%s]",
+                        entityType.getCanonicalName(),
+                        field.getName(), key));
+            }
+            Collection<IEntity> values = resultMap.get(key);
+            Collection<E> parents = sources.get(key);
+            for (E parent : parents) {
+                Class<?> type = field.getType();
+                if (ReflectionUtils.implementsInterface(List.class, type)) {
+                    List vs = new ArrayList(values);
+                    ReflectionUtils.setObjectValue(parent, field, vs);
+                } else if (ReflectionUtils.implementsInterface(Set.class, type)) {
+                    Set vs = new HashSet(values);
+                    ReflectionUtils.setObjectValue(parent, field, vs);
+                } else {
+                    while (values.iterator().hasNext()) {
+                        Object o = values.iterator().next();
+                        ReflectionUtils.setObjectValue(parent, field, o);
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
+    private Multimap<String, IEntity> mapCollection(Collection result,
+                                                    Reference reference,
+                                                    boolean parent) throws Exception {
+        Multimap<String, IEntity> values = ArrayListMultimap.create();
+        for (Object r : result) {
+            Preconditions.checkArgument(r instanceof IEntity);
+            String key = getJoinValue(r, reference, parent);
+            values.put(key, (IEntity) r);
+        }
+        return values;
+    }
+
+    private String getJoinValue(Object value, Reference reference, boolean parent) throws Exception {
+        StringBuffer buff = new StringBuffer();
+        for (JoinColumn column : reference.columns().value()) {
+            String cname = (parent ? column.name() : column.referencedColumnName());
+            Object v = ReflectionUtils.getNestedFieldValue(value, cname);
+            if (buff.length() > 0) {
+                buff.append(KEY_SEPARATOR);
+            }
+            if (v != null) {
+                buff.append(v);
+            } else {
+                buff.append("NULL");
+            }
+        }
+        return buff.toString();
+    }
+
+    @SuppressWarnings("unchecked")
+    private <E extends IEntity> E findReferences(E entity,
+                                                 @Nonnull Class<? extends E> entityType,
+                                                 Context context) throws DataStoreException {
+        try {
+            List<Field> fields = getReferenceFields(entityType);
+            if (fields != null && !fields.isEmpty()) {
+                for (Field f : fields) {
+                    Reference reference = f.getAnnotation(Reference.class);
+                    String query = JoinPredicateHelper.generateHibernateJoinQuery(reference, entity, f, dataStoreManager);
+                    if (Strings.isNullOrEmpty(query)) {
+                        throw new DataStoreException(String.format("NULL query returned. [type=%s][field=%s]",
+                                entityType.getCanonicalName(), f.getName()));
+                    }
+                    Collection result = search(query, (Class<? extends IEntity>) f.getType(), null, context);
+                    if (result != null && !result.isEmpty()) {
+                        Class<?> type = f.getType();
+                        if (ReflectionUtils.implementsInterface(List.class, type)) {
+                            List values = new ArrayList(result);
+                            ReflectionUtils.setObjectValue(entity, f, values);
+                        } else if (ReflectionUtils.implementsInterface(Set.class, type)) {
+                            Set values = new HashSet(result);
+                            ReflectionUtils.setObjectValue(entity, f, values);
+                        } else {
+                            while (result.iterator().hasNext()) {
+                                Object o = result.iterator().next();
+                                ReflectionUtils.setObjectValue(entity, f, o);
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+            return entity;
+        } catch (Exception ex) {
+            throw new DataStoreException(ex);
+        }
     }
 
     public void close() throws IOException {

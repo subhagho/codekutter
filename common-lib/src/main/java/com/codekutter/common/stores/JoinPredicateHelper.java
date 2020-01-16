@@ -10,12 +10,13 @@ import javax.annotation.Nonnull;
 import javax.persistence.JoinColumn;
 import javax.persistence.JoinColumns;
 import java.lang.reflect.Field;
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
 public class JoinPredicateHelper {
     public static <T extends IEntity> String generateHibernateJoinQuery(@Nonnull Reference reference,
-                                                    @Nonnull List<T> source,
+                                                    @Nonnull Collection<T> source,
                                                     @Nonnull Field field,
                                                     @Nonnull DataStoreManager manager) throws DataStoreException {
         try {
@@ -87,7 +88,7 @@ public class JoinPredicateHelper {
     }
 
     public static String generateSearchQuery(@Nonnull Reference reference,
-                                             @Nonnull List<IEntity> source,
+                                             @Nonnull Collection<IEntity> source,
                                              @Nonnull Field field,
                                              @Nonnull DataStoreManager manager) throws DataStoreException {
 
