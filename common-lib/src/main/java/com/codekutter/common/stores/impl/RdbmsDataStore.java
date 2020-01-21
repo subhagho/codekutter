@@ -35,7 +35,7 @@ import java.util.List;
 import java.util.Map;
 
 public class RdbmsDataStore extends TransactionDataStore<Session, Transaction> {
-    protected HibernateConnection readConnection = null;
+    private HibernateConnection readConnection = null;
     protected Session session;
     protected Session readSession;
 
@@ -49,7 +49,7 @@ public class RdbmsDataStore extends TransactionDataStore<Session, Transaction> {
     public void beingTransaction() throws DataStoreException {
         Preconditions.checkState(session != null);
         checkThread();
-        if (transaction() != null) {
+        if (transaction() == null) {
             if (session.isJoinedToTransaction()) {
                 throw new DataStoreException("Session already has a running transaction.");
             }

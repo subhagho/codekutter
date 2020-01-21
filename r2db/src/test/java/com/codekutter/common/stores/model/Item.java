@@ -4,9 +4,12 @@ import com.codekutter.common.Context;
 import com.codekutter.common.model.CopyException;
 import com.codekutter.common.model.IEntity;
 import com.codekutter.common.model.ValidationExceptions;
+import com.codekutter.common.stores.annotations.MappedStores;
+import com.codekutter.common.stores.impl.RdbmsDataStore;
 import lombok.Getter;
 import lombok.Setter;
 
+import javax.persistence.Column;
 import javax.persistence.EmbeddedId;
 import javax.persistence.Entity;
 import javax.persistence.Table;
@@ -15,10 +18,13 @@ import javax.persistence.Table;
 @Setter
 @Entity
 @Table(name = "tb_order_items")
+@MappedStores(stores = {RdbmsDataStore.class})
 public class Item implements IEntity<ItemId> {
     @EmbeddedId
     private ItemId id;
+    @Column(name = "quantity")
     private int quantity;
+    @Column(name = "unit_price")
     private double unitPrice;
 
     @Override

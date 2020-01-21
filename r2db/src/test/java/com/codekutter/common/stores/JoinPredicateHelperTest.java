@@ -1,7 +1,7 @@
 package com.codekutter.common.stores;
 
 import com.codekutter.common.ConfigTestConstants;
-import com.codekutter.common.model.IEntity;
+import com.codekutter.common.TestDataHelper;
 import com.codekutter.common.stores.annotations.Reference;
 import com.codekutter.common.stores.model.*;
 import com.codekutter.common.utils.LogUtils;
@@ -51,7 +51,7 @@ class JoinPredicateHelperTest {
     @Test
     void generateHibernateJoinQuery() {
         try {
-            List<Order> orders = createData(1, 10);
+            List<Order> orders = TestDataHelper.createData(1, 10);
             Field field = ReflectionUtils.findField(Order.class, "items");
             assertNotNull(field);
             Reference reference = field.getAnnotation(Reference.class);
@@ -69,7 +69,7 @@ class JoinPredicateHelperTest {
     @Test
     void testGenerateHibernateJoinQuery() {
         try {
-            List<Order> orders = createData(5, 10);
+            List<Order> orders = TestDataHelper.createData(5, 10);
             Field field = ReflectionUtils.findField(Order.class, "items");
             assertNotNull(field);
             Reference reference = field.getAnnotation(Reference.class);
@@ -90,55 +90,5 @@ class JoinPredicateHelperTest {
 
     @Test
     void testGenerateSearchQuery() {
-    }
-
-    private static List<Order> createData(int count, int itemCount) {
-        List<Order> orders = new ArrayList<>();
-        List<Product> products = new ArrayList<>(itemCount);
-        for (int ii = 0; ii < itemCount; ii++) {
-            Product product = createProduct(ii);
-            products.add(product);
-        }
-        for (int ii = 0; ii < count; ii++) {
-            Order order = new Order();
-            order.setId(UUID.randomUUID().toString());
-            order.setCustomer(createCustomer());
-            for(int jj=0; jj < itemCount; jj++) {
-                Product product = products.get(jj);
-                ItemId id = new ItemId();
-                id.setOrderId(order.getId());
-                id.setProductId(product.getId());
-                Item item = new Item();
-                item.setId(id);
-                item.setQuantity(jj);
-                item.setUnitPrice(product.getBasePrice());
-
-                order.addItem(item);
-            }
-            orders.add(order);
-        }
-        return orders;
-    }
-
-    private static Customer createCustomer() {
-        Customer customer = new Customer();
-        customer.setId(UUID.randomUUID().toString());
-        customer.setFirstName("First");
-        customer.setLastName("Name");
-        customer.setDateOfBirth(new Date());
-        customer.setEmailId("first.name@email.com");
-        customer.setPhoneNumber("+91 12345-67899");
-        return customer;
-    }
-
-    private static Product createProduct(int index) {
-        Random rnd = new Random(System.currentTimeMillis());
-        Product product = new Product();
-        product.setId(UUID.randomUUID().toString());
-        product.setName(String.format("PRODUCT_%d", index));
-        product.setDescription(String.format("This is a test product. [name=%s]", product.getName()));
-        product.setBasePrice(rnd.nextDouble());
-        product.setCreatedDate(System.currentTimeMillis());
-        return product;
     }
 }

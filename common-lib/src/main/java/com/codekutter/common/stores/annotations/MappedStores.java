@@ -22,7 +22,7 @@ import com.codekutter.common.stores.AbstractDataStore;
 import java.lang.annotation.*;
 
 @Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.FIELD)
+@Target(ElementType.TYPE)
 @Inherited
 @SuppressWarnings("rawtypes")
 public @interface MappedStores {
