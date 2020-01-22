@@ -14,18 +14,15 @@ comment 'Demo customer entity table.' charset=utf8;
 
 drop table if exists tb_orders;
 
-create table tb_orders
-(
-	order_id varchar(128) not null
-		primary key,
-	customer_id varchar(128) not null,
-	order_amount decimal(12,2) default 0.00 not null,
-	created_date decimal(24) not null,
-	constraint tb_orders_fk
-		foreign key (customer_id) references tb_customer (customer_id)
-			on update cascade on delete cascade
-)
-comment 'Demo orders table.' charset=utf8;
+CREATE TABLE `tb_orders` (
+  `order_id` varchar(128) NOT NULL,
+  `customer_id` varchar(128) NOT NULL,
+  `order_amount` decimal(12,2) NOT NULL DEFAULT 0.00,
+  `created_date` datetime NOT NULL,
+  PRIMARY KEY (`order_id`),
+  KEY `tb_orders_fk` (`customer_id`),
+  CONSTRAINT `tb_orders_fk` FOREIGN KEY (`customer_id`) REFERENCES `tb_customer` (`customer_id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='Demo orders table.';
 
 drop table if exists tb_product;
 

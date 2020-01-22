@@ -28,6 +28,7 @@ public class TestDataHelper {
 
                 order.addItem(item);
             }
+            order.setCreatedOn(new Date());
             orders.add(order);
         }
         return orders;
@@ -51,6 +52,7 @@ public class TestDataHelper {
 
                 order.addItem(item);
             }
+            order.setCreatedOn(new Date());
             orders.add(order);
         }
         return orders;

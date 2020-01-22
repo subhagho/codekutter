@@ -227,6 +227,36 @@ public class DataStoreManager implements IConfigurable {
         }
     }
 
+    public void commit() throws DataStoreException {
+        long threadId = Thread.currentThread().getId();
+        if (openedStores.containsKey(threadId)) {
+            Map<String, AbstractDataStore> stores = openedStores.get(threadId);
+            for (String name : stores.keySet()) {
+                AbstractDataStore<?> store = stores.get(name);
+                if (store instanceof TransactionDataStore) {
+                    if (((TransactionDataStore) store).isInTransaction()) {
+                        ((TransactionDataStore) store).commit();
+                    }
+                }
+            }
+        }
+    }
+
+    public void rollback() throws DataStoreException {
+        long threadId = Thread.currentThread().getId();
+        if (openedStores.containsKey(threadId)) {
+            Map<String, AbstractDataStore> stores = openedStores.get(threadId);
+            for (String name : stores.keySet()) {
+                AbstractDataStore<?> store = stores.get(name);
+                if (store instanceof TransactionDataStore) {
+                    if (((TransactionDataStore) store).isInTransaction()) {
+                        ((TransactionDataStore) store).rollback();
+                    }
+                }
+            }
+        }
+    }
+
     public void closeStores() throws DataStoreException {
         long threadId = Thread.currentThread().getId();
         if (openedStores.containsKey(threadId)) {

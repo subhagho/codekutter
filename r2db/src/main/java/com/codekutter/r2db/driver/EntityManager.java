@@ -140,6 +140,14 @@ public class EntityManager implements IConfigurable {
         }
     }
 
+    public void commit() throws DataStoreException {
+        dataStoreManager.commit();
+    }
+
+    public void rollback() throws DataStoreException {
+        dataStoreManager.rollback();
+    }
+
     public <T> void commit(@Nonnull Class<? extends IEntity> type, Class<? extends AbstractDataStore<T>> storeType) throws DataStoreException {
         AbstractDataStore<T> dataStore = findStore(type, storeType);
         if (dataStore == null) {
@@ -164,6 +172,10 @@ public class EntityManager implements IConfigurable {
             }
             ((TransactionDataStore) dataStore).rollback();
         }
+    }
+
+    public void closeStores() throws DataStoreException{
+        dataStoreManager.closeStores();
     }
 
     @SuppressWarnings("unchecked")

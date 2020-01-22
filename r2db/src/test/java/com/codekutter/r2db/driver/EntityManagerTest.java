@@ -94,10 +94,12 @@ class EntityManagerTest {
                 for (Order order : orders) {
                     entityManager.create(order, Order.class, RdbmsDataStore.class, user, null);
                 }
-                entityManager.commit(Customer.class, RdbmsDataStore.class);
+                entityManager.commit();
             } catch (Throwable t) {
-                entityManager.rollback(Customer.class, RdbmsDataStore.class);
+                entityManager.rollback();
                 throw t;
+            } finally {
+                entityManager.closeStores();
             }
         } catch (Throwable t) {
             LogUtils.error(getClass(), t);
