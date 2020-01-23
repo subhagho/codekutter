@@ -36,4 +36,23 @@ public class ItemId implements IKey, Serializable {
     public String stringKey() {
         return String.format("%s::%s", orderId, productId);
     }
+
+    /**
+     * Compare the current key to the target.
+     *
+     * @param key - Key to compare to
+     * @return - == 0, < -x, > +x
+     */
+    @Override
+    public int compareTo(IKey key) {
+        if (key instanceof ItemId) {
+            ItemId i = (ItemId)key;
+            int ret = orderId.compareTo(i.orderId);
+            if (ret == 0) {
+                ret = productId.compareTo(i.productId);
+            }
+            return ret;
+        }
+        return -1;
+    }
 }

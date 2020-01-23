@@ -8,19 +8,15 @@ import com.codekutter.common.model.ValidationExceptions;
 import lombok.Getter;
 import lombok.Setter;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.Table;
+import javax.persistence.*;
 
 @Getter
 @Setter
 @Entity
 @Table(name = "tb_product")
-public class Product implements IEntity<StringKey> {
-    @Id
-    @Column(name = "product_id")
-    private String id;
+public class Product implements IEntity<ProductKey> {
+    @EmbeddedId
+    private ProductKey id;
     @Column(name = "product_name")
     private String name;
     @Column(name = "description")
@@ -31,23 +27,23 @@ public class Product implements IEntity<StringKey> {
     private long createdDate;
 
     @Override
-    public StringKey getKey() {
-        return new StringKey(id);
+    public ProductKey getKey() {
+        return id;
     }
 
 
     @Override
-    public int compare(StringKey key) {
-        return id.compareTo(key.getKey());
+    public int compare(ProductKey key) {
+        return id.compareTo(key);
     }
 
     @Override
-    public IEntity<StringKey> copyChanges(IEntity<StringKey> source, Context context) throws CopyException {
+    public IEntity<ProductKey> copyChanges(IEntity<ProductKey> source, Context context) throws CopyException {
         return null;
     }
 
     @Override
-    public IEntity<StringKey> clone(Context context) throws CopyException {
+    public IEntity<ProductKey> clone(Context context) throws CopyException {
         return null;
     }
 

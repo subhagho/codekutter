@@ -19,16 +19,15 @@ import java.util.List;
 @Setter
 @Entity
 @Table(name = "tb_orders")
-public class Order implements IEntity<StringKey> {
-    @Id
-    @Column(name = "order_id")
-    private String id;
-    @OneToOne
+public class Order implements IEntity<OrderKey> {
+    @EmbeddedId
+    private OrderKey id;
+    @ManyToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "customer_id")
     private Customer customer;
     @Transient
     @Reference(target = Item.class,
-            columns = @JoinColumns({@JoinColumn(name = "id", referencedColumnName = "id.orderId")}),
+            columns = @JoinColumns({@JoinColumn(name = "id.key", referencedColumnName = "id.orderId")}),
             query = "quantity > 0"
     )
     private List<Item> items;
@@ -46,22 +45,22 @@ public class Order implements IEntity<StringKey> {
     }
 
     @Override
-    public StringKey getKey() {
-        return new StringKey(id);
+    public OrderKey getKey() {
+        return id;
     }
 
     @Override
-    public int compare(StringKey key) {
-        return id.compareTo(key.getKey());
+    public int compare(OrderKey key) {
+        return id.compareTo(key);
     }
 
     @Override
-    public IEntity<StringKey> copyChanges(IEntity<StringKey> source, Context context) throws CopyException {
+    public IEntity<OrderKey> copyChanges(IEntity<OrderKey> source, Context context) throws CopyException {
         return null;
     }
 
     @Override
-    public IEntity<StringKey> clone(Context context) throws CopyException {
+    public IEntity<OrderKey> clone(Context context) throws CopyException {
         return null;
     }
 

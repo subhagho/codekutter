@@ -30,7 +30,19 @@ public class StringKey implements IKey, Serializable {
         return key;
     }
 
-    public int compareTo(StringKey source) {
-        return key.compareTo(source.key);
+    /**
+     * Compare the current key to the target.
+     *
+     * @param key - Key to compare to
+     * @return - == 0, < -x, > +x
+     */
+    @Override
+    public int compareTo(IKey key) {
+        if (key instanceof StringKey) {
+            StringKey s = (StringKey)key;
+            return this.key.compareTo(s.key);
+        }
+        return -1;
     }
+
 }

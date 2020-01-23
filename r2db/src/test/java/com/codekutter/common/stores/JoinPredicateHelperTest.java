@@ -51,7 +51,7 @@ class JoinPredicateHelperTest {
     @Test
     void generateHibernateJoinQuery() {
         try {
-            List<Order> orders = TestDataHelper.createData(1, 10);
+            List<Order> orders = TestDataHelper.createData(1, 10, null);
             Field field = ReflectionUtils.findField(Order.class, "items");
             assertNotNull(field);
             Reference reference = field.getAnnotation(Reference.class);
@@ -69,7 +69,7 @@ class JoinPredicateHelperTest {
     @Test
     void testGenerateHibernateJoinQuery() {
         try {
-            List<Order> orders = TestDataHelper.createData(5, 10);
+            List<Order> orders = TestDataHelper.createData(5, 10, null);
             Field field = ReflectionUtils.findField(Order.class, "items");
             assertNotNull(field);
             Reference reference = field.getAnnotation(Reference.class);

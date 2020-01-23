@@ -152,7 +152,7 @@ public class RdbmsDataStore extends TransactionDataStore<Session, Transaction> {
             throws DataStoreException {
         Preconditions.checkState(readSession != null);
         checkThread();
-
+        query = String.format("FROM %s WHERE (%s)", type.getCanonicalName(), query);
         Query qq = session.createQuery(query, type).setMaxResults(maxResults).setFirstResult(offset);
         List<?> result = qq.getResultList();
         if (result != null && !result.isEmpty()) {
@@ -172,6 +172,7 @@ public class RdbmsDataStore extends TransactionDataStore<Session, Transaction> {
         Preconditions.checkState(readSession != null);
         checkThread();
 
+        query = String.format("FROM %s WHERE (%s)", type.getCanonicalName(), query);
         Query qq = readSession.createQuery(query, type).setMaxResults(maxResults).setFirstResult(offset);
         if (parameters != null && !parameters.isEmpty()) {
             for (String key : parameters.keySet())

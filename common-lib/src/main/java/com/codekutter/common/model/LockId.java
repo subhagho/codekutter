@@ -63,4 +63,23 @@ public class LockId implements IKey, Serializable {
     public String stringKey() {
         return String.format("%s.%s", namespace, name);
     }
+
+    /**
+     * Compare the current key to the target.
+     *
+     * @param key - Key to compare to
+     * @return - == 0, < -x, > +x
+     */
+    @Override
+    public int compareTo(IKey key) {
+        if (key instanceof LockId) {
+            LockId l = (LockId) key;
+            int ret = namespace.compareTo(l.namespace);
+            if (ret == 0) {
+                ret = name.compareTo(l.name);
+            }
+            return ret;
+        }
+        return -1;
+    }
 }

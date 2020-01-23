@@ -86,7 +86,7 @@ class EntityManagerTest {
         try {
             entityManager.beingTransaction(Customer.class, RdbmsDataStore.class);
             try {
-                List<Product> products = TestDataHelper.createProducts(5);
+                List<Product> products = TestDataHelper.createProducts(5, null);
                 for(Product p : products) {
                     entityManager.create(p, Product.class, RdbmsDataStore.class, user, null);
                 }
@@ -117,6 +117,25 @@ class EntityManagerTest {
 
     @Test
     void find() {
+        try {
+            String prefix = UUID.randomUUID().toString();
+            List<Order> orders = createOrders(prefix, 5, 3);
+            assertNotNull(orders);
+            assertEquals(3, orders.size());
+
+            Order order = entityManager.find(orders.get(2).getKey(), Order.class, RdbmsDataStore.class, null);
+            assertNotNull(order);
+            List<Item> items = order.getItems();
+            assertNotNull(items);
+            assertTrue(items.size() > 0);
+            for(Item item : items) {
+                assertTrue(item.getQuantity() > 0);
+            }
+            LogUtils.debug(getClass(), order);
+        } catch (Throwable t) {
+            LogUtils.debug(getClass(), t);
+            fail(t);
+        }
     }
 
     @Test
@@ -153,5 +172,32 @@ class EntityManagerTest {
 
     @Test
     void testSearch6() {
+    }
+
+    private List<Order> createOrders(String productPrefix, int count, int orderCount) throws Exception {
+        try {
+            entityManager.beingTransaction(Customer.class, RdbmsDataStore.class);
+            try {
+                List<Product> products = TestDataHelper.createProducts(count, productPrefix);
+                for(Product p : products) {
+                    entityManager.create(p, Product.class, RdbmsDataStore.class, user, null);
+                }
+                List<Order> orders = TestDataHelper.createData(products, orderCount);
+                for (Order order : orders) {
+                    entityManager.create(order, Order.class, RdbmsDataStore.class, user, null);
+                }
+                entityManager.commit();
+
+                return orders;
+            } catch (Throwable t) {
+                entityManager.rollback();
+                throw t;
+            } finally {
+                entityManager.closeStores();
+            }
+        } catch (Throwable t) {
+            LogUtils.error(getClass(), t);
+            throw t;
+        }
     }
 }

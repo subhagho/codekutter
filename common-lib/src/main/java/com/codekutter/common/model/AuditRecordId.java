@@ -41,4 +41,23 @@ public class AuditRecordId implements IKey, Serializable {
     public String stringKey() {
         return String.format("%s::%s", recordType, recordId);
     }
+
+    /**
+     * Compare the current key to the target.
+     *
+     * @param key - Key to compare to
+     * @return - == 0, < -x, > +x
+     */
+    @Override
+    public int compareTo(IKey key) {
+        if (key instanceof AuditRecordId) {
+            AuditRecordId k = (AuditRecordId)key;
+            int ret = recordType.compareTo(k.recordType);
+            if (ret == 0) {
+                ret = recordId.compareTo(k.recordId);
+            }
+            return ret;
+        }
+        return -1;
+    }
 }

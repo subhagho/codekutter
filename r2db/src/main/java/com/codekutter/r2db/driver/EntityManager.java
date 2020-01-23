@@ -820,7 +820,7 @@ public class EntityManager implements IConfigurable {
                         throw new DataStoreException(String.format("NULL query returned. [type=%s][field=%s]",
                                 entityType.getCanonicalName(), f.getName()));
                     }
-                    Collection result = search(query, (Class<? extends IEntity>) f.getType(), null, context);
+                    Collection result = search(query, (Class<? extends IEntity>) reference.target(), null, context);
                     if (result != null && !result.isEmpty()) {
                         Class<?> type = f.getType();
                         if (ReflectionUtils.implementsInterface(List.class, type)) {

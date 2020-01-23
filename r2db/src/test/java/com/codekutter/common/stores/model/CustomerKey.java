@@ -15,32 +15,28 @@
  *
  */
 
-package com.codekutter.r2db.driver.model;
+package com.codekutter.common.stores.model;
 
 import com.codekutter.common.model.IKey;
 import lombok.Getter;
 import lombok.Setter;
-import lombok.ToString;
-import lombok.experimental.Accessors;
 
 import javax.annotation.Nonnull;
+import javax.persistence.Column;
+import javax.persistence.Embeddable;
 
 @Getter
 @Setter
-@ToString
-@Accessors(fluent = true)
-public class S3FileKey implements IKey, Comparable<S3FileKey> {
-    private String bucket;
+@Embeddable
+public class CustomerKey implements IKey {
+    @Column(name = "customer_id")
     private String key;
 
+    public CustomerKey() {
+    }
 
-    @Override
-    public int compareTo(@Nonnull S3FileKey s3FileKey) {
-        int ret = bucket.compareTo(s3FileKey.bucket);
-        if (ret == 0) {
-            ret = key.compareTo(s3FileKey.key);
-        }
-        return ret;
+    public CustomerKey(@Nonnull String key) {
+        this.key = key;
     }
 
     /**
@@ -50,7 +46,7 @@ public class S3FileKey implements IKey, Comparable<S3FileKey> {
      */
     @Override
     public String stringKey() {
-        return String.format("%s::%s", bucket, key);
+        return key;
     }
 
     /**
@@ -61,13 +57,9 @@ public class S3FileKey implements IKey, Comparable<S3FileKey> {
      */
     @Override
     public int compareTo(IKey key) {
-        if (key instanceof S3FileKey) {
-            S3FileKey fk = (S3FileKey)key;
-            int ret = bucket.compareTo(fk.bucket);
-            if (ret == 0) {
-                ret = this.key.compareTo(fk.key);
-            }
-            return ret;
+        if (key instanceof CustomerKey) {
+            String k = ((CustomerKey) key).key;
+            return this.key.compareTo(k);
         }
         return -1;
     }

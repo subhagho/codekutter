@@ -8,20 +8,16 @@ import com.codekutter.common.model.ValidationExceptions;
 import lombok.Getter;
 import lombok.Setter;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.Table;
+import javax.persistence.*;
 import java.util.Date;
 
 @Getter
 @Setter
 @Entity
 @Table(name = "tb_customer")
-public class Customer implements IEntity<StringKey> {
-    @Id
-    @Column(name = "customer_id")
-    private String id;
+public class Customer implements IEntity<CustomerKey> {
+    @EmbeddedId
+    private CustomerKey id;
     @Column(name = "first_name")
     private String firstName;
     @Column(name = "last_name")
@@ -34,23 +30,23 @@ public class Customer implements IEntity<StringKey> {
     private String phoneNumber;
 
     @Override
-    public StringKey getKey() {
-        return new StringKey(id);
+    public CustomerKey getKey() {
+        return id;
     }
 
 
     @Override
-    public int compare(StringKey key) {
-        return id.compareTo(key.getKey());
+    public int compare(CustomerKey key) {
+        return id.compareTo(key);
     }
 
     @Override
-    public IEntity<StringKey> copyChanges(IEntity<StringKey> source, Context context) throws CopyException {
+    public IEntity<CustomerKey> copyChanges(IEntity<CustomerKey> source, Context context) throws CopyException {
         return null;
     }
 
     @Override
-    public IEntity<StringKey> clone(Context context) throws CopyException {
+    public IEntity<CustomerKey> clone(Context context) throws CopyException {
         return null;
     }
 
