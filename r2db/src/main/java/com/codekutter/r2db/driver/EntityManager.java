@@ -60,7 +60,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @Setter
 @Accessors(fluent = true)
 @ConfigPath(path = "entity-manager")
-@SuppressWarnings("rawtypes")
+@SuppressWarnings({"rawtypes", "unchecked"})
 public class EntityManager implements IConfigurable {
     private static final int DEFAULT_BATCH_SIZE = 1000;
     private static final String KEY_SEPARATOR = "~||~";
@@ -174,7 +174,7 @@ public class EntityManager implements IConfigurable {
         }
     }
 
-    public void closeStores() throws DataStoreException{
+    public void closeStores() throws DataStoreException {
         dataStoreManager.closeStores();
     }
 
@@ -263,23 +263,25 @@ public class EntityManager implements IConfigurable {
         try {
             List<Field> fields = null;
             Field[] source = ReflectionUtils.getAllFields(entityType);
-            for (Field f : source) {
-                if (f.isAnnotationPresent(Reference.class)) {
-                    Class<?> type = f.getType();
-                    if (ReflectionUtils.implementsInterface(List.class, type)) {
-                        type = ReflectionUtils.getGenericListType(f);
-                    } else if (ReflectionUtils.implementsInterface(Set.class, type)) {
-                        type = ReflectionUtils.getGenericSetType(f);
+            if (source != null) {
+                for (Field f : source) {
+                    if (f.isAnnotationPresent(Reference.class)) {
+                        Class<?> type = f.getType();
+                        if (ReflectionUtils.implementsInterface(List.class, type)) {
+                            type = ReflectionUtils.getGenericListType(f);
+                        } else if (ReflectionUtils.implementsInterface(Set.class, type)) {
+                            type = ReflectionUtils.getGenericSetType(f);
+                        }
+                        if (!ReflectionUtils.implementsInterface(IEntity.class, type)) {
+                            throw new DataStoreException(
+                                    String.format("Invalid reference definition. [type=%s][field=%s][field type=%s]",
+                                            entityType.getCanonicalName(), f.getName(), type.getCanonicalName()));
+                        }
+                        if (fields == null) {
+                            fields = new ArrayList<>();
+                        }
+                        fields.add(f);
                     }
-                    if (!ReflectionUtils.implementsInterface(IEntity.class, type)) {
-                        throw new DataStoreException(
-                                String.format("Invalid reference definition. [type=%s][field=%s][field type=%s]",
-                                        entityType.getCanonicalName(), f.getName(), type.getCanonicalName()));
-                    }
-                    if (fields == null) {
-                        fields = new ArrayList<>();
-                    }
-                    fields.add(f);
                 }
             }
             return fields;
@@ -340,37 +342,100 @@ public class EntityManager implements IConfigurable {
             List<Field> fields = getReferenceFields(entityType);
             if (fields != null && !fields.isEmpty()) {
                 for (Field f : fields) {
+                    Reference reference = f.getAnnotation(Reference.class);
+                    if (reference.type() != EJoinType.One2Many && reference.type() != EJoinType.One2Many) continue;
+
                     Object value = ReflectionUtils.getFieldValue(entity, f);
                     if (value != null) {
                         Class<?> type = f.getType();
-                        if (ReflectionUtils.implementsInterface(List.class, type)) {
+                        if (ReflectionUtils.implementsInterface(List.class, type) | ReflectionUtils.implementsInterface(Set.class, type)) {
                             type = ReflectionUtils.getGenericListType(f);
                             Collection values = (Collection) value;
+                            Collection<? extends IEntity> result = getReferenceEntity(f, entity, entityType, (Class<? extends IEntity>) type, context, false);
+                            Map<String, Object> rmap = new HashMap<>();
+                            if (result != null && !result.isEmpty()) {
+                                for (Object o : result) {
+                                    IEntity e = (IEntity)o;
+                                    rmap.put(e.getKey().stringKey(), e);
+                                }
+                            }
                             for (Object v : values) {
-                                Object t = create((IEntity) v, (Class<? extends IEntity>) type, null, user, context);
+                                IEntity e = (IEntity) v;
+                                String sk = e.getKey().stringKey();
+                                if (!rmap.containsKey(sk)) {
+                                    Object t = create((IEntity) v, (Class<? extends IEntity>) type, null, user, context);
+                                    if (t == null) {
+                                        throw new DataStoreException(
+                                                String.format("Error creating nested entity. [type=%s][key=%s]",
+                                                        type.getCanonicalName(), ((IEntity) v).getKey().stringKey()));
+                                    }
+                                } else {
+                                    Object t = update((IEntity) v, (Class<? extends IEntity>) type, null, user, context);
+                                    if (t == null) {
+                                        throw new DataStoreException(
+                                                String.format("Error creating nested entity. [type=%s][key=%s]",
+                                                        type.getCanonicalName(), ((IEntity) v).getKey().stringKey()));
+                                    }
+                                }
+                            }
+                            if (!rmap.isEmpty()) {
+                                List<IEntity> removed = new ArrayList<>();
+                                Map<String, Object> smap = new HashMap<>();
+                                for(Object o : values) {
+                                    IEntity e = (IEntity)o;
+                                    smap.put(e.getKey().stringKey(), e);
+                                }
+                                for(String k : rmap.keySet()) {
+                                    if (!smap.containsKey(k)) {
+                                        removed.add((IEntity) rmap.get(k));
+                                    }
+                                }
+                                if (!removed.isEmpty()) {
+                                    if (reference.type() == EJoinType.One2Many) {
+                                        for(IEntity e : removed) {
+                                            if (!delete(e, e.getClass(), null, user, context)) {
+                                                throw new DataStoreException(String.format("Error deleting reference. [type=%s][key=%s]",
+                                                        e.getClass().getCanonicalName(), e.getKey().stringKey()));
+                                            }
+                                            LogUtils.debug(getClass(), String.format("Deleted entity reference. [type=%s][key=%s]",
+                                                    e.getClass().getCanonicalName(), e.getKey().stringKey()));
+                                        }
+                                    }
+                                }
+                            }
+                        }  else {
+                            Collection<? extends IEntity> result = getReferenceEntity(f, entity, entityType, (Class<? extends IEntity>) f.getType(), context, false);
+                            if (result == null || result.isEmpty()) {
+                                Object t = create((IEntity) value, (Class<? extends IEntity>) type, null, user, context);
                                 if (t == null) {
                                     throw new DataStoreException(
                                             String.format("Error creating nested entity. [type=%s][key=%s]",
-                                                    type.getCanonicalName(), ((IEntity) v).getKey().stringKey()));
+                                                    type.getCanonicalName(), ((IEntity) value).getKey().stringKey()));
                                 }
-                            }
-                        } else if (ReflectionUtils.implementsInterface(Set.class, type)) {
-                            type = ReflectionUtils.getGenericSetType(f);
-                            Collection values = (Collection) value;
-                            for (Object v : values) {
-                                Object t = create((IEntity) v, (Class<? extends IEntity>) type, null, user, context);
-                                if (t == null) {
-                                    throw new DataStoreException(
-                                            String.format("Error creating nested entity. [type=%s][key=%s]",
-                                                    type.getCanonicalName(), ((IEntity) v).getKey().stringKey()));
+                            } else {
+                                while(result.iterator().hasNext()) {
+                                    IEntity e = result.iterator().next();
+                                    IEntity v = (IEntity)value;
+                                    if (e.getKey().compareTo(v.getKey()) != 0) {
+                                        if (!delete(e, e.getClass(), null, user, context)) {
+                                            throw new DataStoreException(String.format("Error deleting reference. [type=%s][key=%s]",
+                                                    e.getClass().getCanonicalName(), e.getKey().stringKey()));
+                                        }
+                                        Object t = create(v, v.getClass(), null, user, context);
+                                        if (t == null) {
+                                            throw new DataStoreException(
+                                                    String.format("Error creating nested entity. [type=%s][key=%s]",
+                                                            type.getCanonicalName(), ((IEntity) value).getKey().stringKey()));
+                                        }
+                                    } else {
+                                        Object t = update(v, v.getClass(), null, user, context);
+                                        if (t == null) {
+                                            throw new DataStoreException(
+                                                    String.format("Error creating nested entity. [type=%s][key=%s]",
+                                                            type.getCanonicalName(), ((IEntity) value).getKey().stringKey()));
+                                        }
+                                    }
                                 }
-                            }
-                        } else {
-                            Object t = create((IEntity) value, (Class<? extends IEntity>) type, null, user, context);
-                            if (t == null) {
-                                throw new DataStoreException(
-                                        String.format("Error creating nested entity. [type=%s][key=%s]",
-                                                type.getCanonicalName(), ((IEntity) value).getKey().stringKey()));
                             }
                         }
                     }
@@ -406,7 +471,7 @@ public class EntityManager implements IConfigurable {
             }
             entity = (E) formatEntity(entity, context);
             boolean ret = dataStore.delete(entity.getKey(), type, context);
-            if (type.isAnnotationPresent(Audited.class)) {
+            if (ret && type.isAnnotationPresent(Audited.class)) {
                 AuditRecord record = AuditManager.get().audit(EAuditType.Delete, entity, null, user);
                 if (record == null) {
                     LogUtils.error(getClass(), String.format("Audit Log failed for type. [type=%s]", type.getCanonicalName()));
@@ -716,7 +781,7 @@ public class EntityManager implements IConfigurable {
             if (fields != null && !fields.isEmpty()) {
                 for (Field f : fields) {
                     Reference reference = f.getAnnotation(Reference.class);
-                    String query = JoinPredicateHelper.generateHibernateJoinQuery(reference, entities, f, dataStoreManager);
+                    String query = JoinPredicateHelper.generateHibernateJoinQuery(reference, entities, f, dataStoreManager, true);
                     if (Strings.isNullOrEmpty(query)) {
                         throw new DataStoreException(String.format("NULL query returned. [type=%s][field=%s]",
                                 entityType.getCanonicalName(), f.getName()));
@@ -814,15 +879,16 @@ public class EntityManager implements IConfigurable {
             List<Field> fields = getReferenceFields(entityType);
             if (fields != null && !fields.isEmpty()) {
                 for (Field f : fields) {
-                    Reference reference = f.getAnnotation(Reference.class);
-                    String query = JoinPredicateHelper.generateHibernateJoinQuery(reference, entity, f, dataStoreManager);
-                    if (Strings.isNullOrEmpty(query)) {
-                        throw new DataStoreException(String.format("NULL query returned. [type=%s][field=%s]",
-                                entityType.getCanonicalName(), f.getName()));
+                    Class<?> type = f.getType();
+                    Class<?> itype = type;
+                    if (ReflectionUtils.implementsInterface(List.class, type)) {
+                        itype = ReflectionUtils.getGenericListType(f);
+                    } else if (ReflectionUtils.implementsInterface(Set.class, type)) {
+                        itype = ReflectionUtils.getGenericSetType(f);
                     }
-                    Collection result = search(query, (Class<? extends IEntity>) reference.target(), null, context);
+
+                    Collection result = getReferenceEntity(f, entity, entityType, (Class<? extends IEntity>) itype, context, true);
                     if (result != null && !result.isEmpty()) {
-                        Class<?> type = f.getType();
                         if (ReflectionUtils.implementsInterface(List.class, type)) {
                             List values = new ArrayList(result);
                             ReflectionUtils.setObjectValue(entity, f, values);
@@ -843,6 +909,35 @@ public class EntityManager implements IConfigurable {
         } catch (Exception ex) {
             throw new DataStoreException(ex);
         }
+    }
+
+    private <E extends IEntity> Collection<? extends IEntity> getReferenceEntity(Field f,
+                                                                                 E entity,
+                                                                                 Class<? extends E> entityType,
+                                                                                 Class<? extends IEntity> fieldType,
+                                                                                 Context context,
+                                                                                 boolean appendQuery) throws DataStoreException {
+        Reference reference = f.getAnnotation(Reference.class);
+        String query = JoinPredicateHelper.generateHibernateJoinQuery(reference, entity, f, dataStoreManager, appendQuery);
+        if (Strings.isNullOrEmpty(query)) {
+            throw new DataStoreException(String.format("NULL query returned. [type=%s][field=%s]",
+                    entityType.getCanonicalName(), f.getName()));
+        }
+        int offset = 0;
+        List<E> entities = new ArrayList<>();
+        while (true) {
+            Collection result = search(query,
+                    offset,
+                    DEFAULT_BATCH_SIZE,
+                    fieldType,
+                    null, context);
+            if (result != null && !result.isEmpty()) {
+                entities.addAll(result);
+            }
+            if (result == null || result.size() < DEFAULT_BATCH_SIZE) break;
+            offset += result.size();
+        }
+        return entities;
     }
 
     public void close() throws IOException {

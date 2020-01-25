@@ -57,7 +57,7 @@ class JoinPredicateHelperTest {
             Reference reference = field.getAnnotation(Reference.class);
             assertNotNull(reference);
             String query = JoinPredicateHelper.generateHibernateJoinQuery(reference, orders.get(0),
-                    field, R2dbEnv.env().getEntityManager().dataStoreManager());
+                    field, R2dbEnv.env().getEntityManager().dataStoreManager(), true);
             assertFalse(Strings.isNullOrEmpty(query));
             LogUtils.debug(getClass(), query);
         } catch (Throwable t) {
@@ -75,7 +75,7 @@ class JoinPredicateHelperTest {
             Reference reference = field.getAnnotation(Reference.class);
             assertNotNull(reference);
             String query = JoinPredicateHelper.generateHibernateJoinQuery(reference, orders,
-                    field, R2dbEnv.env().getEntityManager().dataStoreManager());
+                    field, R2dbEnv.env().getEntityManager().dataStoreManager(), true);
             assertFalse(Strings.isNullOrEmpty(query));
             LogUtils.debug(getClass(), query);
         } catch (Throwable t) {

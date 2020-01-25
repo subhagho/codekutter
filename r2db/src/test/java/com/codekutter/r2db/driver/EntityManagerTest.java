@@ -78,10 +78,6 @@ class EntityManagerTest {
     }
 
     @Test
-    void rollback() {
-    }
-
-    @Test
     void create() {
         try {
             entityManager.beingTransaction(Customer.class, RdbmsDataStore.class);
@@ -109,14 +105,6 @@ class EntityManagerTest {
 
     @Test
     void update() {
-    }
-
-    @Test
-    void delete() {
-    }
-
-    @Test
-    void find() {
         try {
             String prefix = UUID.randomUUID().toString();
             List<Order> orders = createOrders(prefix, 5, 3);
@@ -128,6 +116,44 @@ class EntityManagerTest {
             List<Item> items = order.getItems();
             assertNotNull(items);
             assertTrue(items.size() > 0);
+            for(Item item : items) {
+                assertTrue(item.getQuantity() > 0);
+            }
+            items.remove(0);
+            entityManager.beingTransaction(Customer.class, RdbmsDataStore.class);
+            try {
+                entityManager.update(order, Order.class, RdbmsDataStore.class, user,null);
+                entityManager.commit();
+            } catch (Throwable t) {
+                entityManager.rollback();
+                throw t;
+            } finally {
+                entityManager.closeStores();
+            }
+            LogUtils.debug(getClass(), order);
+        } catch (Throwable t) {
+            LogUtils.debug(getClass(), t);
+            fail(t);
+        }
+    }
+
+    @Test
+    void delete() {
+    }
+
+    @Test
+    void find() {
+        try {
+            String prefix = UUID.randomUUID().toString();
+            List<Order> orders = createOrders(prefix, 1010, 3);
+            assertNotNull(orders);
+            assertEquals(3, orders.size());
+
+            Order order = entityManager.find(orders.get(2).getKey(), Order.class, RdbmsDataStore.class, null);
+            assertNotNull(order);
+            List<Item> items = order.getItems();
+            assertNotNull(items);
+            assertEquals(1009, items.size());
             for(Item item : items) {
                 assertTrue(item.getQuantity() > 0);
             }

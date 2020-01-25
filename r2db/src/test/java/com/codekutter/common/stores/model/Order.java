@@ -5,6 +5,7 @@ import com.codekutter.common.model.CopyException;
 import com.codekutter.common.model.IEntity;
 import com.codekutter.common.model.StringKey;
 import com.codekutter.common.model.ValidationExceptions;
+import com.codekutter.common.stores.annotations.EJoinType;
 import com.codekutter.common.stores.annotations.Reference;
 import lombok.Getter;
 import lombok.Setter;
@@ -27,6 +28,7 @@ public class Order implements IEntity<OrderKey> {
     private Customer customer;
     @Transient
     @Reference(target = Item.class,
+            type = EJoinType.One2Many,
             columns = @JoinColumns({@JoinColumn(name = "id.key", referencedColumnName = "id.orderId")}),
             query = "quantity > 0"
     )

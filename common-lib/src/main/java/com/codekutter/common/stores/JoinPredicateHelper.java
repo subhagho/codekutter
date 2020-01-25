@@ -16,9 +16,10 @@ import java.util.Set;
 
 public class JoinPredicateHelper {
     public static <T extends IEntity> String generateHibernateJoinQuery(@Nonnull Reference reference,
-                                                    @Nonnull Collection<T> source,
-                                                    @Nonnull Field field,
-                                                    @Nonnull DataStoreManager manager) throws DataStoreException {
+                                                                        @Nonnull Collection<T> source,
+                                                                        @Nonnull Field field,
+                                                                        @Nonnull DataStoreManager manager,
+                                                                        boolean appendQuery) throws DataStoreException {
         try {
             Class<?> type = field.getType();
             if (ReflectionUtils.implementsInterface(List.class, type)) {
@@ -41,7 +42,7 @@ public class JoinPredicateHelper {
                     throw new DataStoreException(String.format("Error generating condition. [type=%s][key=%s]",
                             entity.getClass().getCanonicalName(), entity.getKey()));
                 }
-                if (!Strings.isNullOrEmpty(reference.query())) {
+                if (appendQuery && !Strings.isNullOrEmpty(reference.query())) {
                     condition = String.format("%s AND (%s)", condition, reference.query());
                 }
                 if (first) first = false;
@@ -56,9 +57,10 @@ public class JoinPredicateHelper {
     }
 
     public static <T extends IEntity> String generateHibernateJoinQuery(@Nonnull Reference reference,
-                                                    @Nonnull T source,
-                                                    @Nonnull Field field,
-                                                    @Nonnull DataStoreManager manager) throws DataStoreException {
+                                                                        @Nonnull T source,
+                                                                        @Nonnull Field field,
+                                                                        @Nonnull DataStoreManager manager,
+                                                                        boolean appendQuery) throws DataStoreException {
         try {
             Class<?> type = field.getType();
             if (ReflectionUtils.implementsInterface(List.class, type)) {
@@ -78,7 +80,7 @@ public class JoinPredicateHelper {
                 throw new DataStoreException(String.format("Error generating JOIN condition. [type=%s][field=%s]",
                         source.getClass().getCanonicalName(), field.getName()));
             }
-            if (!Strings.isNullOrEmpty(reference.query())) {
+            if (appendQuery && !Strings.isNullOrEmpty(reference.query())) {
                 condition = String.format("%s AND (%s)", condition, reference.query());
             }
             return condition;
@@ -109,7 +111,7 @@ public class JoinPredicateHelper {
         JoinColumn[] columns = joinColumns.value();
         if (columns.length > 0) {
             StringBuffer buffer = new StringBuffer();
-            for(JoinColumn column : columns) {
+            for (JoinColumn column : columns) {
                 String vc = getHibernateJoinCondition(column, source, type);
                 if (Strings.isNullOrEmpty(vc)) {
                     throw new DataStoreException(String.format("Error generating JOIN condition. [type=%s][column=%s]",
