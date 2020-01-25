@@ -43,6 +43,7 @@ import java.util.Map;
 @Setter
 @Accessors(fluent = true)
 @ConfigPath(path = "queues")
+@SuppressWarnings("rawtypes")
 public class QueueManager implements IConfigurable, Closeable {
     private static final String CONFIG_NODE_QUEUES = "queues";
 
