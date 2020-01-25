@@ -62,7 +62,8 @@ class Test_ExtendedZConfigEnv {
             Version version = Version.parse(vs);
             assertNotNull(version);
 
-            ExtendedZConfigEnv.setup(name, filename, ConfigProviderFactory.EConfigType.XML, vs, encryptionKey);
+            ExtendedZConfigEnv.setup(ExtendedZConfigEnv.class, name, filename,
+                    ConfigProviderFactory.EConfigType.XML, vs, encryptionKey);
         } catch (Throwable t) {
             LogUtils.error(Test_ExtendedZConfigEnv.class, t);
             throw t;

@@ -42,7 +42,7 @@ class EntityManagerTest {
             Version version = Version.parse(vs);
             assertNotNull(version);
 
-            R2dbEnv.setup(name, filename, ConfigProviderFactory.EConfigType.XML, vs, encryptionKey);
+            R2dbEnv.setup(R2dbEnv.class, name, filename, ConfigProviderFactory.EConfigType.XML, vs, encryptionKey);
             entityManager = R2dbEnv.env().getEntityManager();
             assertNotNull(entityManager);
         } catch (Throwable t) {

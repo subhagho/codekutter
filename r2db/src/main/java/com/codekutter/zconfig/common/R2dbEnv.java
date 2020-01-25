@@ -63,41 +63,6 @@ public class R2dbEnv extends ExtendedZConfigEnv {
     }
 
     /**
-     * Setup the client environment using the passed configuration file.
-     * Method to be used in-case the configuration type cannot be deciphered using
-     * the file extension.
-     *
-     * @param configfile - Configuration file (path) to read from.
-     * @param type       - Configuration type.
-     * @param version    - Configuration version (expected)
-     * @throws ConfigurationException
-     */
-    public static void setup(@Nonnull String configName,
-                             @Nonnull String configfile,
-                             @Nonnull ConfigProviderFactory.EConfigType type,
-                             @Nonnull String version, String password)
-            throws ConfigurationException {
-        Preconditions.checkArgument(!Strings.isNullOrEmpty(configfile));
-        Preconditions.checkArgument(type != null);
-        Preconditions.checkArgument(!Strings.isNullOrEmpty(version));
-
-
-        try {
-            ZConfigEnv.getEnvLock();
-            try {
-                ZConfigEnv env = ZConfigEnv.initialize(R2dbEnv.class, configName);
-                if (env.getState() != EEnvState.Initialized) {
-                    env.init(configfile, type, Version.parse(version), password);
-                }
-            } finally {
-                ZConfigEnv.releaseEnvLock();
-            }
-        } catch (Exception e) {
-            throw new ConfigurationException(e);
-        }
-    }
-
-    /**
      * Get the instance of the client environment handle.
      *
      * @return - Client environment handle.

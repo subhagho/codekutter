@@ -24,6 +24,11 @@ import javax.persistence.CascadeType;
 import javax.persistence.JoinColumns;
 import java.lang.annotation.*;
 
+/**
+ * Specify a reference entity to join with.
+ * Reference entity can be any defined entity
+ * that can be loaded and persisted by the entity manager.
+ */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
 @Inherited
@@ -35,6 +40,16 @@ public @interface Reference {
      * @return - Target entity class.
      */
     Class<? extends IEntity> target();
+
+    /**
+     * (Optional)
+     *
+     * Specify the join type.
+     * Default is One to One.
+     *
+     * @return - Join type.
+     */
+    EJoinType type() default EJoinType.One2One;
 
     /**
      * Column set to join on.
@@ -63,6 +78,7 @@ public @interface Reference {
     boolean orphanRemoval() default false;
 
     /**
+     * (Optional)
      * Query to be applied to the join condition.
      *
      * @return - Query String.

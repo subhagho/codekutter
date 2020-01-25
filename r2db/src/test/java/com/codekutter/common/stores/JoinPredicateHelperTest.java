@@ -41,7 +41,7 @@ class JoinPredicateHelperTest {
             Version version = Version.parse(vs);
             assertNotNull(version);
 
-            R2dbEnv.setup(name, filename, ConfigProviderFactory.EConfigType.XML, vs, encryptionKey);
+            R2dbEnv.setup(R2dbEnv.class, name, filename, ConfigProviderFactory.EConfigType.XML, vs, encryptionKey);
         } catch (Throwable t) {
             LogUtils.error(JoinPredicateHelperTest.class, t);
             throw t;

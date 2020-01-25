@@ -126,7 +126,8 @@ public class ExtendedZConfigEnv extends ZConfigEnv {
      * @param version    - Configuration version (expected)
      * @throws ConfigurationException
      */
-    public static void setup(@Nonnull String configName,
+    public static void setup(@Nonnull Class<? extends ExtendedZConfigEnv> envType,
+                             @Nonnull String configName,
                              @Nonnull String configfile,
                              @Nonnull ConfigProviderFactory.EConfigType type,
                              @Nonnull String version, String password)
@@ -139,7 +140,7 @@ public class ExtendedZConfigEnv extends ZConfigEnv {
         try {
             ZConfigEnv.getEnvLock();
             try {
-                ZConfigEnv env = ZConfigEnv.initialize(ExtendedZConfigEnv.class, configName);
+                ZConfigEnv env = ZConfigEnv.initialize(envType, configName);
                 if (env.getState() != EEnvState.Initialized) {
                     env.init(configfile, type, Version.parse(version), password);
                 }
