@@ -31,15 +31,18 @@ import java.util.concurrent.ConcurrentHashMap;
 @Setter
 @Accessors(fluent = true)
 @ConfigPath(path = "audit-manager")
+@SuppressWarnings("rawtypes")
 public class AuditManager implements IConfigurable, Closeable {
     @Setter(AccessLevel.NONE)
-    private Map<String, AbstractAuditLogger> loggers = new ConcurrentHashMap<>();
+    private final Map<String, AbstractAuditLogger> loggers = new ConcurrentHashMap<>();
     @Setter(AccessLevel.NONE)
-    private Map<Class<? extends IKeyed>, AbstractAuditLogger> entityIndex = new HashMap<>();
+    private final Map<Class<? extends IKeyed>, AbstractAuditLogger> entityIndex = new HashMap<>();
     @Setter(AccessLevel.NONE)
     private AbstractAuditLogger defaultLogger = null;
     @Setter(AccessLevel.NONE)
     private DataStoreManager dataStoreManager;
+    @Setter(AccessLevel.NONE)
+    private final Map<Class<? extends IAuditContextGenerator>, IAuditContextGenerator> contextGenerators = new HashMap<>();
 
     public AuditManager withDataStoreManager(@Nonnull DataStoreManager dataStoreManager) {
         this.dataStoreManager = dataStoreManager;
@@ -50,48 +53,74 @@ public class AuditManager implements IConfigurable, Closeable {
         return loggers.get(name);
     }
 
-    public <T extends IKeyed> AuditRecord audit(@Nonnull EAuditType type,
+    public IAuditContextGenerator getContextGenerator(@Nonnull Class<? extends IAuditContextGenerator> type) throws AuditException {
+        try {
+            synchronized (contextGenerators) {
+                if (!contextGenerators.containsKey(type)) {
+                    IAuditContextGenerator g = type.newInstance();
+                    contextGenerators.put(type, g);
+                }
+                return contextGenerators.get(type);
+            }
+        } catch (Exception ex) {
+            throw new AuditException(ex);
+        }
+    }
+
+    public <T extends IKeyed> AuditRecord audit(@Nonnull Class<?> dataStoreType,
+                                                @Nonnull String dataStoreName,
+                                                @Nonnull EAuditType type,
                                                 @Nonnull T entity,
                                                 String changeDelta,
+                                                String changeContext,
                                                 @Nonnull Principal user) throws AuditException {
         AbstractAuditLogger logger = getLogger(entity.getClass());
         if (logger != null) {
-            return logger.write(type, entity, entity.getClass(), changeDelta, user);
+            return logger.write(dataStoreType, dataStoreName, type, entity, entity.getClass(), changeDelta, changeContext, user);
         }
         return null;
     }
 
-    public <T extends IKeyed> AuditRecord audit(@Nonnull EAuditType type,
+    public <T extends IKeyed> AuditRecord audit(@Nonnull Class<?> dataStoreType,
+                                                @Nonnull String dataStoreName,
+                                                @Nonnull EAuditType type,
                                                 @Nonnull T entity,
                                                 String changeDelta,
+                                                String changeContext,
                                                 @Nonnull Principal user,
                                                 @Nonnull IAuditSerDe serializer) throws AuditException {
         AbstractAuditLogger logger = getLogger(entity.getClass());
         if (logger != null) {
-            return logger.write(type, entity, entity.getClass(), changeDelta,user, serializer);
+            return logger.write(dataStoreType, dataStoreName, type, entity, entity.getClass(), changeDelta, changeContext, user, serializer);
         }
         return null;
     }
 
-    public <T extends IKeyed> AuditRecord audit(@Nonnull String logger,
+    public <T extends IKeyed> AuditRecord audit(@Nonnull Class<?> dataStoreType,
+                                                @Nonnull String dataStoreName,
+                                                @Nonnull String logger,
                                                 @Nonnull EAuditType type,
                                                 @Nonnull T entity,
                                                 String changeDelta,
+                                                String changeContext,
                                                 @Nonnull Principal user) throws AuditException {
         if (loggers.containsKey(logger)) {
-            return loggers.get(logger).write(type, entity, entity.getClass(), changeDelta, user);
+            return loggers.get(logger).write(dataStoreType, dataStoreName, type, entity, entity.getClass(), changeDelta, changeContext, user);
         }
         return null;
     }
 
-    public <T extends IKeyed> AuditRecord audit(@Nonnull String logger,
+    public <T extends IKeyed> AuditRecord audit(@Nonnull Class<?> dataStoreType,
+                                                @Nonnull String dataStoreName,
+                                                @Nonnull String logger,
                                                 @Nonnull EAuditType type,
                                                 @Nonnull T entity,
                                                 String changeDelta,
+                                                String changeContext,
                                                 @Nonnull IAuditSerDe serializer,
                                                 @Nonnull Principal user) throws AuditException {
         if (loggers.containsKey(logger)) {
-            return loggers.get(logger).write(type, entity, entity.getClass(), changeDelta, user, serializer);
+            return loggers.get(logger).write(dataStoreType, dataStoreName, type, entity, entity.getClass(), changeDelta, changeContext, user, serializer);
         }
         return null;
     }

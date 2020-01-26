@@ -4,6 +4,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
+import javax.annotation.Nonnull;
 import javax.persistence.Column;
 import javax.persistence.Embeddable;
 import java.io.Serializable;
@@ -13,6 +14,18 @@ import java.io.Serializable;
 @ToString
 @Embeddable
 public class AuditRecordId implements IKey, Serializable {
+    /**
+     * Data Store type where the operation
+     * is being performed.
+     */
+    @Column(name = "data_store_type")
+    private String dataStoreType;
+    /**
+     * Data Store name where the operation
+     * is being performed.
+     */
+    @Column(name = "data_store_name")
+    private String dataStoreName;
     /**
      * Audit Record Type - Record Entity Class
      */
@@ -24,10 +37,28 @@ public class AuditRecordId implements IKey, Serializable {
     @Column(name = "record_id")
     private String recordId;
 
+    public AuditRecordId() {}
+
+    public AuditRecordId(@Nonnull String dataStoreType,
+                         @Nonnull String dataStoreName,
+                         @Nonnull String recordType,
+                         @Nonnull String recordId) {
+        this.dataStoreType = dataStoreType;
+        this.dataStoreName = dataStoreName;
+        this.recordType = recordType;
+        this.recordId = recordId;
+    }
+
     public int compareTo(AuditRecordId id) {
-        int ret = recordType.compareTo(id.recordType);
+        int ret = dataStoreType.compareTo(id.dataStoreType);
         if (ret == 0) {
-            ret = recordId.compareTo(id.recordId);
+            ret = dataStoreName.compareTo(id.dataStoreName);
+            if (ret == 0) {
+                ret = recordType.compareTo(id.recordType);
+                if (ret == 0) {
+                    ret = recordId.compareTo(id.recordId);
+                }
+            }
         }
         return ret;
     }
@@ -39,7 +70,7 @@ public class AuditRecordId implements IKey, Serializable {
      */
     @Override
     public String stringKey() {
-        return String.format("%s::%s", recordType, recordId);
+        return String.format("%s::%s::%s::%s", dataStoreType, dataStoreName, recordType, recordId);
     }
 
     /**
@@ -52,11 +83,7 @@ public class AuditRecordId implements IKey, Serializable {
     public int compareTo(IKey key) {
         if (key instanceof AuditRecordId) {
             AuditRecordId k = (AuditRecordId)key;
-            int ret = recordType.compareTo(k.recordType);
-            if (ret == 0) {
-                ret = recordId.compareTo(k.recordId);
-            }
-            return ret;
+            return compareTo(k);
         }
         return -1;
     }

@@ -115,7 +115,13 @@
                             <class>com.codekutter.common.stores.model.Product</class>
                             <class>com.codekutter.common.stores.model.Item</class>
                             <class>com.codekutter.common.stores.model.Order</class>
+                            <class>com.codekutter.common.model.AuditRecord</class>
                         </classes>
+                        <hibernate>
+                            <parameters>
+                                <show_sql>true</show_sql>
+                            </parameters>
+                        </hibernate>
                     </connection>
                 </connections>
                 <dataStoreManager>

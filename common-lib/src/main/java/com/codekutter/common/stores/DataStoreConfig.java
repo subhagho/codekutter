@@ -17,6 +17,7 @@
 
 package com.codekutter.common.stores;
 
+import com.codekutter.common.auditing.IAuditContextGenerator;
 import com.codekutter.zconfig.common.model.annotations.ConfigAttribute;
 import com.codekutter.zconfig.common.model.annotations.ConfigPath;
 import com.codekutter.zconfig.common.model.annotations.ConfigValue;
@@ -28,6 +29,7 @@ import lombok.experimental.Accessors;
 @Setter
 @Accessors(fluent = true)
 @ConfigPath(path = "dataStore")
+@SuppressWarnings("rawtypes")
 public class DataStoreConfig {
     @ConfigAttribute(name = "dataStoreClass", required = true)
     @SuppressWarnings("rawtypes")
@@ -38,4 +40,10 @@ public class DataStoreConfig {
     private String description;
     @ConfigAttribute(name = "connection", required = true)
     private String connectionName;
+    @ConfigAttribute(name = "audited")
+    private boolean audited = false;
+    @ConfigAttribute(name = "auditLogger")
+    private String auditLogger;
+    @ConfigAttribute(name = "auditContextProvider")
+    private Class<? extends IAuditContextGenerator> auditContextProvider;
 }

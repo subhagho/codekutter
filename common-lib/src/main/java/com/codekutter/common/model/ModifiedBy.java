@@ -24,17 +24,19 @@
 
 package com.codekutter.common.model;
 
-import com.codekutter.common.utils.DateTimeUtils;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 
 import javax.annotation.Nonnull;
+import javax.persistence.Embeddable;
+import java.io.Serializable;
 
 /**
  * Class represents a asset modification update.
  * Includes the modified by and modification timestamp.
  */
-public class ModifiedBy extends ModificationLog<String>{
+@Embeddable
+public class ModifiedBy extends ModificationLog<String> implements Serializable {
     public ModifiedBy() {}
 
     public ModifiedBy(@Nonnull String userId) {

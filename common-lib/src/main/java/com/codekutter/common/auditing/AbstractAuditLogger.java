@@ -116,17 +116,20 @@ public abstract class AbstractAuditLogger<C> implements IConfigurable, Closeable
      * @return - Created Audit record.
      * @throws AuditException
      */
-    public <T extends IKeyed> AuditRecord write(@Nonnull EAuditType type,
+    public <T extends IKeyed> AuditRecord write(@Nonnull Class<?> dataStoreType,
+                                                @Nonnull String dataStoreName,
+                                                @Nonnull EAuditType type,
                                                 @Nonnull T entity,
                                                 @Nonnull Class<? extends T> entityType,
                                                 String changeDelta,
+                                                String changeContext,
                                                 @Nonnull Principal user) throws AuditException {
         try {
             state.check(EObjectState.Available, getClass());
             if (serializer == null) {
                 throw new AuditException(String.format("[logger=%s] No serializer defined.", getClass().getCanonicalName()));
             }
-            return write(type, entity, entityType, changeDelta, user, serializer);
+            return write(dataStoreType, dataStoreName, type, entity, entityType, changeDelta, changeContext, user, serializer);
         } catch (StateException ex) {
             throw new AuditException(ex);
         }
@@ -145,16 +148,19 @@ public abstract class AbstractAuditLogger<C> implements IConfigurable, Closeable
      * @return - Created Audit record.
      * @throws AuditException
      */
-    public <T extends IKeyed> AuditRecord write(@Nonnull EAuditType type,
+    public <T extends IKeyed> AuditRecord write(@Nonnull Class<?> dataStoreType,
+                                                @Nonnull String dataStoreName,
+                                                @Nonnull EAuditType type,
                                                 @Nonnull T entity,
                                                 @Nonnull Class<? extends T> entityType,
                                                 String changeDelta,
+                                                String changeContext,
                                                 @Nonnull Principal user,
                                                 @Nonnull IAuditSerDe serializer) throws AuditException {
         Preconditions.checkState(dataStore != null);
         try {
             state.check(EObjectState.Available, getClass());
-            AuditRecord record = createAuditRecord(type, entity, entityType, changeDelta, user, serializer);
+            AuditRecord record = createAuditRecord(dataStoreType, dataStoreName, type, entity, entityType, changeDelta, changeContext, user, serializer);
             record = dataStore.create(record, record.getClass(), null);
             return record;
         } catch (Throwable t) {
@@ -163,20 +169,26 @@ public abstract class AbstractAuditLogger<C> implements IConfigurable, Closeable
     }
 
     @SuppressWarnings("unchecked")
-    protected <T extends IKeyed> AuditRecord createAuditRecord(@Nonnull EAuditType type,
+    protected <T extends IKeyed> AuditRecord createAuditRecord(@Nonnull Class<?> dataStoreType,
+                                                               @Nonnull String dataStoreName,
+                                                               @Nonnull EAuditType type,
                                                                @Nonnull T entity,
                                                                @Nonnull Class<? extends T> entityType,
                                                                String changeDelta,
+                                                               String changeContext,
                                                                @Nonnull Principal user,
                                                                @Nonnull IAuditSerDe serializer) throws AuditException {
         try {
-            AuditRecord record = new AuditRecord(entityType, user.getName());
+            AuditRecord record = new AuditRecord(dataStoreType, dataStoreName, entityType, user.getName());
             record.setAuditType(type);
             byte[] data = serializer.serialize(entity, entityType);
             record.setEntityData(data);
             record.setEntityId(entity.getKey().stringKey());
             if (!Strings.isNullOrEmpty(changeDelta)) {
                 record.setChangeDelta(changeDelta.getBytes(StandardCharsets.UTF_8));
+            }
+            if (!Strings.isNullOrEmpty(changeContext)) {
+                record.setChangeContext(changeContext.getBytes(StandardCharsets.UTF_8));
             }
             return record;
         } catch (Throwable ex) {
@@ -196,7 +208,7 @@ public abstract class AbstractAuditLogger<C> implements IConfigurable, Closeable
      * @throws AuditException
      */
     public <K extends IKey, T extends IKeyed<K>> List<T> fetch(@Nonnull K key,
-                                                  @Nonnull Class<? extends T> entityType) throws AuditException {
+                                                               @Nonnull Class<? extends T> entityType) throws AuditException {
         Preconditions.checkState(serializer != null);
         return fetch(key, entityType, serializer);
     }
@@ -215,8 +227,8 @@ public abstract class AbstractAuditLogger<C> implements IConfigurable, Closeable
      */
     @SuppressWarnings("unchecked")
     public <K extends IKey, T extends IKeyed<K>> List<T> fetch(@Nonnull K key,
-                                                  @Nonnull Class<? extends T> entityType,
-                                                  @Nonnull IAuditSerDe serializer) throws AuditException {
+                                                               @Nonnull Class<? extends T> entityType,
+                                                               @Nonnull IAuditSerDe serializer) throws AuditException {
         Preconditions.checkState(dataStore != null);
         try {
             state.check(EObjectState.Available, getClass());
@@ -246,7 +258,7 @@ public abstract class AbstractAuditLogger<C> implements IConfigurable, Closeable
      * @throws AuditException
      */
     public <T extends IKeyed> Collection<T> search(@Nonnull String query,
-                                                            @Nonnull Class<? extends T> entityType) throws AuditException {
+                                                   @Nonnull Class<? extends T> entityType) throws AuditException {
         Preconditions.checkState(serializer != null);
         return search(query, entityType, serializer);
     }
@@ -276,5 +288,5 @@ public abstract class AbstractAuditLogger<C> implements IConfigurable, Closeable
      * @throws AuditException
      */
     public abstract <K extends IKey, T extends IKeyed<K>> Collection<AuditRecord> find(@Nonnull K key,
-                                                                          @Nonnull Class<? extends T> entityType) throws AuditException;
+                                                                                       @Nonnull Class<? extends T> entityType) throws AuditException;
 }

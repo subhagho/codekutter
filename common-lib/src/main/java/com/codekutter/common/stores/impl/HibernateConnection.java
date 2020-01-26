@@ -22,6 +22,7 @@ import com.codekutter.common.stores.AbstractConnection;
 import com.codekutter.common.stores.ConnectionException;
 import com.codekutter.common.stores.EConnectionState;
 import com.codekutter.common.utils.ConfigUtils;
+import com.codekutter.common.utils.LogUtils;
 import com.codekutter.zconfig.common.ConfigurationAnnotationProcessor;
 import com.codekutter.zconfig.common.ConfigurationException;
 import com.codekutter.zconfig.common.model.EncryptedValue;
@@ -62,6 +63,7 @@ public class HibernateConnection extends AbstractConnection<Session> {
     public static class HibernateConfig {
         public static final String CACHE_FACTORY_CLASS = "org.hibernate.cache.ehcache.EhCacheRegionFactory";
         public static final String CACHE_CONFIG_FILE = "net.sf.ehcache.configurationResourceName";
+        public static final String CONFIG_HIBERNATE_PATH = "hibernate";
 
         @ConfigValue(name = "url", required = true)
         private String dbUrl;
@@ -172,6 +174,20 @@ public class HibernateConnection extends AbstractConnection<Session> {
                     }
                 }
 
+                AbstractConfigNode hnode = cnode.find(HibernateConfig.CONFIG_HIBERNATE_PATH);
+                if (hnode instanceof ConfigPathNode) {
+                    if (((ConfigPathNode) hnode).parmeters() != null) {
+                        Map<String, ConfigValueNode> params = ((ConfigPathNode) hnode).parmeters().getKeyValues();
+                        if (params != null && !params.isEmpty()) {
+                            for (String key : params.keySet()) {
+                                String p = String.format("hibernate.%s", key);
+                                settings.setProperty(p, params.get(key).getValue());
+                                LogUtils.debug(getClass(), String.format("Added hibernate configuration. [param=%s][value=%s]",
+                                        p, params.get(key).getValue()));
+                            }
+                        }
+                    }
+                }
                 ServiceRegistry registry = new StandardServiceRegistryBuilder().applySettings(configuration.getProperties()).build();
                 sessionFactory = configuration.buildSessionFactory(registry);
 

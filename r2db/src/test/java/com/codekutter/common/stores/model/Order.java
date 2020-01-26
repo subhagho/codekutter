@@ -1,6 +1,7 @@
 package com.codekutter.common.stores.model;
 
 import com.codekutter.common.Context;
+import com.codekutter.common.auditing.Audited;
 import com.codekutter.common.model.CopyException;
 import com.codekutter.common.model.IEntity;
 import com.codekutter.common.model.StringKey;
@@ -20,6 +21,7 @@ import java.util.List;
 @Setter
 @Entity
 @Table(name = "tb_orders")
+@Audited
 public class Order implements IEntity<OrderKey> {
     @EmbeddedId
     private OrderKey id;

@@ -28,17 +28,22 @@ CREATE TABLE `tb_db_locks`
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8 COMMENT ='Table used for database distributed locks.';
 
-DROP TABLE IF EXISTS  `tb_audit_records`;
+DROP TABLE IF EXISTS `tb_audit_records`;
 
-CREATE TABLE `tb_audit_records` (
-  `record_type` varchar(256) NOT NULL,
-  `record_id` varchar(128) NOT NULL,
-  `audit_type` varchar(32) NOT NULL,
-  `entity_id` varchar(512) NOT NULL,
-  `entity_data` blob DEFAULT NULL,
-  `user_id` varchar(128) NOT NULL,
-  `timestamp` decimal(24,0) NOT NULL,
-  `change_delta` blob DEFAULT NULL,
-  PRIMARY KEY (`record_type`,`record_id`),
-  KEY `tb_audit_records_record_type_IDX` (`record_type`,`entity_id`) USING BTREE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='Data base table to persist audit log records';
+CREATE TABLE `tb_audit_records`
+(
+    `data_store_type` varchar(128)   NOT NULL,
+    `data_store_name` varchar(128)   NOT NULL,
+    `record_type`     varchar(128)   NOT NULL,
+    `record_id`       varchar(128)   NOT NULL,
+    `audit_type`      varchar(32)    NOT NULL,
+    `entity_id`       varchar(512)   NOT NULL,
+    `entity_data`     blob DEFAULT NULL,
+    `user_id`         varchar(128)   NOT NULL,
+    `timestamp`       decimal(24, 0) NOT NULL,
+    `change_delta`    blob DEFAULT NULL,
+    `change_context`  blob DEFAULT NULL,
+    PRIMARY KEY (`data_store_type`, `data_store_name`, `record_type`, `record_id`),
+    KEY `tb_audit_records_record_type_IDX` (`record_type`, `entity_id`) USING BTREE
+) ENGINE = InnoDB
+  DEFAULT CHARSET = utf8 COMMENT ='Data base table to persist audit log records';

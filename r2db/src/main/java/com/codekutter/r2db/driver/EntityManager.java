@@ -18,9 +18,7 @@
 package com.codekutter.r2db.driver;
 
 import com.codekutter.common.Context;
-import com.codekutter.common.auditing.AuditManager;
-import com.codekutter.common.auditing.Audited;
-import com.codekutter.common.auditing.IChange;
+import com.codekutter.common.auditing.*;
 import com.codekutter.common.model.AuditRecord;
 import com.codekutter.common.model.EAuditType;
 import com.codekutter.common.model.IEntity;
@@ -33,11 +31,13 @@ import com.codekutter.common.utils.ReflectionUtils;
 import com.codekutter.zconfig.common.ConfigurationAnnotationProcessor;
 import com.codekutter.zconfig.common.ConfigurationException;
 import com.codekutter.zconfig.common.IConfigurable;
+import com.codekutter.zconfig.common.ZConfigEnv;
 import com.codekutter.zconfig.common.model.annotations.ConfigAttribute;
 import com.codekutter.zconfig.common.model.annotations.ConfigPath;
 import com.codekutter.zconfig.common.model.nodes.AbstractConfigNode;
 import com.codekutter.zconfig.common.model.nodes.ConfigPathNode;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
@@ -196,12 +196,7 @@ public class EntityManager implements IConfigurable {
             }
             entity = (E) formatEntity(entity, context);
             entity = dataStore.create(entity, type, context);
-            if (type.isAnnotationPresent(Audited.class)) {
-                AuditRecord record = AuditManager.get().audit(EAuditType.Create, entity, null, user);
-                if (record == null) {
-                    LogUtils.error(getClass(), String.format("Audit Log failed for type. [type=%s]", type.getCanonicalName()));
-                }
-            }
+            auditChange(dataStore, EAuditType.Create, entity, entity.getClass(), context, null, user);
 
             return createReferences(entity, type, user, context);
         } catch (Exception ex) {
@@ -315,19 +310,14 @@ public class EntityManager implements IConfigurable {
             }
             entity = (E) formatEntity(entity, context);
             entity = dataStore.update(entity, type, context);
-            if (type.isAnnotationPresent(Audited.class)) {
-                String delta = null;
-                if (entity instanceof IChange) {
-                    JsonNode node = ((IChange) entity).getChange(prev);
-                    if (node != null) {
-                        delta = node.toPrettyString();
-                    }
-                }
-                AuditRecord record = AuditManager.get().audit(EAuditType.Update, entity, delta, user);
-                if (record == null) {
-                    LogUtils.error(getClass(), String.format("Audit Log failed for type. [type=%s]", type.getCanonicalName()));
+            String delta = null;
+            if (entity instanceof IChange) {
+                JsonNode node = ((IChange) entity).getChange(prev);
+                if (node != null) {
+                    delta = node.toPrettyString();
                 }
             }
+            auditChange(dataStore, EAuditType.Update, entity, entity.getClass(), context, delta, user);
             return updateReferences(entity, type, user, context);
         } catch (Exception ex) {
             throw new DataStoreException(ex);
@@ -355,7 +345,7 @@ public class EntityManager implements IConfigurable {
                             Map<String, Object> rmap = new HashMap<>();
                             if (result != null && !result.isEmpty()) {
                                 for (Object o : result) {
-                                    IEntity e = (IEntity)o;
+                                    IEntity e = (IEntity) o;
                                     rmap.put(e.getKey().stringKey(), e);
                                 }
                             }
@@ -381,18 +371,18 @@ public class EntityManager implements IConfigurable {
                             if (!rmap.isEmpty()) {
                                 List<IEntity> removed = new ArrayList<>();
                                 Map<String, Object> smap = new HashMap<>();
-                                for(Object o : values) {
-                                    IEntity e = (IEntity)o;
+                                for (Object o : values) {
+                                    IEntity e = (IEntity) o;
                                     smap.put(e.getKey().stringKey(), e);
                                 }
-                                for(String k : rmap.keySet()) {
+                                for (String k : rmap.keySet()) {
                                     if (!smap.containsKey(k)) {
                                         removed.add((IEntity) rmap.get(k));
                                     }
                                 }
                                 if (!removed.isEmpty()) {
                                     if (reference.type() == EJoinType.One2Many) {
-                                        for(IEntity e : removed) {
+                                        for (IEntity e : removed) {
                                             if (!delete(e, e.getClass(), null, user, context)) {
                                                 throw new DataStoreException(String.format("Error deleting reference. [type=%s][key=%s]",
                                                         e.getClass().getCanonicalName(), e.getKey().stringKey()));
@@ -403,7 +393,7 @@ public class EntityManager implements IConfigurable {
                                     }
                                 }
                             }
-                        }  else {
+                        } else {
                             Collection<? extends IEntity> result = getReferenceEntity(f, entity, entityType, (Class<? extends IEntity>) f.getType(), context, false);
                             if (result == null || result.isEmpty()) {
                                 Object t = create((IEntity) value, (Class<? extends IEntity>) type, null, user, context);
@@ -413,9 +403,9 @@ public class EntityManager implements IConfigurable {
                                                     type.getCanonicalName(), ((IEntity) value).getKey().stringKey()));
                                 }
                             } else {
-                                while(result.iterator().hasNext()) {
+                                while (result.iterator().hasNext()) {
                                     IEntity e = result.iterator().next();
-                                    IEntity v = (IEntity)value;
+                                    IEntity v = (IEntity) value;
                                     if (e.getKey().compareTo(v.getKey()) != 0) {
                                         if (!delete(e, e.getClass(), null, user, context)) {
                                             throw new DataStoreException(String.format("Error deleting reference. [type=%s][key=%s]",
@@ -471,13 +461,52 @@ public class EntityManager implements IConfigurable {
             }
             entity = (E) formatEntity(entity, context);
             boolean ret = dataStore.delete(entity.getKey(), type, context);
-            if (ret && type.isAnnotationPresent(Audited.class)) {
-                AuditRecord record = AuditManager.get().audit(EAuditType.Delete, entity, null, user);
-                if (record == null) {
-                    LogUtils.error(getClass(), String.format("Audit Log failed for type. [type=%s]", type.getCanonicalName()));
-                }
+            if (ret) {
+                auditChange(dataStore, EAuditType.Delete, entity, entity.getClass(), context, null, user);
             }
             return ret;
+        } catch (Exception ex) {
+            throw new DataStoreException(ex);
+        }
+    }
+
+    private <K extends IKey, E extends IEntity<K>> void auditChange(AbstractDataStore dataStore,
+                                                                    EAuditType auditType,
+                                                                    E entity,
+                                                                    Class<? extends IEntity> entityType,
+                                                                    Context context,
+                                                                    String changeDelta,
+                                                                    Principal user) throws DataStoreException {
+        try {
+            if (dataStore.config().audited() || entityType.isAnnotationPresent(Audited.class)) {
+                String changeContext = null;
+                if (dataStore.config().auditContextProvider() != null) {
+                    IAuditContextGenerator provider = AuditManager.get().getContextGenerator(dataStore.config().auditContextProvider());
+                    if (provider == null) {
+                        throw new DataStoreException(String.format("Audit Context generator not found. [type=%s]",
+                                dataStore.config().auditContextProvider().getCanonicalName()));
+                    }
+                    AbstractAuditContext ctx = provider.generate(dataStore, entity, context, user);
+                    if (ctx != null) {
+                        ObjectMapper mapper = ZConfigEnv.env().getJsonMapper();
+                        changeContext = mapper.writeValueAsString(ctx);
+                    }
+                }
+                String logger = dataStore.config().auditLogger();
+                if (Strings.isNullOrEmpty(logger)) {
+                    AuditRecord r = AuditManager.get().audit(dataStore.getClass(), dataStore.name(), auditType, entity, changeDelta, changeContext, user);
+                    if (r == null) {
+                        throw new DataStoreException(String.format("Error creating audit record. [data store=%s:%s][entity type=%s]",
+                                dataStore.getClass().getCanonicalName(), dataStore.name(), entityType.getCanonicalName()));
+                    }
+                } else {
+                    AuditRecord r = AuditManager.get().audit(dataStore.getClass(), dataStore.name(), logger, auditType, entity, changeDelta, changeContext, user);
+                    if (r == null) {
+                        throw new DataStoreException(String.format("Error creating audit record. [data store=%s:%s][logger=%s][entity type=%s]",
+                                dataStore.getClass().getCanonicalName(), dataStore.name(), logger, entityType.getCanonicalName()));
+                    }
+                }
+            }
         } catch (Exception ex) {
             throw new DataStoreException(ex);
         }

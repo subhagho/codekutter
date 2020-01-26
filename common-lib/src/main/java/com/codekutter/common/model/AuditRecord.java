@@ -1,6 +1,7 @@
 package com.codekutter.common.model;
 
 import com.codekutter.common.Context;
+import com.codekutter.common.stores.AbstractDataStore;
 import com.google.common.base.Strings;
 import lombok.Getter;
 import lombok.Setter;
@@ -25,22 +26,34 @@ public class AuditRecord implements IEntity<AuditRecordId> {
     private byte[] entityData;
     @Column(name = "change_delta")
     private byte[] changeDelta;
+    @Column(name = "change_context")
+    private byte[] changeContext;
     @AttributeOverrides({
             @AttributeOverride(name = "modifiedBy", column = @Column(name = "user_id")),
             @AttributeOverride(name = "timestamp", column = @Column(name = "timestamp"))
     })
     private ModifiedBy createdBy;
 
-    public AuditRecord() {}
+    public AuditRecord() {
+    }
 
-    public AuditRecord(@Nonnull Class<?> entityType) {
+    public AuditRecord(@Nonnull Class<?> dataStoreType,
+                       @Nonnull String dataStoreName,
+                       @Nonnull Class<?> entityType) {
         id = new AuditRecordId();
+        id.setDataStoreType(dataStoreType.getCanonicalName());
+        id.setDataStoreName(dataStoreName);
         id.setRecordType(entityType.getCanonicalName());
         id.setRecordId(UUID.randomUUID().toString());
     }
 
-    public AuditRecord(@Nonnull Class<?> entityType, @Nonnull String userId) {
+    public AuditRecord(@Nonnull Class<?> dataStoreType,
+                       @Nonnull String dataStoreName,
+                       @Nonnull Class<?> entityType,
+                       @Nonnull String userId) {
         id = new AuditRecordId();
+        id.setDataStoreType(dataStoreType.getCanonicalName());
+        id.setDataStoreName(dataStoreName);
         id.setRecordType(entityType.getCanonicalName());
         id.setRecordId(UUID.randomUUID().toString());
 
