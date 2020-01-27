@@ -4,6 +4,7 @@ import com.codekutter.common.model.AuditRecord;
 import com.codekutter.common.model.EObjectState;
 import com.codekutter.common.model.IKey;
 import com.codekutter.common.model.IKeyed;
+import com.codekutter.common.stores.AbstractDataStore;
 import com.codekutter.common.utils.LogUtils;
 import com.google.common.base.Preconditions;
 import org.hibernate.Session;
@@ -28,17 +29,22 @@ public class DBAuditLogger extends AbstractAuditLogger<Session> {
     public <T extends IKeyed> Collection<T> search(@Nonnull String query,
                                                    @Nonnull Class<? extends T> entityType,
                                                    @Nonnull IAuditSerDe serializer) throws AuditException {
-        Preconditions.checkState(dataStore() != null);
+        Preconditions.checkState(dataStoreManager() != null);
         try {
             state().check(EObjectState.Available, getClass());
+            AbstractDataStore<Session> dataStore =
+                    dataStoreManager().getDataStore(dataStoreName(), (Class<? extends AbstractDataStore<Session>>) dataStoreType());
+            if (dataStore == null) {
+                throw new AuditException(String.format("Data Store not found. [type=%s][name=%s]", dataStoreType().getCanonicalName(), dataStoreName()));
+            }
             String qstr = String.format("FROM %s WHERE id.recordType = :recordType AND (%s)",
                     AuditRecord.class.getCanonicalName(), query);
             Map<String, Object> params = new HashMap<>();
             params.put("recordType", entityType.getCanonicalName());
-            Collection<AuditRecord> records = dataStore().search(qstr, params, AuditRecord.class, null);
+            Collection<AuditRecord> records = dataStore.search(qstr, params, AuditRecord.class, null);
             if (records != null && !records.isEmpty()) {
                 List<T> entities = new ArrayList<>(records.size());
-                for(AuditRecord record : records) {
+                for (AuditRecord record : records) {
                     T entity = (T) serializer.deserialize(record.getEntityData(), entityType);
                     LogUtils.debug(getClass(), entity);
                     entities.add(entity);
@@ -60,18 +66,24 @@ public class DBAuditLogger extends AbstractAuditLogger<Session> {
      * @throws AuditException
      */
     @Override
+    @SuppressWarnings("unchecked")
     public <K extends IKey, T extends IKeyed<K>> Collection<AuditRecord> find(@Nonnull K key,
-                                                                          @Nonnull Class<? extends T> entityType) throws AuditException {
-        Preconditions.checkState(dataStore() != null);
+                                                                              @Nonnull Class<? extends T> entityType) throws AuditException {
+        Preconditions.checkState(dataStoreManager() != null);
         try {
             state().check(EObjectState.Available, getClass());
+            AbstractDataStore<Session> dataStore =
+                    dataStoreManager().getDataStore(dataStoreName(), (Class<? extends AbstractDataStore<Session>>) dataStoreType());
+            if (dataStore == null) {
+                throw new AuditException(String.format("Data Store not found. [type=%s][name=%s]", dataStoreType().getCanonicalName(), dataStoreName()));
+            }
 
             String qstr = String.format("FROM %s WHERE id.recordType = :recordType AND entityId = :entityId",
                     AuditRecord.class.getCanonicalName());
             Map<String, Object> params = new HashMap<>();
             params.put("recordType", entityType.getCanonicalName());
             params.put("entityId", key.toString());
-            Collection<AuditRecord> records = dataStore().search(qstr, params, AuditRecord.class, null);
+            Collection<AuditRecord> records = dataStore.search(qstr, params, AuditRecord.class, null);
             if (records != null && !records.isEmpty()) {
                 return records;
             }
@@ -85,9 +97,6 @@ public class DBAuditLogger extends AbstractAuditLogger<Session> {
     public void close() throws IOException {
         if (state().getState() == EObjectState.Available) {
             state().setState(EObjectState.Disposed);
-        }
-        if (dataStore() != null) {
-            dataStore().close();
         }
     }
 }

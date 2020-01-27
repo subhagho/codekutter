@@ -195,6 +195,7 @@ public class EntityManager implements IConfigurable {
                         type.getCanonicalName()));
             }
             entity = (E) formatEntity(entity, context);
+            entity.validate();
             entity = dataStore.create(entity, type, context);
             auditChange(dataStore, EAuditType.Create, entity, entity.getClass(), context, null, user);
 
@@ -309,6 +310,7 @@ public class EntityManager implements IConfigurable {
                 }
             }
             entity = (E) formatEntity(entity, context);
+            entity.validate();
             entity = dataStore.update(entity, type, context);
             String delta = null;
             if (entity instanceof IChange) {

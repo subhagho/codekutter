@@ -28,11 +28,9 @@ import com.codekutter.zconfig.common.ConfigurationException;
 import com.codekutter.zconfig.common.IConfigurable;
 import com.codekutter.zconfig.common.model.annotations.ConfigAttribute;
 import com.codekutter.zconfig.common.model.annotations.ConfigPath;
-import com.codekutter.zconfig.common.model.annotations.ConfigValue;
 import com.codekutter.zconfig.common.model.nodes.*;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
-import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
@@ -107,7 +105,14 @@ public class DataStoreManager implements IConfigurable {
         return null;
     }
 
-    public <T> AbstractDataStore<T> getDataStore(@Nonnull String name, @Nonnull Class<? extends AbstractDataStore<T>> storeType) throws DataStoreException {
+    public <T> AbstractDataStore<T> getDataStore(@Nonnull String name,
+                                                 @Nonnull Class<? extends AbstractDataStore<T>> storeType) throws DataStoreException {
+       return getDataStore(name, storeType, true);
+    }
+
+    public <T> AbstractDataStore<T> getDataStore(@Nonnull String name,
+                                                 @Nonnull Class<? extends AbstractDataStore<T>> storeType,
+                                                 boolean add) throws DataStoreException {
         try {
             DataStoreConfig config = dataStoreConfigs.get(name);
             if (config == null) {
@@ -116,14 +121,21 @@ public class DataStoreManager implements IConfigurable {
             if (!config.dataStoreClass().equals(storeType)) {
                 throw new DataStoreException(String.format("Invalid Data Store class. [store=%s][expected=%s][configured=%s]", name, storeType.getCanonicalName(), config.dataStoreClass().getCanonicalName()));
             }
-            return getDataStore(config, storeType);
+            return getDataStore(config, storeType, add);
         } catch (Exception ex) {
             throw new DataStoreException(ex);
         }
     }
 
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public <T, E extends IEntity> AbstractDataStore<T> getDataStore(@Nonnull Class<? extends AbstractDataStore<T>> storeType, Class<? extends E> type) throws DataStoreException {
+    public <T, E extends IEntity> AbstractDataStore<T> getDataStore(@Nonnull Class<? extends AbstractDataStore<T>> storeType,
+                                                                    Class<? extends E> type) throws DataStoreException {
+        return getDataStore(storeType, type, true);
+    }
+
+    @SuppressWarnings({"rawtypes"})
+    public <T, E extends IEntity> AbstractDataStore<T> getDataStore(@Nonnull Class<? extends AbstractDataStore<T>> storeType,
+                                                                    Class<? extends E> type,
+                                                                    boolean add) throws DataStoreException {
         Map<Class<? extends AbstractDataStore>, DataStoreConfig> configs = entityIndex.get(type);
         if (configs == null) {
             throw new DataStoreException(String.format("No data store found for entity type. [type=%s]", type.getCanonicalName()));
@@ -134,7 +146,7 @@ public class DataStoreManager implements IConfigurable {
         }
 
         try {
-            return getDataStore(config, storeType);
+            return getDataStore(config, storeType, add);
         } catch (Exception ex) {
             throw new DataStoreException(ex);
         }
@@ -142,7 +154,8 @@ public class DataStoreManager implements IConfigurable {
 
     @SuppressWarnings("unchecked")
     private <T> AbstractDataStore<T> getDataStore(DataStoreConfig config,
-                                                  Class<? extends AbstractDataStore<T>> storeType) throws DataStoreException {
+                                                  Class<? extends AbstractDataStore<T>> storeType,
+                                                  boolean add) throws DataStoreException {
         long threadId = Thread.currentThread().getId();
         Map<String, AbstractDataStore> stores = null;
         if (openedStores.containsKey(threadId)) {
@@ -150,9 +163,11 @@ public class DataStoreManager implements IConfigurable {
             if (stores.containsKey(config.name())) {
                 return stores.get(config.name());
             }
-        } else {
+        } else if (add) {
             stores = new ConcurrentHashMap<>();
             openedStores.put(threadId, stores);
+        } else {
+            return null;
         }
 
         try {

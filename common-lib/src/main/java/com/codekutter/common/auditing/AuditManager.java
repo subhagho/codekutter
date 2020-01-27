@@ -182,12 +182,7 @@ public class AuditManager implements IConfigurable, Closeable {
             Class<? extends AbstractAuditLogger> cls = (Class<? extends AbstractAuditLogger>) Class.forName(cname);
             AbstractAuditLogger logger = cls.newInstance();
             logger.configure(node);
-            AbstractDataStore dataStore = dataStoreManager.getDataStore(logger.dataStoreName(), logger.dataStoreType());
-            if (dataStore == null) {
-                throw new ConfigurationException(String.format("[logger=%s] Data Store not found. [name=%s][type=%s]",
-                        logger.name(), logger.dataStoreName(), logger.dataStoreType().getCanonicalName()));
-            }
-            logger.withDataStore(dataStore);
+            logger.withDataStoreManager(dataStoreManager);
             loggers.put(logger.name(), logger);
             if (logger.defaultLogger()) {
                 defaultLogger = logger;

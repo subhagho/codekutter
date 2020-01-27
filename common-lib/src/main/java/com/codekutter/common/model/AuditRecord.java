@@ -28,6 +28,7 @@ public class AuditRecord implements IEntity<AuditRecordId> {
     private byte[] changeDelta;
     @Column(name = "change_context")
     private byte[] changeContext;
+    @Embedded
     @AttributeOverrides({
             @AttributeOverride(name = "modifiedBy", column = @Column(name = "user_id")),
             @AttributeOverride(name = "timestamp", column = @Column(name = "timestamp"))

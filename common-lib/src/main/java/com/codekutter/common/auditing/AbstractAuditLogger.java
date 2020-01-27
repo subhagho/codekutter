@@ -3,6 +3,8 @@ package com.codekutter.common.auditing;
 import com.codekutter.common.StateException;
 import com.codekutter.common.model.*;
 import com.codekutter.common.stores.AbstractDataStore;
+import com.codekutter.common.stores.DataStoreException;
+import com.codekutter.common.stores.DataStoreManager;
 import com.codekutter.common.utils.LogUtils;
 import com.codekutter.zconfig.common.ConfigurationAnnotationProcessor;
 import com.codekutter.zconfig.common.ConfigurationException;
@@ -51,7 +53,7 @@ public abstract class AbstractAuditLogger<C> implements IConfigurable, Closeable
     @ConfigValue(name = "classes", parser = StringListParser.class)
     private List<String> classes;
     @Setter(AccessLevel.NONE)
-    private AbstractDataStore<C> dataStore;
+    private DataStoreManager dataStoreManager;
     @Setter(AccessLevel.NONE)
     private IAuditSerDe serializer;
     @Setter(AccessLevel.NONE)
@@ -60,11 +62,11 @@ public abstract class AbstractAuditLogger<C> implements IConfigurable, Closeable
     /**
      * Set the data store to be used by this audit logger.
      *
-     * @param dataStore - Data Store handle.
+     * @param dataStoreManager - Data Store handle.
      * @return - Self
      */
-    public AbstractAuditLogger<C> withDataStore(@Nonnull AbstractDataStore<C> dataStore) {
-        this.dataStore = dataStore;
+    public AbstractAuditLogger<C> withDataStoreManager(@Nonnull DataStoreManager dataStoreManager) {
+        this.dataStoreManager = dataStoreManager;
         return this;
     }
 
@@ -148,6 +150,7 @@ public abstract class AbstractAuditLogger<C> implements IConfigurable, Closeable
      * @return - Created Audit record.
      * @throws AuditException
      */
+    @SuppressWarnings("unchecked")
     public <T extends IKeyed> AuditRecord write(@Nonnull Class<?> dataStoreType,
                                                 @Nonnull String dataStoreName,
                                                 @Nonnull EAuditType type,
@@ -157,9 +160,13 @@ public abstract class AbstractAuditLogger<C> implements IConfigurable, Closeable
                                                 String changeContext,
                                                 @Nonnull Principal user,
                                                 @Nonnull IAuditSerDe serializer) throws AuditException {
-        Preconditions.checkState(dataStore != null);
+        Preconditions.checkState(dataStoreManager != null);
         try {
             state.check(EObjectState.Available, getClass());
+            AbstractDataStore<C> dataStore = dataStoreManager.getDataStore(dataStoreName, (Class<? extends AbstractDataStore<C>>) dataStoreType);
+            if (dataStore == null) {
+                throw new AuditException(String.format("Data Store not found. [type=%s][name=%s]", dataStoreType.getCanonicalName(), dataStoreName));
+            }
             AuditRecord record = createAuditRecord(dataStoreType, dataStoreName, type, entity, entityType, changeDelta, changeContext, user, serializer);
             record = dataStore.create(record, record.getClass(), null);
             return record;
@@ -229,9 +236,13 @@ public abstract class AbstractAuditLogger<C> implements IConfigurable, Closeable
     public <K extends IKey, T extends IKeyed<K>> List<T> fetch(@Nonnull K key,
                                                                @Nonnull Class<? extends T> entityType,
                                                                @Nonnull IAuditSerDe serializer) throws AuditException {
-        Preconditions.checkState(dataStore != null);
+        Preconditions.checkState(dataStoreManager != null);
         try {
             state.check(EObjectState.Available, getClass());
+            AbstractDataStore<C> dataStore = dataStoreManager.getDataStore(dataStoreName, (Class<? extends AbstractDataStore<C>>) dataStoreType);
+            if (dataStore == null) {
+                throw new AuditException(String.format("Data Store not found. [type=%s][name=%s]", dataStoreType.getCanonicalName(), dataStoreName));
+            }
             Collection<AuditRecord> records = find(key, entityType);
             if (records != null && !records.isEmpty()) {
                 List<T> entities = new ArrayList<>(records.size());
@@ -243,7 +254,7 @@ public abstract class AbstractAuditLogger<C> implements IConfigurable, Closeable
                 return entities;
             }
             return null;
-        } catch (StateException ex) {
+        } catch (StateException | DataStoreException ex) {
             throw new AuditException(ex);
         }
     }
