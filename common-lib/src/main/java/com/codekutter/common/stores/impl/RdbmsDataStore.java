@@ -185,6 +185,16 @@ public class RdbmsDataStore extends TransactionDataStore<Session, Transaction> {
         return null;
     }
 
+    @Override
+    public DataStoreAuditContext context() {
+        DataStoreAuditContext ctx = new DataStoreAuditContext();
+        ctx.setType(getClass().getCanonicalName());
+        ctx.setName(name());
+        ctx.setConnectionType(connection().type().getCanonicalName());
+        ctx.setConnectionName(connection().name());
+        return ctx;
+    }
+
 
     @Override
     public void configure(@Nonnull DataStoreManager dataStoreManager) throws ConfigurationException {

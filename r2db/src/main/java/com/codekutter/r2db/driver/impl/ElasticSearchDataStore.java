@@ -23,6 +23,7 @@ import com.codekutter.common.stores.AbstractDataStore;
 import com.codekutter.common.stores.DataStoreException;
 import com.codekutter.common.stores.DataStoreManager;
 import com.codekutter.common.stores.ISearchable;
+import com.codekutter.common.stores.impl.DataStoreAuditContext;
 import com.codekutter.zconfig.common.ConfigurationException;
 import org.apache.lucene.search.Query;
 import org.elasticsearch.client.RestHighLevelClient;
@@ -75,6 +76,16 @@ public class ElasticSearchDataStore extends AbstractDataStore<RestHighLevelClien
                                                     @Nonnull Class<? extends E> type,
                                                     Context context) throws DataStoreException {
         return null;
+    }
+
+    @Override
+    public DataStoreAuditContext context() {
+        DataStoreAuditContext ctx = new DataStoreAuditContext();
+        ctx.setType(getClass().getCanonicalName());
+        ctx.setName(name());
+        ctx.setConnectionType(connection().type().getCanonicalName());
+        ctx.setConnectionName(connection().name());
+        return ctx;
     }
 
     @Override

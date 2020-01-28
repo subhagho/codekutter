@@ -3,7 +3,7 @@ DROP TABLE IF EXISTS `tb_key_vault`;
 CREATE TABLE `tb_key_vault`
 (
     `key`            varchar(256)   NOT NULL,
-    `data`           blob           NOT NULL,
+    `data`           mediumblob     NOT NULL,
     `created_by`     varchar(128)   NOT NULL,
     `created_at`     decimal(24, 0) NOT NULL,
     `updated_by`     varchar(128)   NOT NULL,
@@ -34,15 +34,15 @@ CREATE TABLE `tb_audit_records`
 (
     `data_store_type` varchar(128)   NOT NULL,
     `data_store_name` varchar(128)   NOT NULL,
-    `record_type`    varchar(128)   NOT NULL,
-    `record_id`      varchar(128)   NOT NULL,
-    `audit_type`     varchar(32)    NOT NULL,
-    `entity_id`      varchar(512)   NOT NULL,
-    `entity_data`    longblob DEFAULT NULL,
-    `user_id`        varchar(128)   NOT NULL,
-    `timestamp`      decimal(24, 0) NOT NULL,
-    `change_delta`   longblob DEFAULT NULL,
-    `change_context` mediumblob DEFAULT NULL,
+    `record_type`     varchar(128)   NOT NULL,
+    `record_id`       varchar(128)   NOT NULL,
+    `audit_type`      varchar(32)    NOT NULL,
+    `entity_id`       varchar(512)   NOT NULL,
+    `entity_data`     longblob   DEFAULT NULL,
+    `user_id`         varchar(128)   NOT NULL,
+    `timestamp`       decimal(24, 0) NOT NULL,
+    `change_delta`    longblob   DEFAULT NULL,
+    `change_context`  mediumblob DEFAULT NULL,
     PRIMARY KEY (`data_store_type`, `data_store_name`, `record_type`, `record_id`),
     KEY `tb_audit_records_record_type_IDX` (`record_type`, `entity_id`) USING BTREE
 ) ENGINE = InnoDB

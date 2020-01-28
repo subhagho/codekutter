@@ -25,6 +25,7 @@ import com.codekutter.common.stores.AbstractConnection;
 import com.codekutter.common.stores.AbstractDirectoryStore;
 import com.codekutter.common.stores.DataStoreException;
 import com.codekutter.common.stores.DataStoreManager;
+import com.codekutter.common.stores.impl.DataStoreAuditContext;
 import com.codekutter.common.utils.IOUtils;
 import com.codekutter.common.utils.LogUtils;
 import com.codekutter.common.utils.ReflectionUtils;
@@ -231,6 +232,17 @@ public class AwsS3DataStore extends AbstractDirectoryStore<AmazonS3> {
                                                     @Nonnull Class<? extends E> type,
                                                     Context context) throws DataStoreException {
         return search(query, offset, maxResults, type, context);
+    }
+
+    @Override
+    public DataStoreAuditContext context() {
+        S3DataStoreAuditContext ctx = new S3DataStoreAuditContext();
+        ctx.setType(getClass().getCanonicalName());
+        ctx.setName(name());
+        ctx.setConnectionType(connection().type().getCanonicalName());
+        ctx.setConnectionName(connection().name());
+        ctx.setBucket(bucket);
+        return ctx;
     }
 
     private String getLocalFileName(S3FileKey key) {

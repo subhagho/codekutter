@@ -18,6 +18,7 @@
 package com.codekutter.r2db.driver.impl;
 
 import com.codekutter.common.Context;
+import com.codekutter.common.stores.impl.DataStoreAuditContext;
 import com.codekutter.r2db.driver.model.FileEntity;
 import com.codekutter.common.model.IEntity;
 import com.codekutter.common.model.StringEntity;
@@ -222,6 +223,17 @@ public class LocalDirectoryStore extends AbstractDirectoryStore<File> {
                                                     @Nonnull Class<? extends E> type,
                                                     Context context) throws DataStoreException {
         return search(query, offset, maxResults, type, context);
+    }
+
+    @Override
+    public DataStoreAuditContext context() {
+        FileDataStoreContext ctx = new FileDataStoreContext();
+        ctx.setType(getClass().getCanonicalName());
+        ctx.setName(name());
+        ctx.setConnectionType(connection().type().getCanonicalName());
+        ctx.setConnectionName(connection().name());
+        ctx.setDirectory(directory.getAbsolutePath());
+        return ctx;
     }
 
     @Override

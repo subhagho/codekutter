@@ -250,18 +250,6 @@ public abstract class ZConfigEnv {
     }
 
     /**
-     * Get a new instance of the JSON Object mapper.
-     *
-     * @return - JSON Object mapper.
-     */
-    public ObjectMapper getJsonMapper() {
-        ObjectMapper mapper = new ObjectMapper();
-        mapper.registerModule(new JodaModule());
-        mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
-        return mapper;
-    }
-
-    /**
      * Perform post-initialisation tasks if any.
      *
      * @throws ConfigurationException

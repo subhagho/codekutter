@@ -18,6 +18,7 @@
 package com.codekutter.r2db.driver;
 
 import com.codekutter.common.Context;
+import com.codekutter.common.GlobalConstants;
 import com.codekutter.common.auditing.*;
 import com.codekutter.common.model.AuditRecord;
 import com.codekutter.common.model.EAuditType;
@@ -490,8 +491,7 @@ public class EntityManager implements IConfigurable {
                     }
                     AbstractAuditContext ctx = provider.generate(dataStore, entity, context, user);
                     if (ctx != null) {
-                        ObjectMapper mapper = ZConfigEnv.env().getJsonMapper();
-                        changeContext = mapper.writeValueAsString(ctx);
+                        changeContext = ctx.json();
                     }
                 }
                 String logger = dataStore.config().auditLogger();

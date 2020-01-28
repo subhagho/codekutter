@@ -19,6 +19,7 @@ package com.codekutter.common.stores;
 
 import com.codekutter.common.Context;
 import com.codekutter.common.model.IEntity;
+import com.codekutter.common.stores.impl.DataStoreAuditContext;
 import com.codekutter.zconfig.common.ConfigurationException;
 import com.codekutter.zconfig.common.model.annotations.ConfigAttribute;
 import com.codekutter.zconfig.common.model.annotations.ConfigValue;
@@ -117,4 +118,5 @@ public abstract class AbstractDataStore<T> implements Closeable {
         return search(query, 0, maxResults, parameters, type, context);
     }
 
+    public abstract DataStoreAuditContext context();
 }

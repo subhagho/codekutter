@@ -128,8 +128,8 @@
                     <dataStores>
                         <dataStore name="TestDataStore" class="com.codekutter.common.stores.impl.RdbmsConfig"
                                    dataStoreClass="com.codekutter.common.stores.impl.RdbmsDataStore"
-                                   connection="TestDbConnection">
-
+                                   connection="TestDbConnection"
+                                   auditContextProvider="com.codekutter.common.stores.DataSourceContextGenerator">
                         </dataStore>
                     </dataStores>
                 </dataStoreManager>

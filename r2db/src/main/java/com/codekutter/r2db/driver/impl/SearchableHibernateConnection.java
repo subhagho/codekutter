@@ -81,8 +81,8 @@ public class SearchableHibernateConnection extends HibernateConnection {
         Preconditions.checkArgument(node instanceof ConfigPathNode);
         try {
             ConfigurationAnnotationProcessor.readConfigAnnotations(getClass(), (ConfigPathNode) node, this);
-            if (!Strings.isNullOrEmpty(hibernateConfig())) {
-                File cfg = new File(hibernateConfig());
+            if (!Strings.isNullOrEmpty(hibernateConfigSource())) {
+                File cfg = new File(hibernateConfigSource());
                 if (!cfg.exists()) {
                     throw new ConfigurationException(String.format("Hibernate configuration not found. [path=%s]", cfg.getAbsolutePath()));
                 }

@@ -86,7 +86,7 @@ public class GlobalConstants {
      * @return - Windows OS?
      */
     public static boolean isWindows() {
-        return (OS.indexOf("win") >= 0);
+        return (OS.contains("win"));
     }
 
     /**
@@ -95,7 +95,7 @@ public class GlobalConstants {
      * @return - Mac OS?
      */
     public static boolean isMac() {
-        return (OS.indexOf("mac") >= 0);
+        return (OS.contains("mac"));
     }
 
     /**
@@ -104,7 +104,7 @@ public class GlobalConstants {
      * @return - (U)NIX OS?
      */
     public static boolean isUnix() {
-        return (OS.indexOf("nix") >= 0 || OS.indexOf("nux") >= 0 || OS.indexOf("aix") > 0);
+        return (OS.contains("nix") || OS.contains("nux") || OS.indexOf("aix") > 0);
     }
 
     /**
@@ -113,7 +113,7 @@ public class GlobalConstants {
      * @return - Solaris OS?
      */
     public static boolean isSolaris() {
-        return (OS.indexOf("sunos") >= 0);
+        return (OS.contains("sunos"));
     }
 
     /**
@@ -125,6 +125,7 @@ public class GlobalConstants {
         ObjectMapper mapper = new ObjectMapper();
         mapper.registerModule(new JodaModule());
         mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+        mapper.enable(SerializationFeature.INDENT_OUTPUT);
         return mapper;
     }
 }

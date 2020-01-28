@@ -15,20 +15,18 @@
  *
  */
 
-package com.codekutter.common.auditing;
+package com.codekutter.common.stores;
 
 import com.codekutter.common.Context;
+import com.codekutter.common.auditing.AbstractAuditContext;
+import com.codekutter.common.auditing.IAuditContextGenerator;
 import com.codekutter.common.model.IEntity;
-import com.codekutter.common.stores.DataStoreException;
+import com.google.common.base.Preconditions;
 
 import javax.annotation.Nonnull;
 import java.security.Principal;
 
-/**
- * Interface to be implemented to setup audit context data.
- */
-@SuppressWarnings("rawtypes")
-public interface IAuditContextGenerator {
+public class DataSourceContextGenerator implements IAuditContextGenerator {
     /**
      * Generate the Audit Context.
      *
@@ -36,12 +34,21 @@ public interface IAuditContextGenerator {
      * @param entity  - Entity being operated on.
      * @param context - Update context.
      * @param user    - Calling User
-     * @param <E>     - Entity Type.
      * @return - Generated Audit context.
      * @throws DataStoreException
      */
-    <E extends IEntity> AbstractAuditContext generate(@Nonnull Object source,
-                                                      @Nonnull E entity,
-                                                      Context context,
-                                                      Principal user) throws DataStoreException;
+    @Override
+    @SuppressWarnings("rawtypes")
+    public <E extends IEntity> AbstractAuditContext generate(@Nonnull Object source,
+                                                             @Nonnull E entity,
+                                                             Context context,
+                                                             Principal user) throws DataStoreException {
+        Preconditions.checkArgument(source instanceof AbstractDataStore);
+        try {
+            AbstractDataStore store = (AbstractDataStore)source;
+            return store.context();
+        } catch (Exception ex) {
+            throw new DataStoreException(ex);
+        }
+    }
 }

@@ -24,11 +24,13 @@
 
 package com.codekutter.zconfig.core.zookeeper;
 
+import com.codekutter.common.GlobalConstants;
 import com.codekutter.common.model.ModifiedBy;
 import com.codekutter.common.model.StringKey;
 import com.codekutter.common.utils.ConfigUtils;
 import com.codekutter.common.utils.IUniqueIDGenerator;
 import com.codekutter.zconfig.common.ZConfigCoreEnv;
+import com.codekutter.zconfig.common.ZConfigEnv;
 import com.codekutter.zconfig.common.model.Configuration;
 import com.codekutter.zconfig.common.model.Version;
 import com.codekutter.zconfig.common.model.nodes.*;
@@ -93,7 +95,7 @@ public class ZkConfigDAO implements IConfigDAO {
                         throw new PersistenceException(
                                 "Invalid Application Group : NULL/empty data returned.");
                     }
-                    ObjectMapper mapper = ZConfigCoreEnv.coreEnv().getJsonMapper();
+                    ObjectMapper mapper = GlobalConstants.getJsonMapper();
                     ApplicationGroup nGroup =
                             mapper.readValue(json, ApplicationGroup.class);
                     if (group.getId().compareTo(nGroup.getId()) != 0) {
@@ -104,7 +106,7 @@ public class ZkConfigDAO implements IConfigDAO {
                 }
             }
             group.setUpdated(modifiedBy);
-            ObjectMapper mapper = ZConfigCoreEnv.coreEnv().getJsonMapper();
+            ObjectMapper mapper = GlobalConstants.getJsonMapper();
             String json = mapper.writeValueAsString(group);
             client.setData().forPath(zkPath, json.getBytes());
 
@@ -149,7 +151,7 @@ public class ZkConfigDAO implements IConfigDAO {
                         throw new PersistenceException(
                                 "Invalid Application Group : NULL/empty data returned.");
                     }
-                    ObjectMapper mapper = ZConfigCoreEnv.coreEnv().getJsonMapper();
+                    ObjectMapper mapper = GlobalConstants.getJsonMapper();
                     Application nGroup =
                             mapper.readValue(json, Application.class);
                     if (application.getId().compareTo(nGroup.getId()) != 0) {
@@ -160,7 +162,7 @@ public class ZkConfigDAO implements IConfigDAO {
                 }
             }
             application.setUpdated(modifiedBy);
-            ObjectMapper mapper = ZConfigCoreEnv.coreEnv().getJsonMapper();
+            ObjectMapper mapper = GlobalConstants.getJsonMapper();
             String json = mapper.writeValueAsString(application);
             client.setData().forPath(zkPath, json.getBytes());
 
@@ -218,7 +220,7 @@ public class ZkConfigDAO implements IConfigDAO {
                     setupConfigHeaderNode(configNode, configuration, application,
                             modifiedBy);
                 } else {
-                    ObjectMapper mapper = ZConfigCoreEnv.coreEnv().getJsonMapper();
+                    ObjectMapper mapper = GlobalConstants.getJsonMapper();
                     configNode = mapper.readValue(data, PersistedConfigNode.class);
                     if (!configuration.getVersion()
                             .equals(configNode.getCurrentVersion())) {
@@ -234,7 +236,7 @@ public class ZkConfigDAO implements IConfigDAO {
             configNode.setUpdated(modifiedBy);
             configNode.setCurrentVersion(version);
 
-            ObjectMapper mapper = ZConfigCoreEnv.coreEnv().getJsonMapper();
+            ObjectMapper mapper = GlobalConstants.getJsonMapper();
             String json = mapper.writeValueAsString(configNode);
 
             client.setData().forPath(zkPath, json.getBytes());
@@ -260,7 +262,7 @@ public class ZkConfigDAO implements IConfigDAO {
                                        ModifiedBy modifiedBy)
             throws ServiceEnvException {
         try {
-            configNode.setId(new StringKey(ZConfigCoreEnv.coreEnv().getIdGenerator()
+            configNode.setId(new StringKey(((ZConfigCoreEnv) ZConfigCoreEnv.env()).getIdGenerator()
                     .generateStringId(null)));
             configNode.setApplication(application);
             configNode.setName(configuration.getName());
@@ -360,7 +362,7 @@ public class ZkConfigDAO implements IConfigDAO {
                     zkNode.setValue(node.getValue());
                 } else {
                     String json = new String(data);
-                    ObjectMapper mapper = ZConfigCoreEnv.coreEnv().getJsonMapper();
+                    ObjectMapper mapper = GlobalConstants.getJsonMapper();
                     zkNode = mapper.readValue(json, PersistedConfigValueNode.class);
                     if (configNode.getCurrentVersion()
                             .compareMinorVersion(zkNode.getNodeVersion()) <
@@ -377,7 +379,7 @@ public class ZkConfigDAO implements IConfigDAO {
             }
             String path = zkNode.getAbsolutePath();
             String json =
-                    ZConfigCoreEnv.coreEnv().getJsonMapper()
+                    GlobalConstants.getJsonMapper()
                             .writeValueAsString(zkNode);
             client.setData().forPath(path, json.getBytes());
 
@@ -406,7 +408,7 @@ public class ZkConfigDAO implements IConfigDAO {
         try {
             zkNode = new PersistedConfigValueNode();
             IUniqueIDGenerator idGenerator =
-                    ZConfigCoreEnv.coreEnv().getIdGenerator();
+                    ((ZConfigCoreEnv) ZConfigCoreEnv.env()).getIdGenerator();
             zkNode.setId(new StringKey(idGenerator.generateStringId(null)));
             zkNode.setName(node.getName());
             String desc = ConfigUtils.getDescription(node);
@@ -468,7 +470,7 @@ public class ZkConfigDAO implements IConfigDAO {
                     zkNode.setValues(values);
                 } else {
                     String json = new String(data);
-                    ObjectMapper mapper = ZConfigCoreEnv.coreEnv().getJsonMapper();
+                    ObjectMapper mapper = GlobalConstants.getJsonMapper();
                     zkNode = mapper.readValue(json,
                             PersistedConfigListValueNode.class);
                     if (configNode.getCurrentVersion()
@@ -486,7 +488,7 @@ public class ZkConfigDAO implements IConfigDAO {
             }
             String path = zkNode.getAbsolutePath();
             String json =
-                    ZConfigCoreEnv.coreEnv().getJsonMapper()
+                    GlobalConstants.getJsonMapper()
                             .writeValueAsString(zkNode);
             client.setData().forPath(path, json.getBytes());
 
@@ -537,7 +539,7 @@ public class ZkConfigDAO implements IConfigDAO {
                     zkNode.setMapFrom(node.getKeyValues());
                 } else {
                     String json = new String(data);
-                    ObjectMapper mapper = ZConfigCoreEnv.coreEnv().getJsonMapper();
+                    ObjectMapper mapper = GlobalConstants.getJsonMapper();
                     zkNode = mapper.readValue(json, PersistedConfigMapNode.class);
                     if (configNode.getCurrentVersion()
                             .compareMinorVersion(zkNode.getNodeVersion()) <
@@ -554,7 +556,7 @@ public class ZkConfigDAO implements IConfigDAO {
             }
             String path = zkNode.getAbsolutePath();
             String json =
-                    ZConfigCoreEnv.coreEnv().getJsonMapper()
+                    GlobalConstants.getJsonMapper()
                             .writeValueAsString(zkNode);
             client.setData().forPath(path, json.getBytes());
 
@@ -585,7 +587,7 @@ public class ZkConfigDAO implements IConfigDAO {
                 byte[] data = client.getData().forPath(zkPath);
                 String json = new String(data);
                 if (!Strings.isNullOrEmpty(json)) {
-                    ObjectMapper mapper = ZConfigCoreEnv.coreEnv().getJsonMapper();
+                    ObjectMapper mapper = GlobalConstants.getJsonMapper();
                     return mapper.readValue(json, PersistedConfigPathNode.class);
                 }
             }
@@ -664,7 +666,7 @@ public class ZkConfigDAO implements IConfigDAO {
             if (stat != null) {
                 byte[] data = client.getData().forPath(zkPath);
                 if (data != null && data.length > 0) {
-                    ObjectMapper mapper = ZConfigCoreEnv.coreEnv().getJsonMapper();
+                    ObjectMapper mapper = GlobalConstants.getJsonMapper();
                     return mapper.readValue(data, ApplicationGroup.class);
                 }
             }
@@ -694,7 +696,7 @@ public class ZkConfigDAO implements IConfigDAO {
             if (stat != null) {
                 byte[] data = client.getData().forPath(zkPath);
                 if (data != null && data.length > 0) {
-                    ObjectMapper mapper = ZConfigCoreEnv.coreEnv().getJsonMapper();
+                    ObjectMapper mapper = GlobalConstants.getJsonMapper();
                     return mapper.readValue(data, Application.class);
                 }
             }
@@ -727,7 +729,7 @@ public class ZkConfigDAO implements IConfigDAO {
             if (stat != null) {
                 byte[] data = client.getData().forPath(zkPath);
                 if (data != null && data.length > 0) {
-                    ObjectMapper mapper = ZConfigCoreEnv.coreEnv().getJsonMapper();
+                    ObjectMapper mapper = GlobalConstants.getJsonMapper();
                     return mapper.readValue(data, PersistedConfigNode.class);
                 }
             }
