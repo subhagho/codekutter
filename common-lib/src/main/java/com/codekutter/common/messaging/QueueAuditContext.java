@@ -15,30 +15,32 @@
  *
  */
 
-package com.codekutter.common.model;
+package com.codekutter.common.messaging;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.codekutter.common.GlobalConstants;
+import com.codekutter.common.auditing.AbstractAuditContext;
+import com.fasterxml.jackson.core.JsonGenerationException;
 import lombok.Getter;
 import lombok.Setter;
-import lombok.ToString;
 
 @Getter
 @Setter
-@ToString
-public class DefaultStringMessage implements IKeyed<StringKey> {
-    private String queue;
-    private String messageId;
-    private String body;
-    private long timestamp;
+public class QueueAuditContext extends AbstractAuditContext {
+    private String queueType;
+    private String queueName;
 
     /**
-     * Get the object instance Key.
+     * Get the context as a JSON string.
      *
-     * @return - Key
+     * @return - JSON String
+     * @throws JsonGenerationException
      */
     @Override
-    @JsonIgnore
-    public StringKey getKey() {
-        return new StringKey(messageId);
+    public String json() throws JsonGenerationException {
+        try {
+            return GlobalConstants.getJsonMapper().writeValueAsString(this);
+        } catch (Exception e) {
+            throw new JsonGenerationException(e);
+        }
     }
 }

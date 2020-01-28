@@ -96,7 +96,7 @@ public class ConnectionManager implements IConfigurable, Closeable {
             }
             String cname = ConfigUtils.getClassAttribute(node);
             if (Strings.isNullOrEmpty(cname)) {
-                throw new ConfigurationException(String.format("Connection name attribute not found. [path=%s]",
+                throw new ConfigurationException(String.format("Connection class attribute not found. [path=%s]",
                         node.getAbsolutePath()));
             }
             Class<? extends AbstractConnection<?>> type = (Class<? extends AbstractConnection<?>>) Class.forName(cname);

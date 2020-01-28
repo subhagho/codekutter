@@ -80,7 +80,8 @@
                 <queue name="TEST-SQS-QUEUE" class="com.codekutter.common.messaging.SQSJsonQueue"
                        queue="ingest-queue-01">
                     <receiveTimeout>50000</receiveTimeout>
-                    <connection name="TEST-SQS-CONNECTION" region="us-east-2">
+                    <connection name="TEST-SQS-CONNECTION" region="us-east-2"
+                                class="com.codekutter.common.messaging.AwsSQSConnection">
                         <parameters>
                             <maxConnections>20</maxConnections>
                             <connectionTimeout>20000</connectionTimeout>

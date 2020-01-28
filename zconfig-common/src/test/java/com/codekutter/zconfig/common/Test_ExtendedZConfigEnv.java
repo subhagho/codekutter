@@ -46,6 +46,7 @@ class Test_ExtendedZConfigEnv {
     private static String zkLockName = "TEST_ZK_LOCK";
     private static String dbLockName = "TEST_DB_LOCK";
     private static String sqsQueueName = "TEST-SQS-QUEUE";
+    private static final User user = new User(UUID.randomUUID().toString());
 
     @BeforeAll
     public static void setup() throws Exception {
@@ -119,7 +120,7 @@ class Test_ExtendedZConfigEnv {
             message.setBody(String.format("This is a test message. [id=%s]", message.getMessageId()));
             message.setTimestamp(System.currentTimeMillis());
 
-            queue.send(message);
+            queue.send(message, user);
         } catch (Throwable t) {
             LogUtils.error(getClass(), t);
             fail(t);
@@ -136,10 +137,10 @@ class Test_ExtendedZConfigEnv {
                 message.setMessageId(UUID.randomUUID().toString());
                 message.setBody(String.format("This is a test message. [id=%s]", message.getMessageId()));
                 message.setTimestamp(System.currentTimeMillis());
-                queue.send(message);
+                queue.send(message, user);
             }
 
-            List<DefaultStringMessage> messages = queue.receiveBatch(5, 5000);
+            List<DefaultStringMessage> messages = queue.receiveBatch(5, 5000, user);
             assertNotNull(messages);
             assertTrue(messages.size() >= 5);
 

@@ -17,7 +17,11 @@
 
 package com.codekutter.common.messaging;
 
+import com.codekutter.common.auditing.AuditManager;
+import com.codekutter.common.model.AuditRecord;
+import com.codekutter.common.model.EAuditType;
 import com.codekutter.common.stores.AbstractConnection;
+import com.codekutter.common.stores.DataStoreException;
 import com.codekutter.common.utils.Monitoring;
 import com.codekutter.zconfig.common.IConfigurable;
 import com.codekutter.zconfig.common.model.annotations.ConfigAttribute;
@@ -29,10 +33,12 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
+import org.elasticsearch.common.Strings;
 
 import javax.annotation.Nonnull;
 import javax.jms.JMSException;
 import java.io.Closeable;
+import java.security.Principal;
 import java.util.List;
 
 /**
@@ -62,6 +68,13 @@ public abstract class AbstractQueue<C, M> implements IConfigurable, Closeable {
      */
     @ConfigValue(name = "receiveTimeout")
     private long receiveTimeout = DEFAULT_RECEIVE_TIMEOUT;
+
+    @ConfigAttribute
+    private boolean audited = false;
+
+    @ConfigValue
+    private String auditLogger;
+
     /**
      * Queue connection handle.
      */
@@ -111,7 +124,7 @@ public abstract class AbstractQueue<C, M> implements IConfigurable, Closeable {
      * @param message - Message handle.
      * @throws JMSException
      */
-    public abstract void send(@Nonnull M message) throws JMSException;
+    public abstract void send(@Nonnull M message, @Nonnull Principal user) throws JMSException;
 
     /**
      * Receive a message from the queue.
@@ -120,7 +133,7 @@ public abstract class AbstractQueue<C, M> implements IConfigurable, Closeable {
      * @return - Received message.
      * @throws JMSException
      */
-    public abstract M receive(long timeout) throws JMSException;
+    public abstract M receive(long timeout, @Nonnull Principal user) throws JMSException;
 
     /**
      * Acknowledge the receipt of the message with the
@@ -130,7 +143,7 @@ public abstract class AbstractQueue<C, M> implements IConfigurable, Closeable {
      * @return - ACK successful?
      * @throws JMSException
      */
-    public abstract boolean ack(@Nonnull String messageId) throws JMSException;
+    public abstract boolean ack(@Nonnull String messageId, @Nonnull Principal user) throws JMSException;
 
     /**
      * Receive a batch of messages, with the specified batch size and
@@ -143,7 +156,7 @@ public abstract class AbstractQueue<C, M> implements IConfigurable, Closeable {
      * @return - List of read messages.
      * @throws JMSException
      */
-    public abstract List<M> receiveBatch(int maxResults, long timeout) throws JMSException;
+    public abstract List<M> receiveBatch(int maxResults, long timeout, @Nonnull Principal user) throws JMSException;
 
 
     /**
@@ -156,8 +169,8 @@ public abstract class AbstractQueue<C, M> implements IConfigurable, Closeable {
      * @return - List of read messages.
      * @throws JMSException
      */
-    public List<M> receiveBatch(int maxResults) throws JMSException {
-        return receiveBatch(maxResults, receiveTimeout);
+    public List<M> receiveBatch(int maxResults, @Nonnull Principal user) throws JMSException {
+        return receiveBatch(maxResults, receiveTimeout, user);
     }
 
     /**
@@ -168,8 +181,8 @@ public abstract class AbstractQueue<C, M> implements IConfigurable, Closeable {
      * @return - Read message or NULL if queue is empty
      * @throws JMSException
      */
-    public M receive() throws JMSException {
-        return receive(receiveTimeout);
+    public M receive(@Nonnull Principal user) throws JMSException {
+        return receive(receiveTimeout, user);
     }
 
     protected void setupMetrics(String metricSendLatency,
@@ -185,5 +198,13 @@ public abstract class AbstractQueue<C, M> implements IConfigurable, Closeable {
         receiveCounter = Monitoring.addCounter(String.format(counterReceive, name(), queue));
         receiveErrorCounter = Monitoring.addCounter(String.format(counterReceiveError, name(), queue));
         sendErrorCounter = Monitoring.addCounter(String.format(counterSendError, name(), queue));
+    }
+
+
+    public QueueAuditContext context() {
+        QueueAuditContext ctx = new QueueAuditContext();
+        ctx.setQueueType(getClass().getCanonicalName());
+        ctx.setQueueName(name);
+        return ctx;
     }
 }
