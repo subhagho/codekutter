@@ -27,6 +27,7 @@ import com.codekutter.common.stores.AbstractConnection;
 import com.codekutter.common.stores.ConnectionManager;
 import com.codekutter.common.stores.DataStoreException;
 import com.codekutter.common.utils.ConfigUtils;
+import com.codekutter.common.utils.KeyValuePair;
 import com.codekutter.common.utils.LogUtils;
 import com.codekutter.common.utils.Monitoring;
 import com.codekutter.zconfig.common.ConfigurationAnnotationProcessor;
@@ -59,16 +60,6 @@ import java.util.concurrent.ConcurrentHashMap;
 @Setter
 @Accessors(fluent = true)
 public class SQSJsonQueue extends AbstractQueue<SQSConnection, DefaultStringMessage> {
-
-    private static final class Metrics {
-        private static final String METRIC_LATENCY_SEND = String.format("%s.%s.%s.SEND", SQSJsonQueue.class.getName(), "%s", "%s");
-        private static final String METRIC_LATENCY_RECEIVE = String.format("%s.%s.%s.RECEIVE", SQSJsonQueue.class.getName(), "%s", "%s");
-        private static final String METRIC_COUNTER_SEND_ERROR = String.format("%s.%s.%s.ERRORS.SEND", SQSJsonQueue.class.getName(), "%s", "%s");
-        private static final String METRIC_COUNTER_RECV = String.format("%s.%s.%s.COUNT.RECEIVE", SQSJsonQueue.class.getName(), "%s", "%s");
-        private static final String METRIC_COUNTER_SEND = String.format("%s.%s.%s.COUNT.SEND", SQSJsonQueue.class.getName(), "%s", "%s");
-        private static final String METRIC_COUNTER_RECV_ERROR = String.format("%s.%s.%s.ERRORS.RECEIVE", SQSJsonQueue.class.getName(), "%s", "%s");
-    }
-
     @ConfigAttribute(required = true)
     private String queue;
     @ConfigValue
@@ -92,7 +83,6 @@ public class SQSJsonQueue extends AbstractQueue<SQSConnection, DefaultStringMess
     }
 
 
-
     @Override
     public void send(@Nonnull DefaultStringMessage message, @Nonnull Principal user) throws JMSException {
         try {
@@ -106,15 +96,15 @@ public class SQSJsonQueue extends AbstractQueue<SQSConnection, DefaultStringMess
                     if (audited()) {
                         audit(message, EAuditType.Create, user);
                     }
-                    Monitoring.increment(sendCounter.name(), null);
+                    Monitoring.increment(sendCounter.name(), (KeyValuePair<String, String>[]) null);
                 } catch (Exception ex) {
                     LogUtils.error(getClass(), ex);
-                    Monitoring.increment(sendErrorCounter.name(), null);
+                    Monitoring.increment(sendErrorCounter.name(), (KeyValuePair<String, String>[]) null);
                     throw new RuntimeException(ex);
                 }
             });
         } catch (Exception ex) {
-            Monitoring.increment(sendErrorCounter.name(), null);
+            Monitoring.increment(sendErrorCounter.name(), (KeyValuePair<String, String>[]) null);
             LogUtils.error(getClass(), ex);
             throw new JMSException(ex.getLocalizedMessage());
         }
@@ -144,7 +134,7 @@ public class SQSJsonQueue extends AbstractQueue<SQSConnection, DefaultStringMess
         try {
             return receiveLatency.record(() -> receiveMessage(timeout, user));
         } catch (Exception ex) {
-            Monitoring.increment(receiveErrorCounter.name(), null);
+            Monitoring.increment(receiveErrorCounter.name(), (KeyValuePair<String, String>[]) null);
             LogUtils.error(getClass(), ex);
             throw new JMSException(ex.getLocalizedMessage());
         }
@@ -157,7 +147,7 @@ public class SQSJsonQueue extends AbstractQueue<SQSConnection, DefaultStringMess
             }
             Message m = consumer.receive(timeout);
             if (m != null) {
-                Monitoring.increment(receiveCounter.name(), null);
+                Monitoring.increment(receiveCounter.name(), (KeyValuePair<String, String>[]) null);
                 if (m instanceof TextMessage) {
                     if (!autoAck) {
                         messageCache.put(m.getJMSMessageID(), m);
@@ -170,7 +160,7 @@ public class SQSJsonQueue extends AbstractQueue<SQSConnection, DefaultStringMess
             return null;
         } catch (Exception ex) {
             LogUtils.error(getClass(), ex);
-            Monitoring.increment(receiveErrorCounter.name(), null);
+            Monitoring.increment(receiveErrorCounter.name(), (KeyValuePair<String, String>[]) null);
             throw new JMSException(ex.getLocalizedMessage());
         }
     }
@@ -231,13 +221,7 @@ public class SQSJsonQueue extends AbstractQueue<SQSConnection, DefaultStringMess
             else
                 session = connection.connection().createSession(false, Session.CLIENT_ACKNOWLEDGE);
 
-            setupMetrics(Metrics.METRIC_LATENCY_SEND,
-                    Metrics.METRIC_LATENCY_RECEIVE,
-                    Metrics.METRIC_COUNTER_SEND,
-                    Metrics.METRIC_COUNTER_RECV,
-                    Metrics.METRIC_COUNTER_SEND_ERROR,
-                    Metrics.METRIC_COUNTER_RECV_ERROR,
-                    queue);
+            setupMetrics(queue);
         } catch (Throwable t) {
             throw new ConfigurationException(t);
         }

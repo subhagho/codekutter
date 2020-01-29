@@ -39,6 +39,6 @@ public class DefaultStringMessage implements IKeyed<StringKey> {
     @Override
     @JsonIgnore
     public StringKey getKey() {
-        return new StringKey(messageId);
+        return new StringKey(String.format("%s:%s", queue, messageId));
     }
 }

@@ -28,7 +28,6 @@ import com.codekutter.common.stores.DataStoreException;
 import com.codekutter.common.stores.DataStoreManager;
 import com.codekutter.common.utils.ReflectionUtils;
 import com.codekutter.zconfig.common.ConfigurationException;
-import com.codekutter.zconfig.common.model.annotations.ConfigAttribute;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import lombok.Getter;
@@ -82,7 +81,7 @@ public class LocalDirectoryStore extends AbstractDirectoryStore<File> {
     }
 
     @Override
-    public void configure(@Nonnull DataStoreManager dataStoreManager) throws ConfigurationException {
+    public void configureDataStore(@Nonnull DataStoreManager dataStoreManager) throws ConfigurationException {
         Preconditions.checkArgument(config() instanceof LocalDirStoreConfig);
         AbstractConnection<File> connection = dataStoreManager.getConnection(config().connectionName(), File.class);
         if (!(connection instanceof LocalDirectoryConnection)) {
@@ -98,7 +97,7 @@ public class LocalDirectoryStore extends AbstractDirectoryStore<File> {
     }
 
     @Override
-    public <E extends IEntity> E create(@Nonnull E entity, @Nonnull Class<? extends IEntity> type, Context context) throws DataStoreException {
+    public <E extends IEntity> E createEntity(@Nonnull E entity, @Nonnull Class<? extends IEntity> type, Context context) throws DataStoreException {
         FileEntity e = null;
         if (entity instanceof FileEntity) {
             e = (FileEntity) entity;
@@ -121,12 +120,12 @@ public class LocalDirectoryStore extends AbstractDirectoryStore<File> {
     }
 
     @Override
-    public <E extends IEntity> E update(@Nonnull E entity, @Nonnull Class<? extends IEntity> type, Context context) throws DataStoreException {
-        return create(entity, type, context);
+    public <E extends IEntity> E updateEntity(@Nonnull E entity, @Nonnull Class<? extends IEntity> type, Context context) throws DataStoreException {
+        return createEntity(entity, type, context);
     }
 
     @Override
-    public <E extends IEntity> boolean delete(@Nonnull Object key, @Nonnull Class<? extends E> type, Context context) throws DataStoreException {
+    public <E extends IEntity> boolean deleteEntity(@Nonnull Object key, @Nonnull Class<? extends E> type, Context context) throws DataStoreException {
         try {
             if (key instanceof String) {
                 File file = new File((String) key);
@@ -148,7 +147,7 @@ public class LocalDirectoryStore extends AbstractDirectoryStore<File> {
 
     @Override
     @SuppressWarnings("unchecked")
-    public <E extends IEntity> E find(@Nonnull Object key, @Nonnull Class<? extends E> type, Context context) throws DataStoreException {
+    public <E extends IEntity> E findEntity(@Nonnull Object key, @Nonnull Class<? extends E> type, Context context) throws DataStoreException {
         if (key instanceof String) {
             File file = new File((String) key);
             if (file.exists()) {
@@ -162,11 +161,11 @@ public class LocalDirectoryStore extends AbstractDirectoryStore<File> {
 
     @Override
     @SuppressWarnings("unchecked")
-    public <E extends IEntity> Collection<E> search(@Nonnull String query,
-                                                    int offset,
-                                                    int maxResults,
-                                                    @Nonnull Class<? extends E> type,
-                                                    Context context) throws DataStoreException {
+    public <E extends IEntity> Collection<E> doSearch(@Nonnull String query,
+                                                      int offset,
+                                                      int maxResults,
+                                                      @Nonnull Class<? extends E> type,
+                                                      Context context) throws DataStoreException {
         if (!ReflectionUtils.isSuperType(FileEntity.class, type)) {
             throw new DataStoreException(String.format("Unsupported entity type. [type=%s]", type.getCanonicalName()));
         }
@@ -216,13 +215,13 @@ public class LocalDirectoryStore extends AbstractDirectoryStore<File> {
     }
 
     @Override
-    public <E extends IEntity> Collection<E> search(@Nonnull String query,
-                                                    int offset,
-                                                    int maxResults,
-                                                    Map<String, Object> parameters,
-                                                    @Nonnull Class<? extends E> type,
-                                                    Context context) throws DataStoreException {
-        return search(query, offset, maxResults, type, context);
+    public <E extends IEntity> Collection<E> doSearch(@Nonnull String query,
+                                                      int offset,
+                                                      int maxResults,
+                                                      Map<String, Object> parameters,
+                                                      @Nonnull Class<? extends E> type,
+                                                      Context context) throws DataStoreException {
+        return doSearch(query, offset, maxResults, type, context);
     }
 
     @Override

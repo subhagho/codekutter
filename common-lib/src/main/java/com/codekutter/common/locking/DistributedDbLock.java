@@ -20,6 +20,7 @@ package com.codekutter.common.locking;
 import com.codekutter.common.model.DbLockRecord;
 import com.codekutter.common.model.LockId;
 import com.codekutter.common.utils.DateTimeUtils;
+import com.codekutter.common.utils.KeyValuePair;
 import com.codekutter.common.utils.LogUtils;
 import com.codekutter.common.utils.Monitoring;
 import com.google.common.base.Preconditions;
@@ -107,7 +108,7 @@ public class DistributedDbLock extends DistributedLock {
     public void lock() {
         Preconditions.checkState(session != null);
         if (!tryLock(lockGetTimeout(), TimeUnit.MILLISECONDS)) {
-            Monitoring.increment(errorCounter.name(), null);
+            Monitoring.increment(errorCounter.name(), (KeyValuePair<String, String>[]) null);
             throw new LockException(String.format("[%s][%s] Timeout getting lock.", id().getNamespace(), id().getName()));
         }
     }
@@ -122,7 +123,7 @@ public class DistributedDbLock extends DistributedLock {
     public boolean tryLock() {
         Preconditions.checkState(session != null);
         checkThread();
-        Monitoring.increment(callCounter.name(), null);
+        Monitoring.increment(callCounter.name(), (KeyValuePair<String, String>[]) null);
         try {
             return lockLatency.record(() -> {
                 if (super.tryLock()) {
@@ -151,7 +152,7 @@ public class DistributedDbLock extends DistributedLock {
                 return locked;
             });
         } catch (Exception ex) {
-            Monitoring.increment(errorCounter.name(), null);
+            Monitoring.increment(errorCounter.name(), (KeyValuePair<String, String>[]) null);
             throw new LockException(ex);
         }
     }
@@ -168,7 +169,7 @@ public class DistributedDbLock extends DistributedLock {
     public boolean tryLock(long timeout, TimeUnit unit) {
         Preconditions.checkState(session != null);
         checkThread();
-        Monitoring.increment(callCounter.name(), null);
+        Monitoring.increment(callCounter.name(), (KeyValuePair<String, String>[]) null);
         try {
             return lockLatency.record(() -> {
                 long start = System.currentTimeMillis();
@@ -205,7 +206,7 @@ public class DistributedDbLock extends DistributedLock {
                 return locked;
             });
         } catch (Throwable t) {
-            Monitoring.increment(errorCounter.name(), null);
+            Monitoring.increment(errorCounter.name(), (KeyValuePair<String, String>[]) null);
             throw new LockException(t);
         }
     }

@@ -20,7 +20,6 @@ package com.codekutter.common.stores.impl;
 import com.codekutter.common.Context;
 import com.codekutter.common.model.IEntity;
 import com.codekutter.common.stores.*;
-import com.codekutter.common.stores.impl.HibernateConnection;
 import com.codekutter.zconfig.common.ConfigurationException;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
@@ -81,9 +80,9 @@ public class RdbmsDataStore extends TransactionDataStore<Session, Transaction> {
 
     @Override
     @SuppressWarnings("rawtypes")
-    public <E extends IEntity> E create(@Nonnull E entity,
-                                        @Nonnull Class<? extends IEntity> type,
-                                        Context context) throws
+    public <E extends IEntity> E createEntity(@Nonnull E entity,
+                                              @Nonnull Class<? extends IEntity> type,
+                                              Context context) throws
             DataStoreException {
         Preconditions.checkState(session != null);
         Preconditions.checkState(isInTransaction());
@@ -98,9 +97,9 @@ public class RdbmsDataStore extends TransactionDataStore<Session, Transaction> {
 
     @Override
     @SuppressWarnings("rawtypes")
-    public <E extends IEntity> E update(@Nonnull E entity,
-                                        @Nonnull Class<? extends IEntity> type,
-                                        Context context) throws
+    public <E extends IEntity> E updateEntity(@Nonnull E entity,
+                                              @Nonnull Class<? extends IEntity> type,
+                                              Context context) throws
             DataStoreException {
         Preconditions.checkState(session != null);
         Preconditions.checkState(isInTransaction());
@@ -115,15 +114,15 @@ public class RdbmsDataStore extends TransactionDataStore<Session, Transaction> {
 
     @Override
     @SuppressWarnings("rawtypes")
-    public <E extends IEntity> boolean delete(@Nonnull Object key,
-                                              @Nonnull Class<? extends E> type,
-                                              Context context) throws
+    public <E extends IEntity> boolean deleteEntity(@Nonnull Object key,
+                                                    @Nonnull Class<? extends E> type,
+                                                    Context context) throws
             DataStoreException {
         Preconditions.checkState(session != null);
         Preconditions.checkState(isInTransaction());
         checkThread();
 
-        E entity = find(key, type, context);
+        E entity = findEntity(key, type, context);
         if (entity != null) {
             session.delete(entity);
             return true;
@@ -133,9 +132,9 @@ public class RdbmsDataStore extends TransactionDataStore<Session, Transaction> {
 
     @Override
     @SuppressWarnings("rawtypes")
-    public <E extends IEntity> E find(@Nonnull Object key,
-                                      @Nonnull Class<? extends E> type,
-                                      Context context) throws
+    public <E extends IEntity> E findEntity(@Nonnull Object key,
+                                            @Nonnull Class<? extends E> type,
+                                            Context context) throws
             DataStoreException {
         Preconditions.checkState(session != null);
         checkThread();
@@ -145,10 +144,10 @@ public class RdbmsDataStore extends TransactionDataStore<Session, Transaction> {
 
     @Override
     @SuppressWarnings({"unchecked", "rawtypes"})
-    public <E extends IEntity> Collection<E> search(@Nonnull String query,
-                                                    int offset, int maxResults,
-                                                    @Nonnull Class<? extends E> type,
-                                                    Context context)
+    public <E extends IEntity> Collection<E> doSearch(@Nonnull String query,
+                                                      int offset, int maxResults,
+                                                      @Nonnull Class<? extends E> type,
+                                                      Context context)
             throws DataStoreException {
         Preconditions.checkState(readSession != null);
         checkThread();
@@ -163,11 +162,11 @@ public class RdbmsDataStore extends TransactionDataStore<Session, Transaction> {
 
     @Override
     @SuppressWarnings({"unchecked", "rawtypes"})
-    public <E extends IEntity> Collection<E> search(@Nonnull String query,
-                                                    int offset, int maxResults,
-                                                    Map<String, Object> parameters,
-                                                    @Nonnull Class<? extends E> type,
-                                                    Context context)
+    public <E extends IEntity> Collection<E> doSearch(@Nonnull String query,
+                                                      int offset, int maxResults,
+                                                      Map<String, Object> parameters,
+                                                      @Nonnull Class<? extends E> type,
+                                                      Context context)
             throws DataStoreException {
         Preconditions.checkState(readSession != null);
         checkThread();
@@ -197,7 +196,7 @@ public class RdbmsDataStore extends TransactionDataStore<Session, Transaction> {
 
 
     @Override
-    public void configure(@Nonnull DataStoreManager dataStoreManager) throws ConfigurationException {
+    public void configureDataStore(@Nonnull DataStoreManager dataStoreManager) throws ConfigurationException {
         Preconditions.checkArgument(config() instanceof RdbmsConfig);
 
         AbstractConnection<Session> connection =

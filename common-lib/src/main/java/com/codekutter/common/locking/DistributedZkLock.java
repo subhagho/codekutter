@@ -18,6 +18,7 @@
 package com.codekutter.common.locking;
 
 import com.codekutter.common.model.LockId;
+import com.codekutter.common.utils.KeyValuePair;
 import com.codekutter.common.utils.Monitoring;
 import com.google.common.base.Preconditions;
 import com.netflix.spectator.api.Id;
@@ -75,7 +76,7 @@ public class DistributedZkLock extends DistributedLock {
     public void lock() {
         Preconditions.checkState(mutex != null);
         checkThread();
-        Monitoring.increment(callCounter.name(), null);
+        Monitoring.increment(callCounter.name(), (KeyValuePair<String, String>[]) null);
         lockLatency.record(() -> {
             try {
                 if (!mutex.isAcquiredInThisProcess())
@@ -83,7 +84,7 @@ public class DistributedZkLock extends DistributedLock {
                         throw new LockException(String.format("[%s][%s] Timeout getting lock.", id().getNamespace(), id().getName()));
                     }
             } catch (Throwable ex) {
-                Monitoring.increment(errorCounter.name(), null);
+                Monitoring.increment(errorCounter.name(), (KeyValuePair<String, String>[]) null);
                 throw new LockException(ex);
             }
         });
@@ -93,7 +94,7 @@ public class DistributedZkLock extends DistributedLock {
     public boolean tryLock() {
         Preconditions.checkState(mutex != null);
         checkThread();
-        Monitoring.increment(callCounter.name(), null);
+        Monitoring.increment(callCounter.name(), (KeyValuePair<String, String>[]) null);
         try {
             return lockLatency.record(() -> {
                 if (super.tryLock()) {
@@ -104,7 +105,7 @@ public class DistributedZkLock extends DistributedLock {
                         return mutex.acquire(DEFAULT_LOCK_TIMEOUT, TimeUnit.MILLISECONDS);
                     } catch (Throwable t) {
                         super.unlock();
-                        Monitoring.increment(errorCounter.name(), null);
+                        Monitoring.increment(errorCounter.name(), (KeyValuePair<String, String>[]) null);
                         throw new LockException(t);
                     }
                 }
@@ -119,7 +120,7 @@ public class DistributedZkLock extends DistributedLock {
     public boolean tryLock(long timeout, TimeUnit unit) {
         Preconditions.checkState(mutex != null);
         checkThread();
-        Monitoring.increment(callCounter.name(), null);
+        Monitoring.increment(callCounter.name(), (KeyValuePair<String, String>[]) null);
         try {
             return lockLatency.record(() -> {
                 if (super.tryLock(timeout, unit)) {
@@ -129,7 +130,7 @@ public class DistributedZkLock extends DistributedLock {
                         return mutex.acquire(timeout, unit);
                     } catch (Throwable t) {
                         super.unlock();
-                        Monitoring.increment(errorCounter.name(), null);
+                        Monitoring.increment(errorCounter.name(), (KeyValuePair<String, String>[]) null);
                         throw new LockException(t);
                     }
                 }
@@ -154,7 +155,7 @@ public class DistributedZkLock extends DistributedLock {
                 super.unlock();
             } catch (Throwable t) {
                 super.unlock();
-                Monitoring.increment(errorCounter.name(), null);
+                Monitoring.increment(errorCounter.name(), (KeyValuePair<String, String>[]) null);
                 throw new LockException(t);
             }
         });

@@ -168,7 +168,7 @@ public abstract class AbstractAuditLogger<C> implements IConfigurable, Closeable
                 throw new AuditException(String.format("Data Store not found. [type=%s][name=%s]", dataStoreType.getCanonicalName(), dataStoreName));
             }
             AuditRecord record = createAuditRecord(dataStoreType, dataStoreName, type, entity, entityType, changeDelta, changeContext, user, serializer);
-            record = dataStore.create(record, record.getClass(), null);
+            record = dataStore.createEntity(record, record.getClass(), null);
             return record;
         } catch (Throwable t) {
             throw new AuditException(t);

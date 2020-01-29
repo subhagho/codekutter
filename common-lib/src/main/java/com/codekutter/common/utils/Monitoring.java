@@ -103,6 +103,7 @@ public class Monitoring {
             reporter.start(REPORT_INTERVAL, TimeUnit.SECONDS);
 
             Monitoring.reporters.add(reporter);
+            LogUtils.info(Monitoring.class, String.format("Using monitoring output directory [%s]", dir.getAbsolutePath()));
         }
         if ((reporters & REPORTER_SLF4J) > 0) {
             Slf4jReporter reporter = Slf4jReporter.forRegistry(codaRegistry).build();
@@ -217,6 +218,20 @@ public class Monitoring {
             if (tags != null && !tags.isEmpty()) {
                 for(String tag : tags.keySet()) {
                     contId = contId.withTag(tag, tags.get(tag));
+                }
+            }
+            __REGISTRY.counter(contId).increment();
+        }
+    }
+
+    public static void increment(@Nonnull String name, KeyValuePair<String, String>[] tags) {
+        name = name(name);
+        if (counters.containsKey(name)) {
+            Id id = counters.get(name);
+            Id contId = id;
+            if (tags != null && tags.length > 0) {
+                for(KeyValuePair<String, String> tag : tags) {
+                    contId = contId.withTag(tag.key(), tag.value());
                 }
             }
             __REGISTRY.counter(contId).increment();

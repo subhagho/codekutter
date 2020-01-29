@@ -18,7 +18,6 @@
 package com.codekutter.r2db.driver;
 
 import com.codekutter.common.Context;
-import com.codekutter.common.GlobalConstants;
 import com.codekutter.common.auditing.*;
 import com.codekutter.common.model.AuditRecord;
 import com.codekutter.common.model.EAuditType;
@@ -32,13 +31,11 @@ import com.codekutter.common.utils.ReflectionUtils;
 import com.codekutter.zconfig.common.ConfigurationAnnotationProcessor;
 import com.codekutter.zconfig.common.ConfigurationException;
 import com.codekutter.zconfig.common.IConfigurable;
-import com.codekutter.zconfig.common.ZConfigEnv;
 import com.codekutter.zconfig.common.model.annotations.ConfigAttribute;
 import com.codekutter.zconfig.common.model.annotations.ConfigPath;
 import com.codekutter.zconfig.common.model.nodes.AbstractConfigNode;
 import com.codekutter.zconfig.common.model.nodes.ConfigPathNode;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
@@ -463,11 +460,60 @@ public class EntityManager implements IConfigurable {
                 }
             }
             entity = (E) formatEntity(entity, context);
+            deleteReferences(entity, type, user, context);
+
             boolean ret = dataStore.delete(entity.getKey(), type, context);
             if (ret) {
                 auditChange(dataStore, EAuditType.Delete, entity, entity.getClass(), context, null, user);
             }
             return ret;
+        } catch (Exception ex) {
+            throw new DataStoreException(ex);
+        }
+    }
+
+    private <E extends IEntity> E deleteReferences(E entity,
+                                                   Class<? extends IEntity> entityType,
+                                                   Principal user,
+                                                   Context context) throws DataStoreException {
+        try {
+            List<Field> fields = getReferenceFields(entityType);
+            if (fields != null && !fields.isEmpty()) {
+                for (Field f : fields) {
+                    Reference reference = f.getAnnotation(Reference.class);
+                    if (reference.type() != EJoinType.One2Many && reference.type() != EJoinType.One2Many) continue;
+
+                    Object value = ReflectionUtils.getFieldValue(entity, f);
+                    if (value != null) {
+                        Class<?> type = f.getType();
+                        if (ReflectionUtils.implementsInterface(List.class, type) | ReflectionUtils.implementsInterface(Set.class, type)) {
+                            type = ReflectionUtils.getGenericListType(f);
+                            Collection<? extends IEntity> result = getReferenceEntity(f, entity, entityType, (Class<? extends IEntity>) type, context, false);
+                            for (IEntity v : result) {
+                                String sk = v.getKey().stringKey();
+                                if (!delete(v, v.getClass(), null, user, context)) {
+                                    throw new DataStoreException(String.format("Error deleting reference. [type=%s][key=%s]",
+                                            v.getClass().getCanonicalName(), v.getKey().stringKey()));
+                                }
+                                LogUtils.debug(getClass(), String.format("Deleted entity reference. [type=%s][key=%s]",
+                                        v.getClass().getCanonicalName(), v.getKey().stringKey()));
+                            }
+                        } else {
+                            Collection<? extends IEntity> result = getReferenceEntity(f, entity, entityType, (Class<? extends IEntity>) f.getType(), context, false);
+                            while (result.iterator().hasNext()) {
+                                IEntity e = result.iterator().next();
+                                if (!delete(e, e.getClass(), null, user, context)) {
+                                    throw new DataStoreException(String.format("Error deleting reference. [type=%s][key=%s]",
+                                            e.getClass().getCanonicalName(), e.getKey().stringKey()));
+                                }
+                                LogUtils.debug(getClass(), String.format("Deleted entity reference. [type=%s][key=%s]",
+                                        e.getClass().getCanonicalName(), e.getKey().stringKey()));
+                            }
+                        }
+                    }
+                }
+            }
+            return entity;
         } catch (Exception ex) {
             throw new DataStoreException(ex);
         }

@@ -66,7 +66,7 @@ public class AwsS3DataStore extends AbstractDirectoryStore<AmazonS3> {
     }
 
     @Override
-    public void configure(@Nonnull DataStoreManager dataStoreManager) throws ConfigurationException {
+    public void configureDataStore(@Nonnull DataStoreManager dataStoreManager) throws ConfigurationException {
         Preconditions.checkState(config() instanceof S3StoreConfig);
         try {
             AbstractConnection<AmazonS3> connection =
@@ -97,7 +97,7 @@ public class AwsS3DataStore extends AbstractDirectoryStore<AmazonS3> {
     }
 
     @Override
-    public <E extends IEntity> E create(@Nonnull E entity, @Nonnull Class<? extends IEntity> type, Context context) throws DataStoreException {
+    public <E extends IEntity> E createEntity(@Nonnull E entity, @Nonnull Class<? extends IEntity> type, Context context) throws DataStoreException {
         Preconditions.checkArgument(entity instanceof S3FileEntity);
         Preconditions.checkArgument(connection != null && connection.state().isOpen());
 
@@ -113,7 +113,7 @@ public class AwsS3DataStore extends AbstractDirectoryStore<AmazonS3> {
     }
 
     @Override
-    public <E extends IEntity> E update(@Nonnull E entity, @Nonnull Class<? extends IEntity> type, Context context) throws DataStoreException {
+    public <E extends IEntity> E updateEntity(@Nonnull E entity, @Nonnull Class<? extends IEntity> type, Context context) throws DataStoreException {
         Preconditions.checkArgument(entity instanceof S3FileEntity);
         Preconditions.checkArgument(connection != null && connection.state().isOpen());
 
@@ -132,11 +132,11 @@ public class AwsS3DataStore extends AbstractDirectoryStore<AmazonS3> {
     }
 
     @Override
-    public <E extends IEntity> boolean delete(@Nonnull Object key, @Nonnull Class<? extends E> type, Context context) throws DataStoreException {
+    public <E extends IEntity> boolean deleteEntity(@Nonnull Object key, @Nonnull Class<? extends E> type, Context context) throws DataStoreException {
         Preconditions.checkArgument(connection != null && connection.state().isOpen());
 
         try {
-            E entity = find(key, type, context);
+            E entity = findEntity(key, type, context);
             if (entity == null) {
                 return false;
             }
@@ -157,7 +157,7 @@ public class AwsS3DataStore extends AbstractDirectoryStore<AmazonS3> {
 
     @Override
     @SuppressWarnings("unchecked")
-    public <E extends IEntity> E find(@Nonnull Object key, @Nonnull Class<? extends E> type, Context context) throws DataStoreException {
+    public <E extends IEntity> E findEntity(@Nonnull Object key, @Nonnull Class<? extends E> type, Context context) throws DataStoreException {
         Preconditions.checkArgument(key instanceof S3FileKey);
         Preconditions.checkArgument(ReflectionUtils.isSuperType(S3FileEntity.class, type));
         try {
@@ -181,9 +181,9 @@ public class AwsS3DataStore extends AbstractDirectoryStore<AmazonS3> {
 
     @Override
     @SuppressWarnings("unchecked")
-    public <E extends IEntity> Collection<E> search(@Nonnull String query, int offset, int maxResults,
-                                                    @Nonnull Class<? extends E> type,
-                                                    Context context) throws DataStoreException {
+    public <E extends IEntity> Collection<E> doSearch(@Nonnull String query, int offset, int maxResults,
+                                                      @Nonnull Class<? extends E> type,
+                                                      Context context) throws DataStoreException {
         Preconditions.checkArgument(ReflectionUtils.isSuperType(S3FileEntity.class, type));
         try {
             S3StoreContext ctx = (S3StoreContext) context;
@@ -211,7 +211,7 @@ public class AwsS3DataStore extends AbstractDirectoryStore<AmazonS3> {
                         key.bucket(obj.getBucketName());
                         key.key(obj.getKey());
 
-                        S3FileEntity entity = find(key, S3FileEntity.class, null);
+                        S3FileEntity entity = findEntity(key, S3FileEntity.class, null);
                         if (entity == null) {
                             throw new DataStoreException(String.format("invalid key : [key=%s]", key.key()));
                         }
@@ -227,11 +227,11 @@ public class AwsS3DataStore extends AbstractDirectoryStore<AmazonS3> {
     }
 
     @Override
-    public <E extends IEntity> Collection<E> search(@Nonnull String query, int offset, int maxResults,
-                                                    Map<String, Object> parameters,
-                                                    @Nonnull Class<? extends E> type,
-                                                    Context context) throws DataStoreException {
-        return search(query, offset, maxResults, type, context);
+    public <E extends IEntity> Collection<E> doSearch(@Nonnull String query, int offset, int maxResults,
+                                                      Map<String, Object> parameters,
+                                                      @Nonnull Class<? extends E> type,
+                                                      Context context) throws DataStoreException {
+        return doSearch(query, offset, maxResults, type, context);
     }
 
     @Override

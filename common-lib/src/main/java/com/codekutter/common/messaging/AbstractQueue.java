@@ -53,6 +53,14 @@ import java.util.List;
 @Accessors(fluent = true)
 @ConfigPath(path = "queue")
 public abstract class AbstractQueue<C, M> implements IConfigurable, Closeable {
+    private static final class Metrics {
+        private static final String METRIC_LATENCY_SEND = String.format("%s.%s.%s.SEND", "%s", "%s", "%s");
+        private static final String METRIC_LATENCY_RECEIVE = String.format("%s.%s.%s.RECEIVE", "%s", "%s", "%s");
+        private static final String METRIC_COUNTER_SEND_ERROR = String.format("%s.%s.%s.ERRORS.SEND", "%s", "%s", "%s");
+        private static final String METRIC_COUNTER_RECV = String.format("%s.%s.%s.COUNT.RECEIVE", "%s", "%s", "%s");
+        private static final String METRIC_COUNTER_SEND = String.format("%s.%s.%s.COUNT.SEND", "%s", "%s", "%s");
+        private static final String METRIC_COUNTER_RECV_ERROR = String.format("%s.%s.%s.ERRORS.RECEIVE", "%s", "%s", "%s");
+    }
     /**
      * Default Queue receive message timeout.
      */
@@ -185,19 +193,13 @@ public abstract class AbstractQueue<C, M> implements IConfigurable, Closeable {
         return receive(receiveTimeout, user);
     }
 
-    protected void setupMetrics(String metricSendLatency,
-                                String metricReceiveLatency,
-                                String counterSend,
-                                String counterReceive,
-                                String counterSendError,
-                                String counterReceiveError,
-                                String queue) {
-        sendLatency = Monitoring.addTimer(String.format(metricSendLatency, name(), queue));
-        receiveLatency = Monitoring.addTimer(String.format(metricReceiveLatency, name(), queue));
-        sendCounter = Monitoring.addCounter(String.format(counterSend, name(), queue));
-        receiveCounter = Monitoring.addCounter(String.format(counterReceive, name(), queue));
-        receiveErrorCounter = Monitoring.addCounter(String.format(counterReceiveError, name(), queue));
-        sendErrorCounter = Monitoring.addCounter(String.format(counterSendError, name(), queue));
+    protected void setupMetrics(String queue) {
+        sendLatency = Monitoring.addTimer(String.format(Metrics.METRIC_LATENCY_SEND, getClass().getCanonicalName(), name(), queue));
+        receiveLatency = Monitoring.addTimer(String.format(Metrics.METRIC_LATENCY_RECEIVE, getClass().getCanonicalName(), name(), queue));
+        sendCounter = Monitoring.addCounter(String.format(Metrics.METRIC_COUNTER_SEND, getClass().getCanonicalName(), name(), queue));
+        receiveCounter = Monitoring.addCounter(String.format(Metrics.METRIC_COUNTER_RECV, getClass().getCanonicalName(), name(), queue));
+        receiveErrorCounter = Monitoring.addCounter(String.format(Metrics.METRIC_COUNTER_RECV_ERROR, getClass().getCanonicalName(), name(), queue));
+        sendErrorCounter = Monitoring.addCounter(String.format(Metrics.METRIC_COUNTER_SEND_ERROR, getClass().getCanonicalName(), name(), queue));
     }
 
 
