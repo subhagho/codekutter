@@ -93,7 +93,7 @@
         <audit>
             <audit-manager>
                 <audit-logger name="TEST-AUDIT-LOGGER" class="com.codekutter.common.auditing.DBAuditLogger"
-                              default="true">
+                              default="true" useCache="true">
                     <serializer>com.codekutter.common.auditing.JsonAuditSerDe</serializer>
                     <dataStore name="TestDataStore" class="com.codekutter.common.stores.impl.RdbmsDataStore"/>
                 </audit-logger>

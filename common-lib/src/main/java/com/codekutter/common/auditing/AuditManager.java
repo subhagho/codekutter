@@ -49,10 +49,6 @@ public class AuditManager implements IConfigurable, Closeable {
         return this;
     }
 
-    public AbstractAuditLogger getLogger(@Nonnull String name) {
-        return loggers.get(name);
-    }
-
     public IAuditContextGenerator getContextGenerator(@Nonnull Class<? extends IAuditContextGenerator> type) throws AuditException {
         try {
             synchronized (contextGenerators) {
@@ -123,6 +119,13 @@ public class AuditManager implements IConfigurable, Closeable {
             return loggers.get(logger).write(dataStoreType, dataStoreName, type, entity, entity.getClass(), changeDelta, changeContext, user, serializer);
         }
         return null;
+    }
+
+    public AbstractAuditLogger getLogger(String name) {
+        if (!Strings.isNullOrEmpty(name) && loggers.containsKey(name)) {
+            return loggers.get(name);
+        }
+        return defaultLogger;
     }
 
     public AbstractAuditLogger getLogger(Class<? extends IKeyed> type) {

@@ -18,6 +18,7 @@
 package com.codekutter.common.stores;
 
 import com.codekutter.common.Context;
+import com.codekutter.common.auditing.AbstractAuditLogger;
 import com.codekutter.common.messaging.AbstractQueue;
 import com.codekutter.common.model.IEntity;
 import com.codekutter.common.stores.impl.DataStoreAuditContext;
@@ -163,6 +164,8 @@ public abstract class AbstractDataStore<T> implements Closeable {
     private DataStoreConfig config;
     @Setter(AccessLevel.NONE)
     protected Metrics metrics = new Metrics();
+    @SuppressWarnings("rawtypes")
+    private AbstractAuditLogger auditLogger;
 
     public AbstractDataStore() {
         threadId = Thread.currentThread().getId();

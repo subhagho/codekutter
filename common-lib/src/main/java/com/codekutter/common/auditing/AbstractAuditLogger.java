@@ -7,6 +7,7 @@ import com.codekutter.common.stores.DataStoreException;
 import com.codekutter.common.stores.DataStoreManager;
 import com.codekutter.common.stores.TransactionDataStore;
 import com.codekutter.common.utils.LogUtils;
+import com.codekutter.common.utils.MapThreadCache;
 import com.codekutter.zconfig.common.ConfigurationAnnotationProcessor;
 import com.codekutter.zconfig.common.ConfigurationException;
 import com.codekutter.zconfig.common.IConfigurable;
@@ -31,6 +32,7 @@ import java.security.Principal;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Abstract base class to define Audit loggers.
@@ -42,6 +44,8 @@ import java.util.List;
 @Accessors(fluent = true)
 @ConfigPath(path = "audit-logger")
 public abstract class AbstractAuditLogger<C> implements IConfigurable, Closeable {
+    private static final int MAX_CACHE_SIZE = 32;
+
     @ConfigAttribute(required = true)
     private String name;
     @ConfigValue(name = "serializer")
@@ -54,12 +58,19 @@ public abstract class AbstractAuditLogger<C> implements IConfigurable, Closeable
     private Class<? extends AbstractDataStore> dataStoreType;
     @ConfigValue(name = "classes", parser = StringListParser.class)
     private List<String> classes;
+    @ConfigAttribute
+    private boolean useCache = false;
+    @ConfigAttribute
+    private int maxCacheSize = MAX_CACHE_SIZE;
     @Setter(AccessLevel.NONE)
     private DataStoreManager dataStoreManager;
     @Setter(AccessLevel.NONE)
     private IAuditSerDe serializer;
     @Setter(AccessLevel.NONE)
     private ObjectState state = new ObjectState();
+    @Setter(AccessLevel.NONE)
+    @Getter(AccessLevel.NONE)
+    private MapThreadCache<String, AuditRecord> cache;
 
     /**
      * Set the data store to be used by this audit logger.
@@ -115,7 +126,10 @@ public abstract class AbstractAuditLogger<C> implements IConfigurable, Closeable
                 withSerializer(serializer);
                 LogUtils.info(getClass(), String.format("Using default serializer. [type=%s]", serializer.getClass().getCanonicalName()));
             }
-
+            if (useCache) {
+                cache = new MapThreadCache<>();
+                LogUtils.debug(getClass(), String.format("Using audit cache. [cache size=%d]", maxCacheSize));
+            }
             state().setState(EObjectState.Available);
             LogUtils.info(getClass(), String.format("Initialized DataBase Audit Logger. [name=%s]", name()));
         } catch (Throwable ex) {
@@ -168,7 +182,6 @@ public abstract class AbstractAuditLogger<C> implements IConfigurable, Closeable
      * @return - Created Audit record.
      * @throws AuditException
      */
-    @SuppressWarnings("unchecked")
     public <T extends IKeyed> AuditRecord write(@Nonnull Class<?> dataStoreType,
                                                 @Nonnull String dataStoreName,
                                                 @Nonnull EAuditType type,
@@ -181,10 +194,84 @@ public abstract class AbstractAuditLogger<C> implements IConfigurable, Closeable
         Preconditions.checkState(dataStoreManager != null);
         try {
             state.check(EObjectState.Available, getClass());
-            AbstractDataStore<C> dataStore = getDataStore(true);
             AuditRecord record = createAuditRecord(dataStoreType, dataStoreName, type, entity, entityType, changeDelta, changeContext, user, serializer);
+            if (useCache) {
+                cache.put(record.getKey().stringKey(), record);
+                if (cache.size() > maxCacheSize) {
+                    flush();
+                }
+            } else {
+                record = writeToStore(record);
+            }
+            return record;
+        } catch (Throwable t) {
+            throw new AuditException(t);
+        }
+    }
+
+    public <T extends IKeyed> AuditRecord writeToStore(AuditRecord record) throws AuditException {
+        Preconditions.checkState(dataStoreManager != null);
+        try {
+            state.check(EObjectState.Available, getClass());
+            AbstractDataStore<C> dataStore = getDataStore(true);
             record = dataStore.createEntity(record, record.getClass(), null);
             return record;
+        } catch (Throwable t) {
+            throw new AuditException(t);
+        }
+    }
+
+    @SuppressWarnings("rawtypes")
+    public void discard() throws AuditException {
+        try {
+            if (useCache) {
+                cache.clear();
+                LogUtils.debug(getClass(), "Discarded cached audit records...");
+            }
+            AbstractDataStore<C> dataStore = getDataStore(false);
+            if (dataStore == null) {
+                throw new AuditException(String.format("Data Store not found. [type=%s][name=%s]", dataStoreType().getCanonicalName(), dataStoreName()));
+            }
+            if (dataStore.connection().hasTransactionSupport()) {
+                TransactionDataStore ts = (TransactionDataStore) dataStore;
+                if (ts.isInTransaction()) {
+                    ts.rollback();
+                }
+            }
+        } catch (Throwable t) {
+            throw new AuditException(t);
+        }
+    }
+
+    @SuppressWarnings("rawtypes")
+    public int flush() throws AuditException {
+        try {
+            int size = 0;
+            if (useCache) {
+                Map<String, AuditRecord> records = cache.get();
+                if (records != null) {
+                    size = records.size();
+                    if (size > 0) {
+                        for (String key : records.keySet()) {
+                            AuditRecord record = records.get(key);
+                            writeToStore(record);
+                        }
+                    }
+                    cache.clear();
+                    LogUtils.debug(getClass(), String.format("Flushed [%d] audit records to store.", size));
+                }
+            }
+            AbstractDataStore<C> dataStore = getDataStore(false);
+            if (dataStore == null) {
+                throw new AuditException(String.format("Data Store not found. [type=%s][name=%s]", dataStoreType().getCanonicalName(), dataStoreName()));
+            }
+            if (dataStore.connection().hasTransactionSupport()) {
+                TransactionDataStore ts = (TransactionDataStore) dataStore;
+                if (!ts.isInTransaction()) {
+                    ts.commit();
+                }
+            }
+            return size;
         } catch (Throwable t) {
             throw new AuditException(t);
         }

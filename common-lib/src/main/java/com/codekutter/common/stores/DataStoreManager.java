@@ -22,6 +22,7 @@ import com.codekutter.common.stores.annotations.IShardProvider;
 import com.codekutter.common.stores.annotations.SchemaSharded;
 import com.codekutter.common.utils.ConfigUtils;
 import com.codekutter.common.utils.LogUtils;
+import com.codekutter.common.utils.MapThreadCache;
 import com.codekutter.common.utils.ReflectionUtils;
 import com.codekutter.zconfig.common.ConfigurationAnnotationProcessor;
 import com.codekutter.zconfig.common.ConfigurationException;
@@ -65,7 +66,7 @@ public class DataStoreManager implements IConfigurable {
     private Map<Class<? extends IEntity>, Map<Class<? extends AbstractDataStore>, DataStoreConfig>> entityIndex = new HashMap<>();
     private Map<String, DataStoreConfig> dataStoreConfigs = new HashMap<>();
     private Map<Class<? extends IShardedEntity>, ShardConfig> shardConfigs = new HashMap<>();
-    private Map<Long, Map<String, AbstractDataStore>> openedStores = new ConcurrentHashMap<>();
+    private MapThreadCache<String, AbstractDataStore> openedStores = new MapThreadCache<>();
 
     public boolean isTypeSupported(@Nonnull Class<?> type) {
         if (ReflectionUtils.implementsInterface(IEntity.class, type)) {
@@ -107,7 +108,7 @@ public class DataStoreManager implements IConfigurable {
 
     public <T> AbstractDataStore<T> getDataStore(@Nonnull String name,
                                                  @Nonnull Class<? extends AbstractDataStore<T>> storeType) throws DataStoreException {
-       return getDataStore(name, storeType, true);
+        return getDataStore(name, storeType, true);
     }
 
     public <T> AbstractDataStore<T> getDataStore(@Nonnull String name,
@@ -156,17 +157,13 @@ public class DataStoreManager implements IConfigurable {
     private <T> AbstractDataStore<T> getDataStore(DataStoreConfig config,
                                                   Class<? extends AbstractDataStore<T>> storeType,
                                                   boolean add) throws DataStoreException {
-        long threadId = Thread.currentThread().getId();
         Map<String, AbstractDataStore> stores = null;
-        if (openedStores.containsKey(threadId)) {
-            stores = openedStores.get(threadId);
+        if (openedStores.containsThread()) {
+            stores = openedStores.get();
             if (stores.containsKey(config.name())) {
                 return stores.get(config.name());
             }
-        } else if (add) {
-            stores = new ConcurrentHashMap<>();
-            openedStores.put(threadId, stores);
-        } else {
+        } else if (!add) {
             return null;
         }
 
@@ -174,7 +171,7 @@ public class DataStoreManager implements IConfigurable {
             AbstractDataStore<T> store = storeType.newInstance();
             store.name(config.name());
             store.withConfig(config).configure(this);
-            stores.put(store.name(), store);
+            openedStores.put(store.name(), store);
 
             return store;
         } catch (Exception ex) {
@@ -243,55 +240,80 @@ public class DataStoreManager implements IConfigurable {
     }
 
     public void commit() throws DataStoreException {
-        long threadId = Thread.currentThread().getId();
-        if (openedStores.containsKey(threadId)) {
-            Map<String, AbstractDataStore> stores = openedStores.get(threadId);
-            for (String name : stores.keySet()) {
-                AbstractDataStore<?> store = stores.get(name);
-                if (store instanceof TransactionDataStore) {
-                    if (((TransactionDataStore) store).isInTransaction()) {
-                        ((TransactionDataStore) store).commit();
+        try {
+            if (openedStores.containsThread()) {
+                Map<String, AbstractDataStore> stores = openedStores.get();
+                for (String name : stores.keySet()) {
+                    AbstractDataStore<?> store = stores.get(name);
+                    if (store.auditLogger() != null) {
+                        store.auditLogger().flush();
+                    }
+                }
+                for (String name : stores.keySet()) {
+                    AbstractDataStore<?> store = stores.get(name);
+                    if (store instanceof TransactionDataStore) {
+                        if (((TransactionDataStore) store).isInTransaction()) {
+                            ((TransactionDataStore) store).commit();
+                        }
                     }
                 }
             }
+        } catch (Throwable t) {
+            throw new DataStoreException(t);
         }
     }
 
     public void rollback() throws DataStoreException {
-        long threadId = Thread.currentThread().getId();
-        if (openedStores.containsKey(threadId)) {
-            Map<String, AbstractDataStore> stores = openedStores.get(threadId);
-            for (String name : stores.keySet()) {
-                AbstractDataStore<?> store = stores.get(name);
-                if (store instanceof TransactionDataStore) {
-                    if (((TransactionDataStore) store).isInTransaction()) {
-                        ((TransactionDataStore) store).rollback();
+        try {
+            if (openedStores.containsThread()) {
+                Map<String, AbstractDataStore> stores = openedStores.get();
+                for (String name : stores.keySet()) {
+                    AbstractDataStore<?> store = stores.get(name);
+                    if (store.auditLogger() != null) {
+                        store.auditLogger().discard();
+                    }
+                }
+                for (String name : stores.keySet()) {
+                    AbstractDataStore<?> store = stores.get(name);
+                    if (store instanceof TransactionDataStore) {
+                        if (((TransactionDataStore) store).isInTransaction()) {
+                            ((TransactionDataStore) store).rollback();
+                        }
                     }
                 }
             }
+        } catch (Throwable t) {
+            throw new DataStoreException(t);
         }
     }
 
     public void closeStores() throws DataStoreException {
-        long threadId = Thread.currentThread().getId();
-        if (openedStores.containsKey(threadId)) {
-            Map<String, AbstractDataStore> stores = openedStores.get(threadId);
-            for (String name : stores.keySet()) {
-                AbstractDataStore<?> store = stores.get(name);
-                if (store instanceof TransactionDataStore) {
-                    if (((TransactionDataStore) store).isInTransaction()) {
-                        LogUtils.warn(getClass(), String.format("Store has pending transactions, rolling back. [name=%s][thread id=%d]", store.name(), threadId));
-                        ((TransactionDataStore) store).rollback();
+        try {
+            if (openedStores.containsThread()) {
+                Map<String, AbstractDataStore> stores = openedStores.get();
+                for (String name : stores.keySet()) {
+                    AbstractDataStore<?> store = stores.get(name);
+                    if (store.auditLogger() != null) store.auditLogger().discard();
+                }
+                for (String name : stores.keySet()) {
+                    AbstractDataStore<?> store = stores.get(name);
+                    if (store instanceof TransactionDataStore) {
+                        if (((TransactionDataStore) store).isInTransaction()) {
+                            LogUtils.error(getClass(), String.format("Store has pending transactions, rolling back. [name=%s][thread id=%d]",
+                                    store.name(), Thread.currentThread().getId()));
+                            ((TransactionDataStore) store).rollback();
+                        }
+                    }
+                    try {
+                        store.close();
+                    } catch (IOException e) {
+                        LogUtils.error(getClass(), e);
                     }
                 }
-                try {
-                    store.close();
-                } catch (IOException e) {
-                    LogUtils.error(getClass(), e);
-                }
+                openedStores.clear();
             }
-            openedStores.remove(threadId);
-            stores.clear();
+        } catch (Throwable t) {
+            throw new DataStoreException(t);
         }
     }
 

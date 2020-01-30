@@ -147,28 +147,42 @@ public class EntityManager implements IConfigurable {
     }
 
     public <T> void commit(@Nonnull Class<? extends IEntity> type, Class<? extends AbstractDataStore<T>> storeType) throws DataStoreException {
-        AbstractDataStore<T> dataStore = findStore(type, storeType);
-        if (dataStore == null) {
-            throw new DataStoreException(String.format("No data store found for entity. [type=%s]", type.getCanonicalName()));
-        }
-        if ((dataStore instanceof TransactionDataStore)) {
-            if (!((TransactionDataStore) dataStore).isInTransaction()) {
-                throw new DataStoreException(String.format("No active transaction. [thread id=%d][data store=%s]", Thread.currentThread().getId(), dataStore.name()));
+        try {
+            AbstractDataStore<T> dataStore = findStore(type, storeType);
+            if (dataStore == null) {
+                throw new DataStoreException(String.format("No data store found for entity. [type=%s]", type.getCanonicalName()));
             }
-            ((TransactionDataStore) dataStore).commit();
+            if (dataStore.auditLogger() != null) {
+                dataStore.auditLogger().flush();
+            }
+            if ((dataStore instanceof TransactionDataStore)) {
+                if (!((TransactionDataStore) dataStore).isInTransaction()) {
+                    throw new DataStoreException(String.format("No active transaction. [thread id=%d][data store=%s]", Thread.currentThread().getId(), dataStore.name()));
+                }
+                ((TransactionDataStore) dataStore).commit();
+            }
+        } catch (Throwable t) {
+            throw new DataStoreException(t);
         }
     }
 
     public <T> void rollback(Class<? extends IEntity> type, Class<? extends AbstractDataStore<T>> storeType) throws DataStoreException {
-        AbstractDataStore<T> dataStore = findStore(type, storeType);
-        if (dataStore == null) {
-            throw new DataStoreException(String.format("No data store found for entity. [type=%s]", type.getCanonicalName()));
-        }
-        if ((dataStore instanceof TransactionDataStore)) {
-            if (!((TransactionDataStore) dataStore).isInTransaction()) {
-                throw new DataStoreException(String.format("No active transaction. [thread id=%d][data store=%s]", Thread.currentThread().getId(), dataStore.name()));
+        try {
+            AbstractDataStore<T> dataStore = findStore(type, storeType);
+            if (dataStore == null) {
+                throw new DataStoreException(String.format("No data store found for entity. [type=%s]", type.getCanonicalName()));
             }
-            ((TransactionDataStore) dataStore).rollback();
+            if (dataStore.auditLogger() != null) {
+                dataStore.auditLogger().discard();
+            }
+            if ((dataStore instanceof TransactionDataStore)) {
+                if (!((TransactionDataStore) dataStore).isInTransaction()) {
+                    throw new DataStoreException(String.format("No active transaction. [thread id=%d][data store=%s]", Thread.currentThread().getId(), dataStore.name()));
+                }
+                ((TransactionDataStore) dataStore).rollback();
+            }
+        } catch (Throwable t) {
+            throw new DataStoreException(t);
         }
     }
 
@@ -540,19 +554,19 @@ public class EntityManager implements IConfigurable {
                         changeContext = ctx.json();
                     }
                 }
-                String logger = dataStore.config().auditLogger();
-                if (Strings.isNullOrEmpty(logger)) {
-                    AuditRecord r = AuditManager.get().audit(dataStore.getClass(), dataStore.name(), auditType, entity, changeDelta, changeContext, user);
-                    if (r == null) {
-                        throw new DataStoreException(String.format("Error creating audit record. [data store=%s:%s][entity type=%s]",
+                if (dataStore.auditLogger() == null) {
+                    String logger = dataStore.config().auditLogger();
+                    AbstractAuditLogger auditLogger = AuditManager.get().getLogger(logger);
+                    if (auditLogger == null) {
+                        throw new DataStoreException(String.format("Error getting audit logger instance. [data store=%s:%s][entity type=%s]",
                                 dataStore.getClass().getCanonicalName(), dataStore.name(), entityType.getCanonicalName()));
                     }
-                } else {
-                    AuditRecord r = AuditManager.get().audit(dataStore.getClass(), dataStore.name(), logger, auditType, entity, changeDelta, changeContext, user);
-                    if (r == null) {
-                        throw new DataStoreException(String.format("Error creating audit record. [data store=%s:%s][logger=%s][entity type=%s]",
-                                dataStore.getClass().getCanonicalName(), dataStore.name(), logger, entityType.getCanonicalName()));
-                    }
+                    dataStore.auditLogger(auditLogger);
+                }
+                AuditRecord r = dataStore.auditLogger().write(dataStore.getClass(), dataStore.name(), auditType, entity, entityType, changeDelta, changeContext, user);
+                if (r == null) {
+                    throw new DataStoreException(String.format("Error creating audit record. [data store=%s:%s][entity type=%s]",
+                            dataStore.getClass().getCanonicalName(), dataStore.name(), entityType.getCanonicalName()));
                 }
             }
         } catch (Exception ex) {
