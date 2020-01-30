@@ -5,6 +5,7 @@ import com.codekutter.common.model.*;
 import com.codekutter.common.stores.AbstractDataStore;
 import com.codekutter.common.stores.DataStoreException;
 import com.codekutter.common.stores.DataStoreManager;
+import com.codekutter.common.stores.TransactionDataStore;
 import com.codekutter.common.utils.LogUtils;
 import com.codekutter.zconfig.common.ConfigurationAnnotationProcessor;
 import com.codekutter.zconfig.common.ConfigurationException;
@@ -21,6 +22,7 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
+import org.hibernate.Session;
 
 import javax.annotation.Nonnull;
 import java.io.Closeable;
@@ -79,6 +81,22 @@ public abstract class AbstractAuditLogger<C> implements IConfigurable, Closeable
     public AbstractAuditLogger<C> withSerializer(@Nonnull IAuditSerDe serializer) {
         this.serializer = serializer;
         return this;
+    }
+
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public AbstractDataStore<C> getDataStore(boolean checkTransaction) throws AuditException, DataStoreException {
+        AbstractDataStore<C> dataStore =
+                dataStoreManager().getDataStore(dataStoreName(), (Class<? extends AbstractDataStore<C>>) dataStoreType());
+        if (dataStore == null) {
+            throw new AuditException(String.format("Data Store not found. [type=%s][name=%s]", dataStoreType().getCanonicalName(), dataStoreName()));
+        }
+        if (checkTransaction && dataStore.connection().hasTransactionSupport()) {
+            TransactionDataStore ts = (TransactionDataStore) dataStore;
+            if (!ts.isInTransaction()) {
+                ts.beingTransaction();
+            }
+        }
+        return dataStore;
     }
 
     /**
@@ -163,10 +181,7 @@ public abstract class AbstractAuditLogger<C> implements IConfigurable, Closeable
         Preconditions.checkState(dataStoreManager != null);
         try {
             state.check(EObjectState.Available, getClass());
-            AbstractDataStore<C> dataStore = dataStoreManager.getDataStore(dataStoreName, (Class<? extends AbstractDataStore<C>>) dataStoreType);
-            if (dataStore == null) {
-                throw new AuditException(String.format("Data Store not found. [type=%s][name=%s]", dataStoreType.getCanonicalName(), dataStoreName));
-            }
+            AbstractDataStore<C> dataStore = getDataStore(true);
             AuditRecord record = createAuditRecord(dataStoreType, dataStoreName, type, entity, entityType, changeDelta, changeContext, user, serializer);
             record = dataStore.createEntity(record, record.getClass(), null);
             return record;
@@ -239,10 +254,6 @@ public abstract class AbstractAuditLogger<C> implements IConfigurable, Closeable
         Preconditions.checkState(dataStoreManager != null);
         try {
             state.check(EObjectState.Available, getClass());
-            AbstractDataStore<C> dataStore = dataStoreManager.getDataStore(dataStoreName, (Class<? extends AbstractDataStore<C>>) dataStoreType);
-            if (dataStore == null) {
-                throw new AuditException(String.format("Data Store not found. [type=%s][name=%s]", dataStoreType.getCanonicalName(), dataStoreName));
-            }
             Collection<AuditRecord> records = find(key, entityType);
             if (records != null && !records.isEmpty()) {
                 List<T> entities = new ArrayList<>(records.size());
@@ -254,7 +265,7 @@ public abstract class AbstractAuditLogger<C> implements IConfigurable, Closeable
                 return entities;
             }
             return null;
-        } catch (StateException | DataStoreException ex) {
+        } catch (StateException ex) {
             throw new AuditException(ex);
         }
     }

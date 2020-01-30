@@ -5,6 +5,8 @@ import com.codekutter.common.model.EObjectState;
 import com.codekutter.common.model.IKey;
 import com.codekutter.common.model.IKeyed;
 import com.codekutter.common.stores.AbstractDataStore;
+import com.codekutter.common.stores.DataStoreException;
+import com.codekutter.common.stores.TransactionDataStore;
 import com.codekutter.common.utils.LogUtils;
 import com.google.common.base.Preconditions;
 import org.hibernate.Session;
@@ -14,7 +16,6 @@ import java.io.IOException;
 import java.util.*;
 
 public class DBAuditLogger extends AbstractAuditLogger<Session> {
-
     /**
      * Search for entity records based on the query string specified.
      *
@@ -32,11 +33,8 @@ public class DBAuditLogger extends AbstractAuditLogger<Session> {
         Preconditions.checkState(dataStoreManager() != null);
         try {
             state().check(EObjectState.Available, getClass());
-            AbstractDataStore<Session> dataStore =
-                    dataStoreManager().getDataStore(dataStoreName(), (Class<? extends AbstractDataStore<Session>>) dataStoreType());
-            if (dataStore == null) {
-                throw new AuditException(String.format("Data Store not found. [type=%s][name=%s]", dataStoreType().getCanonicalName(), dataStoreName()));
-            }
+            AbstractDataStore<Session> dataStore = getDataStore(false);
+
             String qstr = String.format("FROM %s WHERE id.recordType = :recordType AND (%s)",
                     AuditRecord.class.getCanonicalName(), query);
             Map<String, Object> params = new HashMap<>();
@@ -72,11 +70,7 @@ public class DBAuditLogger extends AbstractAuditLogger<Session> {
         Preconditions.checkState(dataStoreManager() != null);
         try {
             state().check(EObjectState.Available, getClass());
-            AbstractDataStore<Session> dataStore =
-                    dataStoreManager().getDataStore(dataStoreName(), (Class<? extends AbstractDataStore<Session>>) dataStoreType());
-            if (dataStore == null) {
-                throw new AuditException(String.format("Data Store not found. [type=%s][name=%s]", dataStoreType().getCanonicalName(), dataStoreName()));
-            }
+            AbstractDataStore<Session> dataStore = getDataStore(false);
 
             String qstr = String.format("FROM %s WHERE id.recordType = :recordType AND entityId = :entityId",
                     AuditRecord.class.getCanonicalName());
