@@ -35,6 +35,7 @@ import com.codekutter.zconfig.common.model.nodes.ConfigValueNode;
 import com.codekutter.zconfig.common.transformers.StringListParser;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
@@ -85,12 +86,18 @@ public class HibernateConnection extends AbstractConnection<Session> {
         private List<String> classes;
     }
 
-    protected static SessionFactory sessionFactory = null;
+    @Setter(AccessLevel.NONE)
+    private SessionFactory sessionFactory = null;
 
     @ConfigValue(name = "config")
     private String hibernateConfigSource;
     @ConfigValue(name = "password", required = true)
     private EncryptedValue dbPassword;
+
+    public HibernateConnection withSessionFactory(@Nonnull SessionFactory sessionFactory) {
+        this.sessionFactory = sessionFactory;
+        return this;
+    }
 
     @Override
     public boolean hasTransactionSupport() {

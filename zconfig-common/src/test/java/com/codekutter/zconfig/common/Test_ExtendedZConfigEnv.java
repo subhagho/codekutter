@@ -22,6 +22,7 @@ import com.codekutter.common.locking.DistributedLock;
 import com.codekutter.common.locking.DistributedLockFactory;
 import com.codekutter.common.messaging.AbstractQueue;
 import com.codekutter.common.messaging.QueueManager;
+import com.codekutter.common.messaging.SQSJsonQueue;
 import com.codekutter.common.model.DefaultStringMessage;
 import com.codekutter.common.utils.LogUtils;
 import com.codekutter.zconfig.common.model.Version;
@@ -113,7 +114,9 @@ class Test_ExtendedZConfigEnv {
     @Test
     void testSqsQueueSend() {
         try {
-            AbstractQueue<SQSConnection, DefaultStringMessage> queue = QueueManager.get().getQueue(sqsQueueName);
+            SQSJsonQueue queue = (SQSJsonQueue) QueueManager.get().getQueue(sqsQueueName,
+                    SQSConnection.class,
+                    DefaultStringMessage.class);
             assertNotNull(queue);
             DefaultStringMessage message = new DefaultStringMessage();
             message.setMessageId(UUID.randomUUID().toString());
@@ -130,7 +133,9 @@ class Test_ExtendedZConfigEnv {
     @Test
     void testSqsQueueReceive() {
         try {
-            AbstractQueue<SQSConnection, DefaultStringMessage> queue = QueueManager.get().getQueue(sqsQueueName);
+            SQSJsonQueue queue = (SQSJsonQueue) QueueManager.get().getQueue(sqsQueueName,
+                    SQSConnection.class,
+                    DefaultStringMessage.class);
             assertNotNull(queue);
             for (int ii = 0; ii < 5; ii++) {
                 DefaultStringMessage message = new DefaultStringMessage();

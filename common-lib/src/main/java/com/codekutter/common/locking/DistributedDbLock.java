@@ -130,7 +130,7 @@ public class DistributedDbLock extends DistributedLock {
                     if (locked) return true;
                     Transaction tnx = session.beginTransaction();
                     try {
-                        DbLockRecord record = checkExpiry(fetch(session, true));
+                        DbLockRecord record = checkExpiry(fetch(session, true, true));
                         if (record.isLocked() && instanceId().compareTo(record.getInstanceId()) == 0) {
                             session.save(record);
                             tnx.commit();
@@ -180,7 +180,7 @@ public class DistributedDbLock extends DistributedLock {
                         if ((System.currentTimeMillis() - start) > period) break;
                         Transaction tnx = session.beginTransaction();
                         try {
-                            DbLockRecord record = checkExpiry(fetch(session, true));
+                            DbLockRecord record = checkExpiry(fetch(session, true, true));
                             if (record.isLocked() && instanceId().compareTo(record.getInstanceId()) == 0) {
                                 session.save(record);
                                 tnx.commit();
@@ -223,7 +223,7 @@ public class DistributedDbLock extends DistributedLock {
             if (locked) {
                 Transaction tnx = session.beginTransaction();
                 try {
-                    DbLockRecord record = fetch(session, false);
+                    DbLockRecord record = fetch(session, false, true);
                     if (record == null) {
                         throw new LockException(String.format("[%s][%s][%s] Lock record not found.", id().getNamespace(), id().getName(), threadId()));
                     }
@@ -274,7 +274,7 @@ public class DistributedDbLock extends DistributedLock {
     public boolean isLocked() {
         if (super.isLocked()) return true;
         else {
-            DbLockRecord record = fetch(session, false);
+            DbLockRecord record = fetch(session, false, false);
             return record.isLocked();
         }
     }
@@ -296,8 +296,10 @@ public class DistributedDbLock extends DistributedLock {
         return record;
     }
 
-    private DbLockRecord fetch(Session session, boolean create) throws LockException {
-        DbLockRecord record = session.find(DbLockRecord.class, id(), LockModeType.PESSIMISTIC_WRITE);
+    private DbLockRecord fetch(Session session, boolean create, boolean lock) throws LockException {
+        LockModeType lt = LockModeType.NONE;
+        if (lock) lt = LockModeType.PESSIMISTIC_WRITE;
+        DbLockRecord record = session.find(DbLockRecord.class, id(), lt);
         if (record == null && create) {
             record = new DbLockRecord();
             record.setId(id());

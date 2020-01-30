@@ -88,7 +88,7 @@ public class SearchableHibernateConnection extends HibernateConnection {
                 }
                 Properties settings = new Properties();
                 settings.setProperty(Environment.PASS, dbPassword().getDecryptedValue());
-                sessionFactory = new Configuration().configure(cfg).addProperties(settings).buildSessionFactory();
+                withSessionFactory(new Configuration().configure(cfg).addProperties(settings).buildSessionFactory());
             } else {
                 AbstractConfigNode cnode = ConfigUtils.getPathNode(getClass(), (ConfigPathNode) node);
                 if (!(cnode instanceof ConfigPathNode)) {
@@ -146,7 +146,7 @@ public class SearchableHibernateConnection extends HibernateConnection {
                 }
 
                 ServiceRegistry registry = new StandardServiceRegistryBuilder().applySettings(configuration.getProperties()).build();
-                sessionFactory = configuration.buildSessionFactory(registry);
+                withSessionFactory(configuration.buildSessionFactory(registry));
 
                 state().setState(EConnectionState.Open);
             }

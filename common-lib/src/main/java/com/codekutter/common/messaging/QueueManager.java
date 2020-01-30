@@ -50,7 +50,9 @@ public class QueueManager implements IConfigurable, Closeable {
     private Map<String, AbstractQueue> queues = new HashMap<>();
 
     @SuppressWarnings("unchecked")
-    public <C, M> AbstractQueue<C, M> getQueue(@Nonnull String name) {
+    public <C, M> AbstractQueue<C, M> getQueue(@Nonnull String name,
+                                               @Nonnull Class<? extends C> connectionType,
+                                               @Nonnull Class<? extends M> messageType) {
         return queues.get(name);
     }
 
