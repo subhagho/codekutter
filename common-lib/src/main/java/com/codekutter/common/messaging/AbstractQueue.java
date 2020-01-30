@@ -17,11 +17,7 @@
 
 package com.codekutter.common.messaging;
 
-import com.codekutter.common.auditing.AuditManager;
-import com.codekutter.common.model.AuditRecord;
-import com.codekutter.common.model.EAuditType;
 import com.codekutter.common.stores.AbstractConnection;
-import com.codekutter.common.stores.DataStoreException;
 import com.codekutter.common.utils.Monitoring;
 import com.codekutter.zconfig.common.IConfigurable;
 import com.codekutter.zconfig.common.model.annotations.ConfigAttribute;
@@ -33,7 +29,6 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
-import org.elasticsearch.common.Strings;
 
 import javax.annotation.Nonnull;
 import javax.jms.JMSException;

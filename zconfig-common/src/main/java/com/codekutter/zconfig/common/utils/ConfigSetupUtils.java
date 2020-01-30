@@ -17,17 +17,23 @@
 
 package com.codekutter.zconfig.common.utils;
 
+import com.codekutter.common.utils.CypherUtils;
 import com.codekutter.zconfig.common.ConfigKeyVault;
 import com.google.common.base.Strings;
-import org.kohsuke.args4j.CmdLineException;
-import org.kohsuke.args4j.CmdLineParser;
-import org.kohsuke.args4j.Option;
-import org.kohsuke.args4j.OptionHandlerFilter;
+import org.kohsuke.args4j.*;
 
 import java.io.Console;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
 
 public class ConfigSetupUtils {
+    public enum EOperation {
+        IV, encrypt, decrypt, hash
+    }
+
+    @Option(name = "-o", usage = "Operation to perform", aliases = {"--op"})
+    private String op;
     @Option(name = "-i", usage = "Configuration ID", aliases = {"--id"})
     private String id;
     @Option(name = "-g", usage = "Configuration Application Group", aliases = {"--group"})
@@ -37,8 +43,16 @@ public class ConfigSetupUtils {
     @Option(name = "-n", usage = "Configuration Name", aliases = {"--name"})
     private String name;
     @Option(name = "-h", usage = "Configuration Key Hash", aliases = {"--hash"})
+    private String hash;
+    @Option(name = "-k", usage = "Key to encrypt/decrypt with.", aliases = {"--key"})
     private String key;
+    @Option(name = "-s", usage = "IV Spec to use to encryption/decryption.", aliases = {"--iv"})
+    private String iv;
+    @Argument
+    private List<String> otherArgs = new ArrayList<>();
 
+    private String input;
+    private EOperation operation;
 
     private void execute(String[] args) throws Exception {
         CmdLineParser parser = new CmdLineParser(this);
@@ -51,29 +65,87 @@ public class ConfigSetupUtils {
             // parse the arguments.
             parser.parseArgument(args);
 
-            if (Strings.isNullOrEmpty(id)) {
-                id = getValue("ID");
+            if (Strings.isNullOrEmpty(op)) {
+                op = getValue("Operation");
             }
-            if (Strings.isNullOrEmpty(group)) {
-                group = getValue("Application Group");
+            operation = EOperation.valueOf(op);
+            String text = null;
+            if (operation == EOperation.IV) {
+                if (Strings.isNullOrEmpty(id)) {
+                    id = getValue("ID");
+                }
+                if (Strings.isNullOrEmpty(group)) {
+                    group = getValue("Application Group");
+                }
+                if (Strings.isNullOrEmpty(app)) {
+                    app = getValue("Application");
+                }
+                if (Strings.isNullOrEmpty(name)) {
+                    name = getValue("Configuration Name");
+                }
+                if (Strings.isNullOrEmpty(hash)) {
+                    hash = getValue("Configuration Hash Key");
+                }
+                text = "Generated IV Spec";
+                value = ConfigKeyVault.getIvSpec(id, group, app, name, hash);
+            } else if (operation == EOperation.encrypt) {
+                if (Strings.isNullOrEmpty(iv)) {
+                    iv = getValue("IV Spec");
+                }
+                if (!otherArgs.isEmpty()) {
+                    input = otherArgs.get(0);
+                }
+                if (Strings.isNullOrEmpty(key)) {
+                    key = getPassword();
+                }
+                text = "Encrypted Value";
+                value = CypherUtils.encryptAsString(input.getBytes(StandardCharsets.UTF_8), key, iv);
+            } else if (operation == EOperation.decrypt) {
+                if (Strings.isNullOrEmpty(iv)) {
+                    iv = getValue("IV Spec");
+                }
+                if (!otherArgs.isEmpty()) {
+                    input = otherArgs.get(0);
+                }
+                if (Strings.isNullOrEmpty(key)) {
+                    key = getPassword();
+                }
+                text = "Encrypted Value";
+                byte[] data = CypherUtils.decrypt(input, key, iv);
+                value = new String(data, StandardCharsets.UTF_8);
+            } else if (operation == EOperation.hash) {
+                if (Strings.isNullOrEmpty(key)) {
+                    key = getValue("Key");
+                }
+                text = "Generated Hash";
+                value = CypherUtils.getKeyHash(key);
             }
-            if (Strings.isNullOrEmpty(app)) {
-                app = getValue("Application");
-            }
-            if (Strings.isNullOrEmpty(name)) {
-                name = getValue("Configuration Name");
-            }
-            if (Strings.isNullOrEmpty(key)) {
-                key = getValue("Configuration Hash Key");
-            }
-            value = ConfigKeyVault.getIvSpec(id, group, app, name, key);
-            System.out.println("Generated IV Spec: [" + value + "]\n");
+            String output = String.format("%s: [%s]\n", text, value);
+            System.out.println(output);
         } catch (CmdLineException e) {
             printUsage(parser, e);
             throw e;
         }
     }
 
+    private String getPassword() {
+        if (Strings.isNullOrEmpty(key)) {
+            Console console = System.console();
+            while (true) {
+                char[] buff = console.readPassword("Enter Password:");
+                if (buff == null || buff.length == 0) {
+                    continue;
+                }
+                if (buff.length != 16) {
+                    System.err.println("Invalid Password : Must be 16 characters.");
+                    continue;
+                }
+                key = new String(buff);
+                break;
+            }
+        }
+        return key;
+    }
 
     private String getValue(String name) {
         Console console = System.console();
