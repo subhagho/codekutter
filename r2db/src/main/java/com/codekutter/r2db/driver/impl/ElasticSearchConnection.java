@@ -17,6 +17,7 @@
 
 package com.codekutter.r2db.driver.impl;
 
+import com.codekutter.common.model.IEntity;
 import com.codekutter.common.stores.AbstractConnection;
 import com.codekutter.common.stores.EConnectionState;
 import com.codekutter.zconfig.common.ConfigurationAnnotationProcessor;
@@ -24,6 +25,7 @@ import com.codekutter.zconfig.common.ConfigurationException;
 import com.codekutter.zconfig.common.model.annotations.ConfigValue;
 import com.codekutter.zconfig.common.model.nodes.AbstractConfigNode;
 import com.codekutter.zconfig.common.model.nodes.ConfigPathNode;
+import com.codekutter.zconfig.common.transformers.StringListParser;
 import com.google.common.base.Preconditions;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -35,17 +37,20 @@ import org.elasticsearch.client.RestHighLevelClient;
 
 import javax.annotation.Nonnull;
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 
 @Getter
 @Setter
 @Accessors(fluent = true)
 public class ElasticSearchConnection extends AbstractConnection<RestHighLevelClient> {
-    @ConfigValue(name = "hosts", required = true)
-    private Map<String, Integer> hosts;
+    @ConfigValue(name = "hosts", required = true, parser = StringListParser.class)
+    private List<String> hosts;
     @Setter(AccessLevel.NONE)
     @Getter(AccessLevel.NONE)
     private RestHighLevelClient client = null;
+    @ConfigValue(name = "classes", parser = StringListParser.class)
+    private List<String> classes;
 
     @Override
     public RestHighLevelClient connection() {
@@ -65,18 +70,31 @@ public class ElasticSearchConnection extends AbstractConnection<RestHighLevelCli
      * @throws ConfigurationException
      */
     @Override
+    @SuppressWarnings({"rawtypes", "unchecked"})
     public void configure(@Nonnull AbstractConfigNode node) throws ConfigurationException {
         Preconditions.checkArgument(node instanceof ConfigPathNode);
         try {
             ConfigurationAnnotationProcessor.readConfigAnnotations(getClass(), (ConfigPathNode) node, this);
             HttpHost[] array = new HttpHost[hosts.size()];
             int indx = 0;
-            for (String host : hosts.keySet()) {
-                HttpHost h = new HttpHost(host, hosts.get(host), "http");
+            for (String host : hosts) {
+                String[] parts = host.split(":");
+                if (parts.length < 2) {
+                    throw new ConfigurationException(String.format("Invalid host definition. [host=%s]", host));
+                }
+                int port = Integer.parseInt(parts[1]);
+                HttpHost h = new HttpHost(parts[0], port, "http");
                 array[indx] = h;
                 indx++;
             }
             client = new RestHighLevelClient(RestClient.builder(array).build());
+
+            if (classes != null && !classes.isEmpty()) {
+                for(String cls : classes) {
+                    Class<? extends IEntity> type = (Class<? extends IEntity>) Class.forName(cls);
+                    addSupportedType(type);
+                }
+            }
             state().setState(EConnectionState.Open);
         } catch (Throwable t) {
             state().setError(t);

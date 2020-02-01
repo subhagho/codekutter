@@ -18,20 +18,29 @@
 package com.codekutter.r2db.driver.impl;
 
 import com.codekutter.common.stores.AbstractConnection;
+import com.codekutter.common.stores.ConnectionException;
+import com.codekutter.common.stores.EConnectionState;
 import com.codekutter.zconfig.common.ConfigurationException;
 import com.codekutter.zconfig.common.model.nodes.AbstractConfigNode;
+import org.hibernate.ogm.OgmSession;
+import org.hibernate.ogm.OgmSessionFactory;
 
 import javax.annotation.Nonnull;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import java.io.IOException;
 
-public class HibernateOgmConnection extends AbstractConnection<EntityManager> {
-    private EntityManagerFactory factory = null;
+public class HibernateOgmConnection extends AbstractConnection<OgmSession> {
+    private OgmSessionFactory sessionFactory = null;
 
     @Override
-    public EntityManager connection() {
-        return null;
+    public OgmSession connection() throws ConnectionException {
+        try {
+            state().checkOpened();
+            return sessionFactory.openSession();
+        } catch (Throwable t) {
+            throw new ConnectionException(t, getClass());
+        }
     }
 
     @Override
@@ -52,6 +61,11 @@ public class HibernateOgmConnection extends AbstractConnection<EntityManager> {
 
     @Override
     public void close() throws IOException {
-
+        if (state().isOpen())
+            state().setState(EConnectionState.Closed);
+        if (sessionFactory != null) {
+            sessionFactory.close();
+            sessionFactory = null;
+        }
     }
 }

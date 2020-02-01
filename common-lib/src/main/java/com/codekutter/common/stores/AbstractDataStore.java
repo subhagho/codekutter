@@ -36,6 +36,7 @@ import lombok.experimental.Accessors;
 
 import javax.annotation.Nonnull;
 import java.io.Closeable;
+import java.io.IOException;
 import java.util.Collection;
 import java.util.Map;
 
@@ -166,6 +167,8 @@ public abstract class AbstractDataStore<T> implements Closeable {
     protected Metrics metrics = new Metrics();
     @SuppressWarnings("rawtypes")
     private AbstractAuditLogger auditLogger;
+    @Setter(AccessLevel.NONE)
+    private DataStoreManager dataStoreManager;
 
     public AbstractDataStore() {
         threadId = Thread.currentThread().getId();
@@ -213,6 +216,7 @@ public abstract class AbstractDataStore<T> implements Closeable {
 
     public void configure(@Nonnull DataStoreManager dataStoreManager) throws ConfigurationException {
         try {
+            this.dataStoreManager = dataStoreManager;
             configureDataStore(dataStoreManager);
             setupMonitoring();
         } catch (Exception ex) {
@@ -360,6 +364,17 @@ public abstract class AbstractDataStore<T> implements Closeable {
                                                     @Nonnull Class<? extends E> type, Context context) throws
             DataStoreException {
         return search(query, 0, maxResults, parameters, type, context);
+    }
+
+    @Override
+    public void close() throws IOException {
+        try {
+            if (dataStoreManager != null) {
+                dataStoreManager.close(this);
+            }
+        } catch (Throwable t) {
+            throw new IOException(t);
+        }
     }
 
     public abstract DataStoreAuditContext context();

@@ -317,6 +317,30 @@ public class DataStoreManager implements IConfigurable {
         }
     }
 
+    public void close(@Nonnull AbstractDataStore dataStore) throws DataStoreException {
+        try {
+            if (openedStores.containsThread()) {
+                Map<String, AbstractDataStore> stores = openedStores.get();
+                if (stores.containsKey(dataStore.name())) {
+                    if (dataStore.auditLogger() != null) {
+                        dataStore.auditLogger().discard();
+                    }
+                    if (dataStore instanceof TransactionDataStore) {
+                        TransactionDataStore ts = (TransactionDataStore) dataStore;
+                        if (ts.isInTransaction()) {
+                            LogUtils.error(getClass(), String.format("Data Store has un-committed transaction. [name=%s][thread=%d]",
+                                    dataStore.name(), Thread.currentThread().getId()));
+                            ts.rollback();
+                        }
+                    }
+                    openedStores.remove(dataStore.name());
+                }
+            }
+        } catch (Exception ex) {
+            throw new DataStoreException(ex);
+        }
+    }
+
     @Override
     public void configure(@Nonnull AbstractConfigNode node) throws ConfigurationException {
         Preconditions.checkArgument(node instanceof ConfigPathNode);

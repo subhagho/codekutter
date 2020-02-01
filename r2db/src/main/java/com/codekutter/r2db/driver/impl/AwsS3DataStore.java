@@ -248,9 +248,4 @@ public class AwsS3DataStore extends AbstractDirectoryStore<AmazonS3> {
     private String getLocalFileName(S3FileKey key) {
         return String.format("%s/bucket-%s/%s", workDirectory.getAbsolutePath(), key.bucket(), key.key());
     }
-
-    @Override
-    public void close() throws IOException {
-        // Do nothing...
-    }
 }

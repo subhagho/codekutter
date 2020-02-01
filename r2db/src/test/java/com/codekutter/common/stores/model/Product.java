@@ -7,6 +7,7 @@ import com.codekutter.common.model.StringKey;
 import com.codekutter.common.model.ValidationExceptions;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.search.annotations.Indexed;
 
 import javax.persistence.*;
 
@@ -14,6 +15,7 @@ import javax.persistence.*;
 @Setter
 @Entity
 @Table(name = "tb_product")
+@Indexed(index = "product")
 public class Product implements IEntity<ProductKey> {
     @EmbeddedId
     private ProductKey id;

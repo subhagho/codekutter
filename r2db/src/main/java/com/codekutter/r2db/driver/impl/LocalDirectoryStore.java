@@ -234,9 +234,4 @@ public class LocalDirectoryStore extends AbstractDirectoryStore<File> {
         ctx.setDirectory(directory.getAbsolutePath());
         return ctx;
     }
-
-    @Override
-    public void close() throws IOException {
-        // Do nothing...
-    }
 }

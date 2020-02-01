@@ -237,5 +237,6 @@ public class RdbmsDataStore extends TransactionDataStore<Session, Transaction> {
         }
         session = null;
         readSession = null;
+        super.close();
     }
 }

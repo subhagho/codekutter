@@ -143,7 +143,7 @@ public class Context {
                 return Boolean.parseBoolean((String) value);
             }
         }
-        return null;
+        return false;
     }
 
     /**
