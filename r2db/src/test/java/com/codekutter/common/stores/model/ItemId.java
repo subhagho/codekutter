@@ -1,6 +1,7 @@
 package com.codekutter.common.stores.model;
 
 import com.codekutter.common.model.IKey;
+import com.codekutter.common.utils.CommonUtils;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -54,5 +55,18 @@ public class ItemId implements IKey, Serializable {
             return ret;
         }
         return -1;
+    }
+
+    @Override
+    public int hashCode() {
+        return CommonUtils.getHashCode(stringKey());
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof ItemId) {
+            return compareTo((IKey) obj) == 0;
+        }
+        return super.equals(obj);
     }
 }

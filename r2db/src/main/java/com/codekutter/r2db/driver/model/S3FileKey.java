@@ -18,6 +18,7 @@
 package com.codekutter.r2db.driver.model;
 
 import com.codekutter.common.model.IKey;
+import com.codekutter.common.utils.CommonUtils;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -70,5 +71,18 @@ public class S3FileKey implements IKey, Comparable<S3FileKey> {
             return ret;
         }
         return -1;
+    }
+
+    @Override
+    public int hashCode() {
+        return CommonUtils.getHashCode(stringKey());
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof S3FileKey) {
+            return compareTo((IKey) obj) == 0;
+        }
+        return super.equals(obj);
     }
 }

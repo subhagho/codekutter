@@ -192,11 +192,13 @@ public class EntityManager implements IConfigurable {
 
     @SuppressWarnings("unchecked")
     public <T, E extends IEntity> E create(@Nonnull E entity,
-                                           @Nonnull Class<? extends IEntity> type,
+                                           @Nonnull Class<? extends E> type,
                                            Class<? extends AbstractDataStore<T>> storeType,
                                            @Nonnull Principal user,
                                            Context context) throws DataStoreException {
         try {
+            entity.validate();
+
             Object shardKey = null;
             if (entity instanceof IShardedEntity) {
                 shardKey = ((IShardedEntity) entity).getShardKey();
@@ -218,7 +220,7 @@ public class EntityManager implements IConfigurable {
     }
 
     private <E extends IEntity> E createReferences(E entity,
-                                                   Class<? extends IEntity> entityType,
+                                                   Class<? extends E> entityType,
                                                    Principal user,
                                                    Context context) throws DataStoreException {
         try {
@@ -300,11 +302,13 @@ public class EntityManager implements IConfigurable {
 
     @SuppressWarnings("unchecked")
     public <T, E extends IEntity> E update(@Nonnull E entity,
-                                           @Nonnull Class<? extends IEntity> type,
+                                           @Nonnull Class<? extends E> type,
                                            Class<? extends AbstractDataStore<T>> storeType,
                                            @Nonnull Principal user,
                                            Context context) throws DataStoreException {
         try {
+            entity.validate();
+
             Object shardKey = null;
             if (entity instanceof IShardedEntity) {
                 shardKey = ((IShardedEntity) entity).getShardKey();

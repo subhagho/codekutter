@@ -106,7 +106,7 @@ public class SearchableRdbmsDataStore extends RdbmsDataStore implements ISearcha
     }
 
     @Override
-    public <E extends IEntity> E createEntity(@Nonnull E entity, @Nonnull Class<? extends IEntity> type, Context context) throws DataStoreException {
+    public <E extends IEntity> E createEntity(@Nonnull E entity, @Nonnull Class<? extends E> type, Context context) throws DataStoreException {
         entity = super.createEntity(entity, type, context);
         CacheEntry ce = new CacheEntry();
         ce.entryType = EAuditType.Create;
@@ -124,7 +124,7 @@ public class SearchableRdbmsDataStore extends RdbmsDataStore implements ISearcha
     }
 
     @Override
-    public <E extends IEntity> E updateEntity(@Nonnull E entity, @Nonnull Class<? extends IEntity> type, Context context) throws DataStoreException {
+    public <E extends IEntity> E updateEntity(@Nonnull E entity, @Nonnull Class<? extends E> type, Context context) throws DataStoreException {
         entity = super.updateEntity(entity, type, context);
         CacheEntry ce = new CacheEntry();
         ce.entryType = EAuditType.Create;

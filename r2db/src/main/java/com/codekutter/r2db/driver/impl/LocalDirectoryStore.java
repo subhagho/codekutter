@@ -97,7 +97,7 @@ public class LocalDirectoryStore extends AbstractDirectoryStore<File> {
     }
 
     @Override
-    public <E extends IEntity> E createEntity(@Nonnull E entity, @Nonnull Class<? extends IEntity> type, Context context) throws DataStoreException {
+    public <E extends IEntity> E createEntity(@Nonnull E entity, @Nonnull Class<? extends E> type, Context context) throws DataStoreException {
         FileEntity e = null;
         if (entity instanceof FileEntity) {
             e = (FileEntity) entity;
@@ -120,7 +120,7 @@ public class LocalDirectoryStore extends AbstractDirectoryStore<File> {
     }
 
     @Override
-    public <E extends IEntity> E updateEntity(@Nonnull E entity, @Nonnull Class<? extends IEntity> type, Context context) throws DataStoreException {
+    public <E extends IEntity> E updateEntity(@Nonnull E entity, @Nonnull Class<? extends E> type, Context context) throws DataStoreException {
         return createEntity(entity, type, context);
     }
 

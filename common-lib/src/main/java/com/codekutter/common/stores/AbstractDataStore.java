@@ -237,7 +237,7 @@ public abstract class AbstractDataStore<T> implements Closeable {
     }
 
     @SuppressWarnings("rawtypes")
-    public <E extends IEntity> E create(@Nonnull E entity, @Nonnull Class<? extends IEntity> type, Context context) throws
+    public <E extends IEntity> E create(@Nonnull E entity, @Nonnull Class<? extends E> type, Context context) throws
             DataStoreException {
         setTag(Metrics.METRIC_TAG_CREATE, type);
         try {
@@ -250,11 +250,11 @@ public abstract class AbstractDataStore<T> implements Closeable {
     }
 
     @SuppressWarnings("rawtypes")
-    public abstract <E extends IEntity> E createEntity(@Nonnull E entity, @Nonnull Class<? extends IEntity> type, Context context) throws
+    public abstract <E extends IEntity> E createEntity(@Nonnull E entity, @Nonnull Class<? extends E> type, Context context) throws
             DataStoreException;
 
     @SuppressWarnings("rawtypes")
-    public <E extends IEntity> E update(@Nonnull E entity, @Nonnull Class<? extends IEntity> type, Context context) throws
+    public <E extends IEntity> E update(@Nonnull E entity, @Nonnull Class<? extends E> type, Context context) throws
             DataStoreException {
         setTag(Metrics.METRIC_TAG_UPDATE, type);
         try {
@@ -267,7 +267,7 @@ public abstract class AbstractDataStore<T> implements Closeable {
     }
 
     @SuppressWarnings("rawtypes")
-    public abstract <E extends IEntity> E updateEntity(@Nonnull E entity, @Nonnull Class<? extends IEntity> type, Context context) throws
+    public abstract <E extends IEntity> E updateEntity(@Nonnull E entity, @Nonnull Class<? extends E> type, Context context) throws
             DataStoreException;
 
     @SuppressWarnings("rawtypes")

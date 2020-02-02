@@ -51,7 +51,7 @@ public class ElasticSearchDataStore extends AbstractDataStore<RestHighLevelClien
 
     @Override
     public <E extends IEntity> E createEntity(@Nonnull E entity,
-                                              @Nonnull Class<? extends IEntity> type,
+                                              @Nonnull Class<? extends E> type,
                                               Context context) throws DataStoreException {
         try {
             return helper.createEntity(connection().connection(), entity, type, context);
@@ -61,7 +61,7 @@ public class ElasticSearchDataStore extends AbstractDataStore<RestHighLevelClien
     }
 
     @Override
-    public <E extends IEntity> E updateEntity(@Nonnull E entity, @Nonnull Class<? extends IEntity> type, Context context) throws DataStoreException {
+    public <E extends IEntity> E updateEntity(@Nonnull E entity, @Nonnull Class<? extends E> type, Context context) throws DataStoreException {
         try {
             return helper.updateEntity(connection().connection(), entity, type, context);
         } catch (ConnectionException t) {

@@ -81,7 +81,7 @@ public class RdbmsDataStore extends TransactionDataStore<Session, Transaction> {
     @Override
     @SuppressWarnings("rawtypes")
     public <E extends IEntity> E createEntity(@Nonnull E entity,
-                                              @Nonnull Class<? extends IEntity> type,
+                                              @Nonnull Class<? extends E> type,
                                               Context context) throws
             DataStoreException {
         Preconditions.checkState(session != null);
@@ -98,7 +98,7 @@ public class RdbmsDataStore extends TransactionDataStore<Session, Transaction> {
     @Override
     @SuppressWarnings("rawtypes")
     public <E extends IEntity> E updateEntity(@Nonnull E entity,
-                                              @Nonnull Class<? extends IEntity> type,
+                                              @Nonnull Class<? extends E> type,
                                               Context context) throws
             DataStoreException {
         Preconditions.checkState(session != null);

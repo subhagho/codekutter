@@ -44,11 +44,9 @@ public class LockId implements IKey, Serializable {
     @Override
     public boolean equals(Object obj) {
         if (this == obj) return true;
-        if (this.hashCode() == obj.hashCode()) return true;
-        if (obj instanceof LockId) {
-            if ((namespace != null && namespace.compareTo(((LockId) obj).namespace) == 0) &&
-                    (name != null && name.compareTo(((LockId) obj).name) == 0)) {
-                return true;
+        if (this.hashCode() == obj.hashCode()) {
+            if (obj instanceof LockId) {
+                return compareTo((IKey) obj) == 0;
             }
         }
         return false;
@@ -82,4 +80,6 @@ public class LockId implements IKey, Serializable {
         }
         return -1;
     }
+
+
 }

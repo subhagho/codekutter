@@ -97,7 +97,7 @@ public class AwsS3DataStore extends AbstractDirectoryStore<AmazonS3> {
     }
 
     @Override
-    public <E extends IEntity> E createEntity(@Nonnull E entity, @Nonnull Class<? extends IEntity> type, Context context) throws DataStoreException {
+    public <E extends IEntity> E createEntity(@Nonnull E entity, @Nonnull Class<? extends E> type, Context context) throws DataStoreException {
         Preconditions.checkArgument(entity instanceof S3FileEntity);
         Preconditions.checkArgument(connection != null && connection.state().isOpen());
 
@@ -113,7 +113,7 @@ public class AwsS3DataStore extends AbstractDirectoryStore<AmazonS3> {
     }
 
     @Override
-    public <E extends IEntity> E updateEntity(@Nonnull E entity, @Nonnull Class<? extends IEntity> type, Context context) throws DataStoreException {
+    public <E extends IEntity> E updateEntity(@Nonnull E entity, @Nonnull Class<? extends E> type, Context context) throws DataStoreException {
         Preconditions.checkArgument(entity instanceof S3FileEntity);
         Preconditions.checkArgument(connection != null && connection.state().isOpen());
 

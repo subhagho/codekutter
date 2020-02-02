@@ -52,7 +52,7 @@ public class ReflectionUtils {
      * @return - Key Value Pair (Class<?>, Field)
      */
     public static KeyValuePair<String, Field> findNestedField(@Nonnull Class<?> type,
-                                                                @Nonnull String name) {
+                                                              @Nonnull String name) {
         String[] parts = name.split("\\.");
         Class<?> ntype = type;
         int index = 0;
@@ -221,7 +221,7 @@ public class ReflectionUtils {
         Object value = source;
         Class<?> type = source.getClass();
         int index = 0;
-        while(index < parts.length) {
+        while (index < parts.length) {
             Field field = findField(type, parts[index]);
             if (field == null) {
                 throw new Exception(String.format("Field not found. [type=%s][field=%s]",
@@ -782,14 +782,40 @@ public class ReflectionUtils {
     }
 
     /**
+     * Get the Parameterized type of the Map key field specified.
+     *
+     * @param field - Field to extract the Parameterized type for.
+     * @return - Parameterized type.
+     */
+    public static Class<?> getGenericMapKeyType(@Nonnull Field field) {
+        Preconditions
+                .checkArgument(implementsInterface(Map.class, field.getType()));
+
+        ParameterizedType ptype = (ParameterizedType) field.getGenericType();
+        return (Class<?>) ptype.getActualTypeArguments()[0];
+    }
+
+    /**
+     * Get the Parameterized type of the Map value field specified.
+     *
+     * @param field - Field to extract the Parameterized type for.
+     * @return - Parameterized type.
+     */
+    public static Class<?> getGenericMapValueType(@Nonnull Field field) {
+        Preconditions
+                .checkArgument(implementsInterface(Map.class, field.getType()));
+
+        ParameterizedType ptype = (ParameterizedType) field.getGenericType();
+        return (Class<?>) ptype.getActualTypeArguments()[1];
+    }
+
+    /**
      * Get the Parameterized type of the List field specified.
      *
      * @param field - Field to extract the Parameterized type for.
      * @return - Parameterized type.
-     * @throws Exception
      */
-    public static Class<?> getGenericListType(@Nonnull Field field)
-            throws Exception {
+    public static Class<?> getGenericListType(@Nonnull Field field) {
         Preconditions.checkArgument(field != null);
         Preconditions
                 .checkArgument(implementsInterface(List.class, field.getType()));
@@ -803,10 +829,8 @@ public class ReflectionUtils {
      *
      * @param field - Field to extract the Parameterized type for.
      * @return - Parameterized type.
-     * @throws Exception
      */
-    public static Class<?> getGenericSetType(@Nonnull Field field)
-            throws Exception {
+    public static Class<?> getGenericSetType(@Nonnull Field field) {
         Preconditions.checkArgument(field != null);
         Preconditions
                 .checkArgument(implementsInterface(Set.class, field.getType()));

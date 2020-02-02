@@ -18,6 +18,7 @@
 package com.codekutter.common.stores.model;
 
 import com.codekutter.common.model.IKey;
+import com.codekutter.common.utils.CommonUtils;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -62,5 +63,18 @@ public class ProductKey implements IKey {
             return this.key.compareTo(k);
         }
         return -1;
+    }
+
+    @Override
+    public int hashCode() {
+        return CommonUtils.getHashCode(stringKey());
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof ProductKey) {
+            return compareTo((IKey) obj) == 0;
+        }
+        return super.equals(obj);
     }
 }

@@ -1,5 +1,6 @@
 package com.codekutter.common.model;
 
+import com.codekutter.common.utils.CommonUtils;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -45,4 +46,16 @@ public class StringKey implements IKey, Serializable {
         return -1;
     }
 
+    @Override
+    public int hashCode() {
+        return CommonUtils.getHashCode(stringKey());
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof StringKey) {
+            return compareTo((IKey) obj) == 0;
+        }
+        return super.equals(obj);
+    }
 }
