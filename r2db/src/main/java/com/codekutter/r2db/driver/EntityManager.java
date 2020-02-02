@@ -1033,7 +1033,8 @@ public class EntityManager implements IConfigurable {
 
     public void close() throws IOException {
         try {
-            dataStoreManager.closeStores();
+            if (dataStoreManager != null)
+                dataStoreManager.closeStores();
         } catch (Exception ex) {
             throw new IOException(ex);
         }

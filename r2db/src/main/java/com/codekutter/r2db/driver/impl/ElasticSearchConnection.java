@@ -43,7 +43,7 @@ import java.util.Map;
 @Getter
 @Setter
 @Accessors(fluent = true)
-public class ElasticSearchConnection extends AbstractConnection<RestHighLevelClient> {
+public class ElasticSearchConnection extends SearchableConnection<RestHighLevelClient> {
     @ConfigValue(name = "hosts", required = true, parser = StringListParser.class)
     private List<String> hosts;
     @Setter(AccessLevel.NONE)
@@ -87,7 +87,7 @@ public class ElasticSearchConnection extends AbstractConnection<RestHighLevelCli
                 array[indx] = h;
                 indx++;
             }
-            client = new RestHighLevelClient(RestClient.builder(array).build());
+            client = new RestHighLevelClient(RestClient.builder(array));
 
             if (classes != null && !classes.isEmpty()) {
                 for(String cls : classes) {

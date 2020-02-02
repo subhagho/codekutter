@@ -139,7 +139,7 @@ public class RdbmsDataStore extends TransactionDataStore<Session, Transaction> {
         Preconditions.checkState(session != null);
         checkThread();
 
-        return readSession.find(type, key);
+        return session.find(type, key);
     }
 
     @Override

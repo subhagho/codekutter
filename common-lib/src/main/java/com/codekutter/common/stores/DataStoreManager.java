@@ -437,7 +437,7 @@ public class DataStoreManager implements IConfigurable {
                     (ConfigPathNode) cnode, config);
             dataStoreConfigs.put(
                     config.name(), config);
-            AbstractConnection<?> connection = ConnectionManager.get().connection(config.connectionName());
+            AbstractConnection<?> connection = ConnectionManager.get().connection(config.connectionName(), config.connectionType());
             if (connection == null) {
                 throw new ConfigurationException(String.format("No connection found. [store=%s][node=%s]", config.name(), cnode.getAbsolutePath()));
             }

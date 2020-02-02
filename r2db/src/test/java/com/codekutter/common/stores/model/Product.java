@@ -3,11 +3,10 @@ package com.codekutter.common.stores.model;
 import com.codekutter.common.Context;
 import com.codekutter.common.model.CopyException;
 import com.codekutter.common.model.IEntity;
-import com.codekutter.common.model.StringKey;
 import com.codekutter.common.model.ValidationExceptions;
+import com.codekutter.r2db.driver.impl.annotations.Indexed;
 import lombok.Getter;
 import lombok.Setter;
-import org.hibernate.search.annotations.Indexed;
 
 import javax.persistence.*;
 

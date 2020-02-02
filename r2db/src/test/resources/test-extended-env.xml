@@ -128,7 +128,7 @@
                     <dataStores>
                         <dataStore name="TestDataStore" class="com.codekutter.common.stores.impl.RdbmsConfig"
                                    dataStoreClass="com.codekutter.common.stores.impl.RdbmsDataStore"
-                                   connection="TestDbConnection"
+                                   connection="TestDbConnection" connectionType="org.hibernate.Session"
                                    auditContextProvider="com.codekutter.common.stores.DataSourceContextGenerator">
                         </dataStore>
                     </dataStores>

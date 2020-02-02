@@ -40,6 +40,8 @@ public class DataStoreConfig {
     private String description;
     @ConfigAttribute(name = "connection", required = true)
     private String connectionName;
+    @ConfigAttribute(name = "connectionType", required = true)
+    private Class<?> connectionType;
     @ConfigAttribute(name = "audited")
     private boolean audited = false;
     @ConfigAttribute(name = "auditLogger")

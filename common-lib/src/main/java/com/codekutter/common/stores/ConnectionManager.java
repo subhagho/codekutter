@@ -57,7 +57,7 @@ public class ConnectionManager implements IConfigurable, Closeable {
     /**
      * Configure this type instance.
      *
-     * @param node - Handle to the configuration node.
+     * @param inode - Handle to the configuration node.
      * @throws ConfigurationException
      */
     @Override
@@ -110,7 +110,7 @@ public class ConnectionManager implements IConfigurable, Closeable {
     }
 
     @SuppressWarnings("unchecked")
-    public <T> AbstractConnection<T> connection(@Nonnull String name) throws DataStoreException {
+    public <T> AbstractConnection<T> connection(@Nonnull String name, @Nonnull Class<? extends T> type) throws DataStoreException {
         if (connections.containsKey(name)) {
             return connections.get(name);
         }
