@@ -22,5 +22,7 @@ import java.lang.annotation.*;
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.FIELD })
 @Inherited
-public @interface ZkIgnoreProperty {
+public @interface ZkProperty {
+    boolean ignore() default false;
+    boolean cascade() default true;
 }

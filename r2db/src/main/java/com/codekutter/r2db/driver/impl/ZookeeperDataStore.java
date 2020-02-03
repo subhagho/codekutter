@@ -25,11 +25,12 @@ import com.codekutter.common.stores.AbstractConnection;
 import com.codekutter.common.stores.AbstractDataStore;
 import com.codekutter.common.stores.DataStoreException;
 import com.codekutter.common.stores.DataStoreManager;
+import com.codekutter.common.stores.annotations.Reference;
 import com.codekutter.common.stores.impl.DataStoreAuditContext;
 import com.codekutter.common.stores.impl.ZookeeperConnection;
 import com.codekutter.common.utils.ReflectionUtils;
 import com.codekutter.r2db.driver.impl.annotations.ZkEntity;
-import com.codekutter.r2db.driver.impl.annotations.ZkIgnoreProperty;
+import com.codekutter.r2db.driver.impl.annotations.ZkProperty;
 import com.codekutter.r2db.driver.model.ZkEntityReference;
 import com.codekutter.zconfig.common.ConfigurationException;
 import com.google.common.base.Preconditions;
@@ -66,7 +67,7 @@ public class ZookeeperDataStore extends AbstractDataStore<CuratorFramework> {
         }
     }
 
-    private <E extends IEntity> String getZkPath(Class<? extends E> type, E entity) throws DataStoreException {
+    private <E extends IEntity> String getZkPath(Class<? extends E> type, IKey key) throws DataStoreException {
         ZookeeperDataStoreConfig config = (ZookeeperDataStoreConfig) config();
         if (!type.isAnnotationPresent(ZkEntity.class)) {
             throw new DataStoreException(String.format("Zookeeper Entity annotation not specified. [type=%s]", type.getCanonicalName()));
@@ -87,8 +88,60 @@ public class ZookeeperDataStore extends AbstractDataStore<CuratorFramework> {
         }
         path = String.format("%s/%s", config.rootPath(), path);
 
-        IKey key = entity.getKey();
         return String.format("%s/%s", path, key.stringKey());
+    }
+
+    @SuppressWarnings("rawtypes")
+    private <E extends IEntity> E readEntityData(String path, Class<? extends E> type, Context context) throws DataStoreException {
+        try {
+            CuratorFramework client = connection().connection();
+            Stat stat = client.checkExists().forPath(path);
+            if (stat != null) {
+                byte[] data = client.getData().forPath(path);
+                if (data != null && data.length > 0) {
+                    Map properties = GlobalConstants.getJsonMapper().readValue(data, Map.class);
+                    if (properties != null) {
+                        E entity = type.newInstance();
+                        Map<String, Field> fields = ReflectionUtils.getFieldsMap(type);
+                        if (fields == null) {
+                            throw new DataStoreException(String.format("Error getting fields for type. [type=%s]", type.getCanonicalName()));
+                        }
+                        for (Object key : properties.keySet()) {
+                            String k = (String) key;
+                            Object value = properties.get(key);
+                            Field field = fields.get(k);
+                            if (field == null) {
+                                throw new DataStoreException(String.format("Field not found. [name=%s][type=%s]", k, type.getCanonicalName()));
+                            }
+                            if (ReflectionUtils.isPrimitiveTypeOrString(field)) {
+                                ReflectionUtils.setObjectValue(entity, field, value);
+                            } else {
+                                Class<?> itype = field.getType();
+                                if (ReflectionUtils.implementsInterface(List.class, itype)) {
+                                    itype = ReflectionUtils.getGenericListType(field);
+                                } else if (ReflectionUtils.implementsInterface(Set.class, itype)) {
+                                    itype = ReflectionUtils.getGenericSetType(field);
+                                }
+                                boolean reference = false;
+                                if (ReflectionUtils.implementsInterface(IEntity.class, itype)) {
+                                    if (itype.isAnnotationPresent(ZkEntity.class)) {
+                                        reference = true;
+                                    }
+                                }
+                                if (!reference) {
+                                    ReflectionUtils.setObjectValue(entity, field, value);
+                                }
+                            }
+                        }
+                    } else {
+                        throw new DataStoreException(String.format("Error reading object data. [type=%s][path=%s]", type.getCanonicalName(), path));
+                    }
+                }
+            }
+            return null;
+        } catch (Exception ex) {
+            throw new DataStoreException(ex);
+        }
     }
 
     @SuppressWarnings({"rawtypes", "unchecked"})
@@ -98,11 +151,19 @@ public class ZookeeperDataStore extends AbstractDataStore<CuratorFramework> {
             Field[] fields = ReflectionUtils.getAllFields(type);
             if (fields != null && fields.length > 0) {
                 for (Field field : fields) {
-                    if (field.isAnnotationPresent(ZkIgnoreProperty.class)) continue;
+                    if (field.isAnnotationPresent(Reference.class))
+                        continue;
 
+                    boolean cascade = false;
+                    if (field.isAnnotationPresent(ZkProperty.class)) {
+                        ZkProperty zp = field.getAnnotation(ZkProperty.class);
+                        if (zp.ignore()) continue;
+                        cascade = zp.cascade();
+                    }
+
+                    Object value = ReflectionUtils.getFieldValue(entity, field);
                     if (ReflectionUtils.isPrimitiveTypeOrString(field)) {
                         String name = field.getName();
-                        Object value = ReflectionUtils.getFieldValue(entity, field);
                         properties.put(name, value);
                     } else {
                         Class<?> itype = field.getType();
@@ -116,13 +177,14 @@ public class ZookeeperDataStore extends AbstractDataStore<CuratorFramework> {
                             if (itype.isAnnotationPresent(ZkEntity.class)) {
                                 if (ReflectionUtils.implementsInterface(List.class, field.getType())) {
                                     List<ZkEntityReference> references = new ArrayList<>();
-                                    Object value = ReflectionUtils.getFieldValue(entity, field);
                                     List values = (List) value;
                                     for (Object v : values) {
                                         IEntity ie = (IEntity) v;
-                                        String p = createZkEntity(ie, (Class<? extends IEntity>) itype, context);
-                                        if (Strings.isNullOrEmpty(p)) {
-                                            throw new DataStoreException(String.format("Error creating reference entity. [type=%s]", itype.getCanonicalName()));
+                                        if (cascade) {
+                                            String p = createZkEntity(ie, (Class<? extends IEntity>) itype, context);
+                                            if (Strings.isNullOrEmpty(p)) {
+                                                throw new DataStoreException(String.format("Error creating reference entity. [type=%s]", itype.getCanonicalName()));
+                                            }
                                         }
                                         ZkEntityReference ref = new ZkEntityReference();
                                         ref.setType(itype.getCanonicalName());
@@ -132,13 +194,14 @@ public class ZookeeperDataStore extends AbstractDataStore<CuratorFramework> {
                                     properties.put(field.getName(), references);
                                 } else if (ReflectionUtils.implementsInterface(List.class, field.getType())) {
                                     Set<ZkEntityReference> references = new HashSet<>();
-                                    Object value = ReflectionUtils.getFieldValue(entity, field);
                                     Set values = (Set) value;
                                     for (Object v : values) {
                                         IEntity ie = (IEntity) v;
-                                        String p = createZkEntity(ie, (Class<? extends IEntity>) itype, context);
-                                        if (Strings.isNullOrEmpty(p)) {
-                                            throw new DataStoreException(String.format("Error creating reference entity. [type=%s]", itype.getCanonicalName()));
+                                        if (cascade) {
+                                            String p = createZkEntity(ie, (Class<? extends IEntity>) itype, context);
+                                            if (Strings.isNullOrEmpty(p)) {
+                                                throw new DataStoreException(String.format("Error creating reference entity. [type=%s]", itype.getCanonicalName()));
+                                            }
                                         }
                                         ZkEntityReference ref = new ZkEntityReference();
                                         ref.setType(itype.getCanonicalName());
@@ -152,7 +215,6 @@ public class ZookeeperDataStore extends AbstractDataStore<CuratorFramework> {
                         }
                         if (!reference) {
                             String name = field.getName();
-                            Object value = ReflectionUtils.getFieldValue(entity, field);
                             properties.put(name, value);
                         }
                     }
@@ -174,7 +236,7 @@ public class ZookeeperDataStore extends AbstractDataStore<CuratorFramework> {
         try {
             CuratorFramework client = connection().connection();
             entity.validate();
-            String path = getZkPath(type, entity);
+            String path = getZkPath(type, entity.getKey());
             Stat stat = client.checkExists().forPath(path);
             if (stat == null) {
                 path = client.create().withMode(CreateMode.PERSISTENT).forPath(path);
@@ -208,14 +270,66 @@ public class ZookeeperDataStore extends AbstractDataStore<CuratorFramework> {
         return createEntity(entity, type, context);
     }
 
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    private <E extends IEntity> boolean deleteZkEntity(String path, E entity, Class<? extends E> type, Context context) throws DataStoreException {
+        try {
+            CuratorFramework client = connection().connection();
+            client.delete().forPath(path);
+            Field[] fields = ReflectionUtils.getAllFields(type);
+            if (fields != null && fields.length > 0) {
+                for (Field field : fields) {
+                    Class<?> itype = field.getType();
+                    if (ReflectionUtils.implementsInterface(List.class, itype)) {
+                        itype = ReflectionUtils.getGenericListType(field);
+                    } else if (ReflectionUtils.implementsInterface(Set.class, itype)) {
+                        itype = ReflectionUtils.getGenericSetType(field);
+                    }
+                    Object value = ReflectionUtils.getFieldValue(entity, field);
+                    if (field.isAnnotationPresent(ZkProperty.class)) {
+                        ZkProperty zp = field.getAnnotation(ZkProperty.class);
+                        if (zp.cascade()) {
+                            if (ReflectionUtils.implementsInterface(IEntity.class, itype)
+                                    && itype.isAnnotationPresent(ZkEntity.class)) {
+                                if (ReflectionUtils.implementsInterface(List.class, field.getType())) {
+                                    List values = (List) value;
+                                    for (Object v : values) {
+                                        deleteEntity(((IEntity) v).getKey(), (Class<? extends IEntity>) itype, context);
+                                    }
+                                } else if (ReflectionUtils.implementsInterface(Set.class, field.getType())) {
+                                    Set values = (Set) value;
+                                    for (Object v : values) {
+                                        deleteEntity(((IEntity) v).getKey(), (Class<? extends IEntity>) itype, context);
+                                    }
+                                } else {
+                                    deleteEntity(((IEntity) value).getKey(), (Class<? extends IEntity>) itype, context);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            return true;
+        } catch (Exception ex) {
+            throw new DataStoreException(ex);
+        }
+    }
+
     @Override
     public <E extends IEntity> boolean deleteEntity(@Nonnull Object key, @Nonnull Class<? extends E> type, Context context) throws DataStoreException {
+        Preconditions.checkArgument(key instanceof IKey);
+        String path = getZkPath(type, (IKey) key);
+        E entity = readEntityData(path, type, context);
+        if (entity != null) {
+            return deleteZkEntity(path, entity, type, context);
+        }
         return false;
     }
 
     @Override
     public <E extends IEntity> E findEntity(@Nonnull Object key, @Nonnull Class<? extends E> type, Context context) throws DataStoreException {
-        return null;
+        Preconditions.checkArgument(key instanceof IKey);
+        String path = getZkPath(type, (IKey) key);
+        return readEntityData(path, type, context);
     }
 
     @Override
