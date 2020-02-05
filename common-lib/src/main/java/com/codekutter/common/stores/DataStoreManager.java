@@ -450,13 +450,15 @@ public class DataStoreManager implements IConfigurable {
                 connections.put(connection.name(), connection);
             }
             if (connection.supportedTypes() != null && !connection.supportedTypes().isEmpty()) {
-                for (Class<? extends IEntity> t : connection.supportedTypes()) {
-                    Map<Class<? extends AbstractDataStore>, DataStoreConfig> ec = entityIndex.get(t);
-                    if (ec == null) {
-                        ec = new HashMap<>();
-                        entityIndex.put(t, ec);
+                for (Class<?> t : connection.supportedTypes()) {
+                    if (ReflectionUtils.implementsInterface(IEntity.class, t)) {
+                        Map<Class<? extends AbstractDataStore>, DataStoreConfig> ec = entityIndex.get(t);
+                        if (ec == null) {
+                            ec = new HashMap<>();
+                            entityIndex.put((Class<? extends IEntity>) t, ec);
+                        }
+                        ec.put(config.dataStoreClass(), config);
                     }
-                    ec.put(config.dataStoreClass(), config);
                 }
             }
         } catch (Exception ex) {

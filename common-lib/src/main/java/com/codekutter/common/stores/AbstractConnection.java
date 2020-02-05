@@ -23,7 +23,10 @@ import com.codekutter.zconfig.common.ConfigurationException;
 import com.codekutter.zconfig.common.IConfigurable;
 import com.codekutter.zconfig.common.model.annotations.ConfigAttribute;
 import com.codekutter.zconfig.common.model.annotations.ConfigPath;
+import com.codekutter.zconfig.common.model.annotations.ConfigValue;
+import com.codekutter.zconfig.common.model.nodes.AbstractConfigNode;
 import com.codekutter.zconfig.common.model.nodes.ConfigPathNode;
+import com.codekutter.zconfig.common.transformers.ClassListParser;
 import com.google.common.base.Strings;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -45,12 +48,10 @@ public abstract class AbstractConnection<T> implements IConfigurable, Closeable 
     private String name;
     @ConfigAttribute(name = "class")
     private Class<? extends AbstractConnection> type;
-
     @Setter(AccessLevel.NONE)
     private ConnectionState state = new ConnectionState();
-    @Setter(AccessLevel.NONE)
-    @SuppressWarnings("rawtypes")
-    private List<Class<? extends IEntity>> supportedTypes = new ArrayList<>();
+    @ConfigValue(name="classes", parser = ClassListParser.class)
+    private List<Class<?>> supportedTypes = new ArrayList<>();
 
     public AbstractConnection() {
 

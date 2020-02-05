@@ -28,14 +28,24 @@
     </properties>
 
     <distributionManagement>
-        <repository>
+        <!--repository>
             <id>internal.repo</id>
             <name>Temporary Staging Repository</name>
             <url>file://${zconfig.common.target}/</url>
-        </repository>
-        <snapshotRepository>
+        </repository -->
+        <!--snapshotRepository>
             <id>ossrh</id>
             <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+        </snapshotRepository -->
+        <repository>
+            <id>release</id>
+            <name>Azure DevOps Release</name>
+            <url>https://pkgs.dev.azure.com/codekutter/codekutter/_packaging/release/maven/v1</url>
+        </repository>
+        <snapshotRepository>
+            <id>release</id>
+            <name>Azure DevOps Release</name>
+            <url>https://pkgs.dev.azure.com/codekutter/codekutter/_packaging/release/maven/v1</url>
         </snapshotRepository>
     </distributionManagement>
 
@@ -45,6 +55,16 @@
             <url>https://oss.sonatype.org/content/repositories/snapshots</url>
             <releases>
                 <enabled>false</enabled>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </repository>
+        <repository>
+            <id>release</id>
+            <url>https://pkgs.dev.azure.com/codekutter/codekutter/_packaging/release/maven/v1</url>
+            <releases>
+                <enabled>true</enabled>
             </releases>
             <snapshots>
                 <enabled>true</enabled>

@@ -82,8 +82,6 @@ public class HibernateConnection extends AbstractConnection<Session> {
         private boolean enableQueryCaching = false;
         @ConfigValue(name = "cacheConfig")
         private String cacheConfig;
-        @ConfigValue(name = "classes", parser = StringListParser.class)
-        private List<String> classes;
     }
 
     @Setter(AccessLevel.NONE)
@@ -173,11 +171,9 @@ public class HibernateConnection extends AbstractConnection<Session> {
                 }
                 configuration.setProperties(settings);
 
-                if (cfg.classes != null && !cfg.classes.isEmpty()) {
-                    for (String cls : cfg.classes) {
-                        Class<?> c = Class.forName(cls);
-                        configuration.addAnnotatedClass(c);
-                        addSupportedType((Class<? extends IEntity>) c);
+                if (supportedTypes() != null && !supportedTypes().isEmpty()) {
+                    for(Class<?> cls : supportedTypes()) {
+                        configuration.addAnnotatedClass(cls);
                     }
                 }
 
