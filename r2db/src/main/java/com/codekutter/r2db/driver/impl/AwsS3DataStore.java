@@ -181,7 +181,19 @@ public class AwsS3DataStore extends AbstractDirectoryStore<AmazonS3> {
 
     @Override
     @SuppressWarnings("unchecked")
-    public <E extends IEntity> Collection<E> doSearch(@Nonnull String query, int offset, int maxResults,
+    public <E extends IEntity> Collection<E> doSearch(@Nonnull String query,
+                                                      int offset,
+                                                      int maxResults,
+                                                      @Nonnull Class<? extends E> type,
+                                                      Context context) throws DataStoreException {
+        Preconditions.checkArgument(ReflectionUtils.isSuperType(S3FileEntity.class, type));
+        return doSearch(bucket, query, offset, maxResults, type, context);
+    }
+
+    protected  <E extends IEntity> Collection<E> doSearch(@Nonnull String bucket,
+                                                      @Nonnull String query,
+                                                      int offset,
+                                                      int maxResults,
                                                       @Nonnull Class<? extends E> type,
                                                       Context context) throws DataStoreException {
         Preconditions.checkArgument(ReflectionUtils.isSuperType(S3FileEntity.class, type));
@@ -194,7 +206,7 @@ public class AwsS3DataStore extends AbstractDirectoryStore<AmazonS3> {
             if (!Strings.isNullOrEmpty(query)) {
                 request.setPrefix(query);
             }
-            request.setMaxKeys(maxResults > 0 ? maxResults : maxResults());
+            request.setMaxKeys(maxResults > 0 ? maxResults + offset : maxResults() + offset);
             if (ctx != null) {
                 String ckey = ctx.continuationKey();
                 if (!Strings.isNullOrEmpty(ckey)) {
@@ -206,7 +218,13 @@ public class AwsS3DataStore extends AbstractDirectoryStore<AmazonS3> {
                 List<S3ObjectSummary> objs = result.getObjectSummaries();
                 if (objs != null && !objs.isEmpty()) {
                     List<E> array = new ArrayList<>();
+                    int count = 0;
                     for (S3ObjectSummary obj : objs) {
+                        if (offset > 0 && count < offset) {
+                            count++;
+                            continue;
+                        }
+
                         S3FileKey key = new S3FileKey();
                         key.bucket(obj.getBucketName());
                         key.key(obj.getKey());
@@ -216,6 +234,8 @@ public class AwsS3DataStore extends AbstractDirectoryStore<AmazonS3> {
                             throw new DataStoreException(String.format("invalid key : [key=%s]", key.key()));
                         }
                         array.add((E) entity);
+                        count++;
+                        if ((count - offset) > maxResults) break;
                     }
                     return array;
                 }

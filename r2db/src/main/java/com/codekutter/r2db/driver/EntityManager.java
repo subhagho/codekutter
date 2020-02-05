@@ -385,7 +385,7 @@ public class EntityManager implements IConfigurable {
     }
 
     private <E extends IEntity> E updateReferences(E entity,
-                                                   Class<? extends IEntity> entityType,
+                                                   Class<? extends E> entityType,
                                                    Principal user,
                                                    Context context) throws DataStoreException {
         try {
@@ -554,7 +554,7 @@ public class EntityManager implements IConfigurable {
     }
 
     private <E extends IEntity> E deleteReferences(E entity,
-                                                   Class<? extends IEntity> entityType,
+                                                   Class<? extends E> entityType,
                                                    Principal user,
                                                    Context context) throws DataStoreException {
         try {
@@ -603,7 +603,7 @@ public class EntityManager implements IConfigurable {
     private <K extends IKey, E extends IEntity<K>> void auditChange(AbstractDataStore dataStore,
                                                                     EAuditType auditType,
                                                                     E entity,
-                                                                    Class<? extends IEntity> entityType,
+                                                                    Class<? extends E> entityType,
                                                                     Context context,
                                                                     String changeDelta,
                                                                     Principal user) throws DataStoreException {
