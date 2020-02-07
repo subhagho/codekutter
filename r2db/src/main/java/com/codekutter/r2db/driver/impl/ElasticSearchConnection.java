@@ -49,8 +49,6 @@ public class ElasticSearchConnection extends SearchableConnection<RestHighLevelC
     @Setter(AccessLevel.NONE)
     @Getter(AccessLevel.NONE)
     private RestHighLevelClient client = null;
-    @ConfigValue(name = "classes", parser = StringListParser.class)
-    private List<String> classes;
 
     @Override
     public RestHighLevelClient connection() {
@@ -89,12 +87,6 @@ public class ElasticSearchConnection extends SearchableConnection<RestHighLevelC
             }
             client = new RestHighLevelClient(RestClient.builder(array));
 
-            if (classes != null && !classes.isEmpty()) {
-                for(String cls : classes) {
-                    Class<? extends IEntity> type = (Class<? extends IEntity>) Class.forName(cls);
-                    addSupportedType(type);
-                }
-            }
             state().setState(EConnectionState.Open);
         } catch (Throwable t) {
             state().setError(t);

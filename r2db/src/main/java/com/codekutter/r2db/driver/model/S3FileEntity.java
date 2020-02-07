@@ -24,6 +24,7 @@ import com.amazonaws.services.s3.model.*;
 import com.codekutter.common.Context;
 import com.codekutter.common.model.CopyException;
 import com.codekutter.common.model.IEntity;
+import com.codekutter.common.model.StringKey;
 import com.codekutter.common.model.ValidationExceptions;
 import com.google.common.base.Preconditions;
 
@@ -38,18 +39,22 @@ public class S3FileEntity extends RemoteFileEntity<S3FileKey, AmazonS3> {
 
     public S3FileEntity(String bucket, String key, String pathname) {
         super(pathname);
+        this.key = new S3FileKey(bucket, key);
     }
 
-    public S3FileEntity(String parent, String child) {
+    public S3FileEntity(String parent, String child, String bucket, String key) {
         super(parent, child);
+        this.key = new S3FileKey(bucket, key);
     }
 
-    public S3FileEntity(File parent, String child) {
+    public S3FileEntity(File parent, String child, String bucket, String key) {
         super(parent, child);
+        this.key = new S3FileKey(bucket, key);
     }
 
-    public S3FileEntity(URI uri) {
+    public S3FileEntity(URI uri, String bucket, String key) {
         super(uri);
+        this.key = new S3FileKey(bucket, key);
     }
 
     public S3FileEntity withClient(@Nonnull AmazonS3 client) {
@@ -146,7 +151,7 @@ public class S3FileEntity extends RemoteFileEntity<S3FileKey, AmazonS3> {
         try {
             PutObjectRequest request = new PutObjectRequest(key.bucket(), key.key(), this);
             client.putObject(request);
-            return null;
+            return key.stringKey();
         } catch (AmazonServiceException ex) {
             throw new IOException(ex);
         } catch (SdkClientException ex) {

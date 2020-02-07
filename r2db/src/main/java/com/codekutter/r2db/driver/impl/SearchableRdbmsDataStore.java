@@ -25,6 +25,7 @@ import com.codekutter.common.stores.AbstractConnection;
 import com.codekutter.common.stores.DataStoreException;
 import com.codekutter.common.stores.DataStoreManager;
 import com.codekutter.common.stores.ISearchable;
+import com.codekutter.common.stores.impl.HibernateConnection;
 import com.codekutter.common.stores.impl.RdbmsConfig;
 import com.codekutter.common.stores.impl.RdbmsDataStore;
 import com.codekutter.zconfig.common.ConfigurationException;
@@ -208,23 +209,21 @@ public class SearchableRdbmsDataStore extends RdbmsDataStore implements ISearcha
         Preconditions.checkArgument(config() instanceof RdbmsConfig);
         AbstractConnection<Session> connection =
                 dataStoreManager.getConnection(config().connectionName(), Session.class);
-        if (!(connection instanceof SearchableConnection)) {
+        if (!(connection instanceof HibernateConnection)) {
             throw new ConfigurationException(String.format("No connection found for name. [name=%s]", config().connectionName()));
         }
         withConnection(connection);
         try {
-            SearchableConnection<RestHighLevelClient> readConnection = null;
             if (!Strings.isNullOrEmpty(((RdbmsConfig) config()).readConnectionName())) {
                 AbstractConnection<RestHighLevelClient> rc =
                         (AbstractConnection<RestHighLevelClient>) dataStoreManager.getConnection(((RdbmsConfig) config()).readConnectionName(), RestHighLevelClient.class);
                 if (!(rc instanceof SearchableConnection)) {
                     throw new ConfigurationException(String.format("No connection found for name. [name=%s]", ((RdbmsConfig) config()).readConnectionName()));
                 }
-                readConnection = (SearchableConnection<RestHighLevelClient>) rc;
+                readConnection = (ElasticSearchConnection) rc;
             } else {
                 throw new ConfigurationException(String.format("No Search connection specified. [data store=%s]", name()));
             }
-            this.readConnection = (ElasticSearchConnection) readConnection;
         } catch (Exception ex) {
             throw new ConfigurationException(ex);
         }
