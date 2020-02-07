@@ -87,6 +87,7 @@ public class AwsS3Connection extends AbstractConnection<AmazonS3> {
             ClientConfiguration config = configBuilder((ConfigPathNode) cnode);
             client = AmazonS3ClientBuilder.standard()
                     .withRegion(region).withClientConfiguration(config).build();
+            state().setState(EConnectionState.Open);
         } catch (Throwable t) {
             state().setError(t);
             throw new ConfigurationException(t);

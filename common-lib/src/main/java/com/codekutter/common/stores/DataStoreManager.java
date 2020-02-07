@@ -291,12 +291,10 @@ public class DataStoreManager implements IConfigurable {
         try {
             if (openedStores.containsThread()) {
                 Map<String, AbstractDataStore> stores = openedStores.get();
+                List<AbstractDataStore> storeList = new ArrayList<>();
                 for (String name : stores.keySet()) {
                     AbstractDataStore<?> store = stores.get(name);
                     if (store.auditLogger() != null) store.auditLogger().discard();
-                }
-                for (String name : stores.keySet()) {
-                    AbstractDataStore<?> store = stores.get(name);
                     if (store instanceof TransactionDataStore) {
                         if (((TransactionDataStore) store).isInTransaction()) {
                             LogUtils.error(getClass(), String.format("Store has pending transactions, rolling back. [name=%s][thread id=%d]",
@@ -304,6 +302,9 @@ public class DataStoreManager implements IConfigurable {
                             ((TransactionDataStore) store).rollback();
                         }
                     }
+                    storeList.add(store);
+                }
+                for(AbstractDataStore store : storeList) {
                     try {
                         store.close();
                     } catch (IOException e) {
@@ -311,6 +312,7 @@ public class DataStoreManager implements IConfigurable {
                     }
                 }
                 openedStores.clear();
+                storeList.clear();
             }
         } catch (Throwable t) {
             throw new DataStoreException(t);
