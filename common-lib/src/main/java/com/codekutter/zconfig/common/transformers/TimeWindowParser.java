@@ -44,7 +44,7 @@ public class TimeWindowParser implements ICustomParser<Integer> {
                 String value = vn.getValue();
                 if (!Strings.isNullOrEmpty(value)) {
                     TimeWindow window = TimeWindow.parse(value);
-                    return (int) window.period();
+                    return (int) (window.period() / 1000);
                 }
             }
             return null;

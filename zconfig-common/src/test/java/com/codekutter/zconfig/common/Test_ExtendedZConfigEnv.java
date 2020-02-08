@@ -74,6 +74,7 @@ class Test_ExtendedZConfigEnv {
 
     @AfterAll
     public static void dispose() throws Exception {
+        Thread.sleep(15000);
         ExtendedZConfigEnv.shutdown();
     }
 
@@ -85,6 +86,7 @@ class Test_ExtendedZConfigEnv {
             lock.lock();
             try {
                 LogUtils.debug(getClass(), String.format("Acquired lock. [namespace=%s][name=%s]", lock.id().getNamespace(), lock.id().getName()));
+                Thread.sleep(35000);
             } finally {
                 lock.unlock();
             }

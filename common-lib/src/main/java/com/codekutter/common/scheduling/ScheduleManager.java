@@ -56,6 +56,7 @@ import static org.quartz.DateBuilder.futureDate;
 @ConfigPath(path = "schedule")
 public class ScheduleManager implements IConfigurable, Closeable {
     public static final String CONFIG_PATH_JOBS = "jobs";
+    public static final int DEFAULT_STARTUP_DELAY = 30;
 
     @Setter(AccessLevel.NONE)
     private Map<String, JobConfig> jobs = new HashMap<>();
@@ -63,6 +64,9 @@ public class ScheduleManager implements IConfigurable, Closeable {
     private Map<String, Trigger> triggers = new HashMap<>();
     @ConfigValue(required = true)
     private String quartzConfig;
+    @ConfigValue
+    private int startUpDelay = DEFAULT_STARTUP_DELAY;
+
     @Setter(AccessLevel.NONE)
     private ObjectState state = new ObjectState();
 
@@ -109,7 +113,7 @@ public class ScheduleManager implements IConfigurable, Closeable {
                 }
             }
             scheduler.start();
-            Date startTime = futureDate(30, DateBuilder.IntervalUnit.SECOND);
+            Date startTime = futureDate(startUpDelay, DateBuilder.IntervalUnit.SECOND);
             for (String key : jobs.keySet()) {
                 JobConfig config = jobs.get(key);
                 Trigger trigger = scheduleJob(config, startTime);
@@ -124,11 +128,11 @@ public class ScheduleManager implements IConfigurable, Closeable {
     }
 
     private Trigger scheduleJob(JobConfig config, Date start) throws SchedulerException {
-        JobDetail jd = JobBuilder.newJob(config.type()).withIdentity(config.name(), config.namespace()).build();
-        Trigger trigger = TriggerBuilder.newTrigger().withIdentity(config.name(), config.namespace())
+        JobDetail jd = JobBuilder.newJob(config.getType()).withIdentity(config.getName(), config.getNamespace()).build();
+        Trigger trigger = TriggerBuilder.newTrigger().withIdentity(config.getName(), config.getNamespace())
                 .startAt(start)
-                .withPriority(config.priority())
-                .withSchedule(SimpleScheduleBuilder.simpleSchedule().withIntervalInSeconds(config.scheduleInterval()))
+                .withPriority(config.getPriority())
+                .withSchedule(SimpleScheduleBuilder.simpleSchedule().repeatForever().withIntervalInSeconds(config.getScheduleInterval()))
                 .build();
         scheduler.scheduleJob(jd, trigger);
 
@@ -137,7 +141,7 @@ public class ScheduleManager implements IConfigurable, Closeable {
 
     @SuppressWarnings("unchecked")
     private void readJobConfig(ConfigPathNode node) throws ConfigurationException {
-        AbstractConfigNode jnode = ConfigUtils.getPathNode(AbstractJob.class, node);
+        AbstractConfigNode jnode = ConfigUtils.getPathNode(JobConfig.class, node);
         if (jnode instanceof ConfigPathNode) {
             String cname = ConfigUtils.getClassAttribute(jnode);
             if (Strings.isNullOrEmpty(cname)) {

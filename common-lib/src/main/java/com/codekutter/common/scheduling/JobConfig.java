@@ -17,10 +17,16 @@
 
 package com.codekutter.common.scheduling;
 
+import com.codekutter.zconfig.common.ConfigurationAnnotationProcessor;
+import com.codekutter.zconfig.common.ConfigurationException;
 import com.codekutter.zconfig.common.IConfigurable;
 import com.codekutter.zconfig.common.model.annotations.ConfigAttribute;
+import com.codekutter.zconfig.common.model.annotations.ConfigPath;
 import com.codekutter.zconfig.common.model.annotations.ConfigValue;
+import com.codekutter.zconfig.common.model.nodes.AbstractConfigNode;
+import com.codekutter.zconfig.common.model.nodes.ConfigPathNode;
 import com.codekutter.zconfig.common.transformers.TimeWindowParser;
+import com.google.common.base.Preconditions;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
@@ -29,8 +35,8 @@ import javax.annotation.Nonnull;
 
 @Getter
 @Setter
-@Accessors(fluent = true)
-public abstract class JobConfig implements IConfigurable {
+@ConfigPath(path = "job")
+public class JobConfig implements IConfigurable {
     public static final String CONTEXT_PARAM_CONFIG = "jobs.context.config";
 
     @ConfigAttribute(required = true)
@@ -41,7 +47,7 @@ public abstract class JobConfig implements IConfigurable {
     private int scheduleInterval;
     @ConfigValue
     private int priority = 999;
-    @ConfigAttribute(required = true)
+    @ConfigValue(required = true)
     private Class<? extends AbstractJob> type;
 
     public String jobKey() {
@@ -50,5 +56,17 @@ public abstract class JobConfig implements IConfigurable {
 
     public static String key(@Nonnull String namespace, @Nonnull String name) {
         return String.format("%s.%s", namespace, name);
+    }
+
+    /**
+     * Configure this type instance.
+     *
+     * @param node - Handle to the configuration node.
+     * @throws ConfigurationException
+     */
+    @Override
+    public void configure(@Nonnull AbstractConfigNode node) throws ConfigurationException {
+        Preconditions.checkArgument(node instanceof ConfigPathNode);
+        ConfigurationAnnotationProcessor.readConfigAnnotations(getClass(), (ConfigPathNode) node, this);
     }
 }

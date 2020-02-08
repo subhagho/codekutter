@@ -119,6 +119,7 @@ public class ExtendedZConfigEnv extends ZConfigEnv {
             Monitoring.stop();
             DistributedLockFactory.close();
             QueueManager.get().close();
+            ScheduleManager.dispose();
         } catch (Exception ex) {
             LogUtils.error(getClass(), ex);
         }

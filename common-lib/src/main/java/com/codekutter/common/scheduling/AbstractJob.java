@@ -41,7 +41,6 @@ import java.util.UUID;
 @Getter
 @Setter
 @Accessors(fluent = true)
-@ConfigPath(path = "job")
 public abstract class AbstractJob implements Job {
     private final String METRIC_LATENCY_CALL = String.format("%s.%s.CALL", "%s", "%s");
     private final String METRIC_COUNTER_CALL = String.format("%s.%s.COUNT.CALL", "%s", "%s");

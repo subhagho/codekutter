@@ -546,7 +546,11 @@ public class ConfigurationAnnotationProcessor {
             if (Strings.isNullOrEmpty(name)) {
                 name = field.getName();
             }
-            if ((field.getType().isEnum() || canSetFieldType(field))) {
+            if (!pp.equals(NullParser.class)) {
+                ICustomParser<?> parser = pp.newInstance();
+                Object pvalue = parser.parse(node, name);
+                ReflectionUtils.setObjectValue(target, field, pvalue);
+            } else if ((field.getType().isEnum() || canSetFieldType(field))) {
                 String value = null;
                 if (node instanceof ConfigPathNode) {
                     AbstractConfigNode fnode = node.find(name);
@@ -570,8 +574,8 @@ public class ConfigurationAnnotationProcessor {
                     }
                 }
                 if (!Strings.isNullOrEmpty(value)) {
-                        ReflectionUtils
-                                .setValueFromString(value, target, field);
+                    ReflectionUtils
+                            .setValueFromString(value, target, field);
                 } else if (configValue.required()) {
                     throw new ConfigurationException(String.format(
                             "Required configuration value not specified: [path=%s][name=%s]",
@@ -629,7 +633,7 @@ public class ConfigurationAnnotationProcessor {
                                 "Required configuration value not specified: [path=%s][name=%s]",
                                 node.getAbsolutePath(), name));
                     }
-                } else if (pp != NullParser.class) {
+                } else if (!pp.equals(NullParser.class)) {
                     ICustomParser<?> parser = pp.newInstance();
                     Object pvalue = parser.parse(node, name);
                     ReflectionUtils.setObjectValue(target, field, pvalue);

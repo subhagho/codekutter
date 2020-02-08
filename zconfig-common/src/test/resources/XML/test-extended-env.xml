@@ -89,6 +89,16 @@
                     </connection>
                 </queue>
             </queues>
+            <schedule>
+                <quartzConfig>src/test/resources/quartz.properties</quartzConfig>
+                <startUpDelay>10</startUpDelay>
+                <jobs>
+                    <job class="com.codekutter.common.scheduling.JobConfig" namespace="com.codekutter.common.test" name="TEST-JOB-01">
+                        <type>com.codekutter.zconfig.common.scheduling.DemoJobLog</type>
+                        <scheduleInterval>5ss</scheduleInterval>
+                    </job>
+                </jobs>
+            </schedule>
         </env>
     </configuration>
 </root>
