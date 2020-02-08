@@ -15,21 +15,40 @@
  *
  */
 
-package com.codekutter.r2db.driver.impl;
+package com.codekutter.common.scheduling;
 
-import com.codekutter.common.stores.DataStoreConfig;
+import com.codekutter.zconfig.common.IConfigurable;
 import com.codekutter.zconfig.common.model.annotations.ConfigAttribute;
 import com.codekutter.zconfig.common.model.annotations.ConfigValue;
+import com.codekutter.zconfig.common.transformers.TimeWindowParser;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 
+import javax.annotation.Nonnull;
+
 @Getter
 @Setter
 @Accessors(fluent = true)
-public class S3StoreConfig extends DataStoreConfig {
+public abstract class JobConfig implements IConfigurable {
+    public static final String CONTEXT_PARAM_CONFIG = "jobs.context.config";
+
     @ConfigAttribute(required = true)
-    private String bucket;
+    private String name;
+    @ConfigAttribute(required = true)
+    private String namespace;
+    @ConfigValue(required = true, parser = TimeWindowParser.class)
+    private int scheduleInterval;
     @ConfigValue
-    private String tempDirectory;
+    private int priority = 999;
+    @ConfigAttribute(required = true)
+    private Class<? extends AbstractJob> type;
+
+    public String jobKey() {
+        return key(namespace, name);
+    }
+
+    public static String key(@Nonnull String namespace, @Nonnull String name) {
+        return String.format("%s.%s", namespace, name);
+    }
 }

@@ -19,6 +19,7 @@ package com.codekutter.zconfig.common;
 
 import com.codekutter.common.locking.DistributedLockFactory;
 import com.codekutter.common.messaging.QueueManager;
+import com.codekutter.common.scheduling.ScheduleManager;
 import com.codekutter.common.utils.ConfigUtils;
 import com.codekutter.common.utils.LogUtils;
 import com.codekutter.common.utils.Monitoring;
@@ -33,7 +34,6 @@ import javax.annotation.Nonnull;
 
 public class ExtendedZConfigEnv extends ZConfigEnv {
     public static final String CONFIG_ENV_PATH = "/configuration/env";
-
     protected ConfigPathNode envNode = null;
 
     protected ExtendedZConfigEnv(@Nonnull String configName) {
@@ -69,8 +69,16 @@ public class ExtendedZConfigEnv extends ZConfigEnv {
             }
 
             setupLockFactory();
+            setupScheduler();
         } else {
             envNode = null;
+        }
+    }
+
+    private void setupScheduler() throws ConfigurationException {
+        AbstractConfigNode node = ConfigUtils.getPathNode(ScheduleManager.class, envNode);
+        if (node instanceof ConfigPathNode) {
+            ScheduleManager.setup(node);
         }
     }
 

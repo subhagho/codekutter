@@ -34,6 +34,12 @@ import java.util.regex.Pattern;
  */
 @Data
 public class TimeWindow {
+    private static final String TW_MILLISECONDS = "ms";
+    private static final String TW_SECONDS = "ss";
+    private static final String TW_MINUTES = "mi";
+    private static final String TW_HOURS = "hh";
+    private static final String TW_DAYS = "dd";
+
     private TimeUnit granularity;
     private int resolution;
     private long div = -1;
@@ -142,20 +148,28 @@ public class TimeWindow {
      * @throws TimeWindowException
      */
     public static TimeWindow parse(String unit) throws TimeWindowException {
-        unit = unit.toUpperCase();
-        Pattern p = Pattern.compile("(\\d+)(MS|SS|MM|HH|DD{1}$)");
+        if (StringUtils.isNumeric(unit)) {
+            TimeWindow tw = new TimeWindow();
+            tw.setGranularity(TimeUnit.MILLISECONDS);
+            tw.setResolution(Integer.parseInt(unit));
 
-        Matcher m = p.matcher(unit);
-        if (m.matches()) {
-            if (m.groupCount() >= 2) {
-                String r = m.group(1);
-                String g = m.group(2);
-                if (!StringUtils.isEmpty(r) && !StringUtils.isEmpty(g)) {
-                    TimeWindow tw = new TimeWindow();
-                    tw.setResolution(Integer.parseInt(r));
-                    tw.setGranularity(timeunit(g));
+            return tw;
+        } else {
+            unit = unit.toUpperCase();
+            Pattern p = Pattern.compile("(\\d+)(MS|ms|SS|ss|MI|mi|HH|hh|DD|dd{1}$)");
 
-                    return tw;
+            Matcher m = p.matcher(unit);
+            if (m.matches()) {
+                if (m.groupCount() >= 2) {
+                    String r = m.group(1);
+                    String g = m.group(2);
+                    if (!StringUtils.isEmpty(r) && !StringUtils.isEmpty(g)) {
+                        TimeWindow tw = new TimeWindow();
+                        tw.setResolution(Integer.parseInt(r));
+                        tw.setGranularity(timeunit(g));
+
+                        return tw;
+                    }
                 }
             }
         }
@@ -172,15 +186,15 @@ public class TimeWindow {
      *             the time window exception
      */
     private static TimeUnit timeunit(String s) throws TimeWindowException {
-        if (s.compareTo("MS") == 0) {
+        if (s.compareToIgnoreCase(TW_MILLISECONDS) == 0) {
             return TimeUnit.MILLISECONDS;
-        } else if (s.compareTo("SS") == 0) {
+        } else if (s.compareToIgnoreCase(TW_SECONDS) == 0) {
             return TimeUnit.SECONDS;
-        } else if (s.compareTo("MM") == 0) {
+        } else if (s.compareToIgnoreCase(TW_MINUTES) == 0) {
             return TimeUnit.MINUTES;
-        } else if (s.compareTo("HH") == 0) {
+        } else if (s.compareToIgnoreCase(TW_HOURS) == 0) {
             return TimeUnit.HOURS;
-        } else if (s.compareTo("DD") == 0) {
+        } else if (s.compareToIgnoreCase(TW_DAYS) == 0) {
             return TimeUnit.DAYS;
         }
         throw new TimeWindowException("Invalid TimeUnit value. [string=" + s + "]");
