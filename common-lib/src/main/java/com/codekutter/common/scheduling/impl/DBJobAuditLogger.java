@@ -82,13 +82,19 @@ public class DBJobAuditLogger implements IJobAuditLogger {
             record.setStartTime(System.currentTimeMillis());
             record.setContextJson(GlobalConstants.getJsonMapper().writeValueAsString(config));
 
-            Transaction tx = connection.connection().beginTransaction();
+            Session session = connection.connection().getSession();
+            Transaction tx = session.beginTransaction();
             try {
-                connection.connection().save(record);
+                Object result = session.save(record);
+                if (result == null) {
+                    throw new AuditException(String.format("Error creating entity. [type=%s]", record.getClass().getCanonicalName()));
+                }
                 tx.commit();
             } catch (Throwable t) {
                 tx.rollback();
                 throw t;
+            } finally {
+                session.close();
             }
             return record.getJobId();
         } catch (Throwable t) {
@@ -112,9 +118,8 @@ public class DBJobAuditLogger implements IJobAuditLogger {
                 throw new AuditException(String.format("Error getting DB connection. [name=%s]", connectionName));
             }
 
-            HibernateConnection hc = (HibernateConnection)connection;
-
-            JobAuditLog record = hc.connection().find(JobAuditLog.class, id);
+            Session session = connection.connection().getSession();
+            JobAuditLog record = session.find(JobAuditLog.class, id);
             if (record == null) {
                 throw new AuditException(String.format("Audit Log record not found. [id=%s]", id));
             }
@@ -131,12 +136,14 @@ public class DBJobAuditLogger implements IJobAuditLogger {
                 String trace = LogUtils.getStackTrace(error);
                 record.setErrorTrace(trace);
             }
-            Transaction tx = hc.connection().beginTransaction();
+            Transaction tx = session.beginTransaction();
             try {
-                connection.connection().update(record);
+                session.update(record);
                 tx.commit();
             } catch (Throwable t) {
                 tx.rollback();
+            } finally {
+                session.close();
             }
         } catch (Throwable t) {
             throw new AuditException(t);
