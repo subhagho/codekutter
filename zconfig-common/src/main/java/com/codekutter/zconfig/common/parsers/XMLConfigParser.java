@@ -252,18 +252,15 @@ public class XMLConfigParser extends AbstractConfigParser {
                     ConfigResourceFile pnode = null;
                     if (type == EResourceType.FILE) {
                         pnode = new ConfigResourceFile(configuration, parent);
-                        //((ConfigPathNode) parent).addChildNode(pnode);
                         setupNode(ConfigResourceNode.NODE_NAME, pnode, parent);
                         parseResourceFileNode(node, pnode);
                     } else if (type == EResourceType.BLOB) {
                         pnode = new ConfigResourceBlob(configuration, parent);
                         setupNode(ConfigResourceNode.NODE_NAME, pnode, parent);
-                        //((ConfigPathNode) parent).addChildNode(pnode);
                         parseResourceFileNode(node, pnode);
                     } else if (type == EResourceType.DIRECTORY) {
                         pnode = new ConfigResourceDirectory(configuration, parent);
                         setupNode(ConfigResourceNode.NODE_NAME, pnode, parent);
-                        //((ConfigPathNode) parent).addChildNode(pnode);
                         parseResourceDirNode(node, (ConfigResourceDirectory) pnode);
                     }
                     pnode.setName(nodeName);
@@ -304,6 +301,49 @@ public class XMLConfigParser extends AbstractConfigParser {
                         parent.getClass().getCanonicalName(),
                         parent.getAbsolutePath()));
             }
+        }
+    }
+
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    private ConfigValueNode parseValueNode(Element node, AbstractConfigNode parent) throws ConfigurationException {
+        try {
+            ConfigValueNode vn = new ConfigValueNode(configuration, parent);
+            String name = node.getNodeName();
+            if (name.compareTo(ConfigurationSettings.DEFAULT_PARAM_NAME) == 0) {
+                name = node.getAttribute(XMLConfigConstants.CONFIG_HEADER_NAME);
+            }
+            if (Strings.isNullOrEmpty(name)) {
+                throw new ConfigurationException(String.format("Attribute not found. [name=name][path=%s]", node.getNodeName()));
+            }
+            String value = node.getTextContent();
+            value = value.trim();
+            if (!Strings.isNullOrEmpty(value)) {
+                vn.setValue(value);
+            }
+            if (node.hasAttribute(XMLConfigConstants.CONFIG_NODE_ENCRYPTED)) {
+                String en =
+                        node.getAttribute(XMLConfigConstants.CONFIG_NODE_ENCRYPTED);
+                if (en.compareToIgnoreCase("true") == 0) {
+                    vn.setEncrypted(true);
+                }
+            }
+            if (!vn.isEncrypted()) {
+                if (node.hasAttribute(XMLConfigConstants.CONFIG_ATTR_VALUE_TYPE)) {
+                    String et = node.getAttribute(XMLConfigConstants.CONFIG_ATTR_VALUE_TYPE);
+                    EValueType vt = EValueType.valueOf(et);
+                    vn.setValueType(vt);
+                    if (vt == EValueType.ENUM) {
+                        String tt = node.getAttribute(XMLConfigConstants.CONFIG_ATTR_ENUM_TYPE);
+                        if (!Strings.isNullOrEmpty(tt)) {
+                            Class<? extends Enum> enumType = (Class<? extends Enum>) Class.forName(et);
+                            vn.setEnumType(enumType);
+                        }
+                    }
+                }
+            }
+            return vn;
+        } catch (Throwable t) {
+            throw new ConfigurationException(t);
         }
     }
 

@@ -40,4 +40,7 @@ public class XMLConfigConstants {
     public static final String CONFIG_UPDATED_BY = "updatedBy";
     public static final String CONFIG_NODE_ENCRYPTED = "encrypted";
     public static final String CONFIG_HEADER_PASSWD_HASH = "passwordHash";
+
+    public static final String CONFIG_ATTR_VALUE_TYPE = "type";
+    public static final String CONFIG_ATTR_ENUM_TYPE = "enumType";
 }

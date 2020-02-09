@@ -74,9 +74,10 @@ public class ConfigurationSettings {
     public static final String NODE_PARENT_TERM = "..";
     public static final String NODE_SEARCH_SEPERATOR = "/";
 
-    private static final String DEFAULT_PROPS_NAME = "properties";
-    private static final String DEFAULT_ATTR_NAME = "@";
-    private static final String DEFAULT_PARAMS_NAME = "parameters";
+    public static final String DEFAULT_PROPS_NAME = "properties";
+    public static final String DEFAULT_ATTR_NAME = "@";
+    public static final String DEFAULT_PARAMS_NAME = "parameters";
+    public static final String DEFAULT_PARAM_NAME = "param";
     public static final String ARRAY_INDEX_REGEX = "^(\\w*)\\[(\\d*)\\]$";
     public static final String PARAM_NODE_CHAR = "#";
     public static final String PROP_NODE_CHAR = "$";

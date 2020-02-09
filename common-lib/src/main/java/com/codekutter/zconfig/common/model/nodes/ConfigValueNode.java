@@ -25,6 +25,7 @@
 package com.codekutter.zconfig.common.model.nodes;
 
 import com.codekutter.common.GlobalConstants;
+import com.codekutter.common.ValueParseException;
 import com.codekutter.zconfig.common.ConfigKeyVault;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.common.base.Preconditions;
@@ -36,6 +37,7 @@ import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 
+import javax.annotation.Nonnull;
 import java.util.List;
 
 /**
@@ -51,6 +53,7 @@ import java.util.List;
  * XML:
  * <pre>
  *     <name value="value"/>
+ *     <param name="name" value="value .../>
  * </pre>
  */
 public class ConfigValueNode extends AbstractConfigNode
@@ -64,6 +67,15 @@ public class ConfigValueNode extends AbstractConfigNode
      * Is the data in this node encrypted?
      */
     private boolean encrypted = false;
+    /**
+     * Value type expected of this value.
+     */
+    private EValueType valueType = EValueType.STRING;
+    /**
+     * Enum Type if the value type is Enum.
+     */
+    @SuppressWarnings("rawtypes")
+    private Class<? extends Enum> enumType = null;
 
     /**
      * Default constructor - Initialize the state object.
@@ -146,6 +158,22 @@ public class ConfigValueNode extends AbstractConfigNode
         this.encrypted = encrypted;
     }
 
+    public void setValueType(@Nonnull EValueType type) {
+        this.valueType = type;
+    }
+
+    public EValueType getValueType() {
+        return valueType;
+    }
+
+    public void setEnumType(Class<? extends Enum> enumType) {
+        this.enumType = enumType;
+    }
+
+    public Class<? extends Enum> getEnumType() {
+        return enumType;
+    }
+
     /**
      * Get the value parsed as Boolean.
      * <p>
@@ -154,11 +182,11 @@ public class ConfigValueNode extends AbstractConfigNode
      * @return - Value parsed as boolean.
      */
     @JsonIgnore
-    public boolean getBooleanValue() {
+    public Boolean getBooleanValue() {
         if (!Strings.isNullOrEmpty(value)) {
             return Boolean.parseBoolean(value);
         }
-        return false;
+        return null;
     }
 
     /**
@@ -169,11 +197,11 @@ public class ConfigValueNode extends AbstractConfigNode
      * @return - Value parsed as short.
      */
     @JsonIgnore
-    public short getShortValue() {
+    public Short getShortValue() {
         if (!Strings.isNullOrEmpty(value)) {
             return Short.parseShort(value);
         }
-        return Short.MIN_VALUE;
+        return null;
     }
 
     /**
@@ -184,11 +212,11 @@ public class ConfigValueNode extends AbstractConfigNode
      * @return - Value parsed as integer.
      */
     @JsonIgnore
-    public int getIntValue() {
+    public Integer getIntValue() {
         if (!Strings.isNullOrEmpty(value)) {
             return Integer.parseInt(value);
         }
-        return Integer.MIN_VALUE;
+        return null;
     }
 
     /**
@@ -199,11 +227,11 @@ public class ConfigValueNode extends AbstractConfigNode
      * @return - Value parsed as long.
      */
     @JsonIgnore
-    public long getLongValue() {
+    public Long getLongValue() {
         if (!Strings.isNullOrEmpty(value)) {
             return Long.parseLong(value);
         }
-        return Long.MIN_VALUE;
+        return null;
     }
 
     /**
@@ -214,11 +242,11 @@ public class ConfigValueNode extends AbstractConfigNode
      * @return - Value parsed as float.
      */
     @JsonIgnore
-    public float getFloatValue() {
+    public Float getFloatValue() {
         if (!Strings.isNullOrEmpty(value)) {
             return Float.parseFloat(value);
         }
-        return Float.MIN_VALUE;
+        return null;
     }
 
     /**
@@ -229,11 +257,21 @@ public class ConfigValueNode extends AbstractConfigNode
      * @return - Value parsed as double.
      */
     @JsonIgnore
-    public double getDoubleValue() {
+    public Double getDoubleValue() {
         if (!Strings.isNullOrEmpty(value)) {
             return Double.parseDouble(value);
         }
-        return Double.MIN_VALUE;
+        return null;
+    }
+
+    public Object getParsedValue() throws ValueParseException {
+        Preconditions.checkState(!encrypted);
+        if (valueType != EValueType.ENUM) {
+            return valueType.parseValue(valueType, valueType.getType(valueType), value);
+        } else {
+            Preconditions.checkState(enumType != null);
+            return valueType.parseValue(valueType, enumType, value);
+        }
     }
 
     /**
@@ -347,5 +385,19 @@ public class ConfigValueNode extends AbstractConfigNode
     @Override
     public void changeConfiguration(Configuration configuration) {
         setConfiguration(configuration);
+    }
+
+    /**
+     * Validate that this node has been setup correctly.
+     *
+     * @throws ConfigurationException
+     */
+    @Override
+    public void validate() throws ConfigurationException {
+        super.validate();
+        if (valueType == EValueType.ENUM) {
+            if (enumType == null)
+                throw new ConfigurationException(String.format("Enum Type not specified for value. [value type=%s]", valueType.name()));
+        }
     }
 }
