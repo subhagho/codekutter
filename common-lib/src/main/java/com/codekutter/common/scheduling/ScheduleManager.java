@@ -25,6 +25,7 @@ import com.codekutter.common.utils.LogUtils;
 import com.codekutter.zconfig.common.ConfigurationAnnotationProcessor;
 import com.codekutter.zconfig.common.ConfigurationException;
 import com.codekutter.zconfig.common.IConfigurable;
+import com.codekutter.zconfig.common.model.annotations.ConfigAttribute;
 import com.codekutter.zconfig.common.model.annotations.ConfigPath;
 import com.codekutter.zconfig.common.model.annotations.ConfigValue;
 import com.codekutter.zconfig.common.model.nodes.AbstractConfigNode;
@@ -66,6 +67,13 @@ public class ScheduleManager implements IConfigurable, Closeable {
     private String quartzConfig;
     @ConfigValue
     private int startUpDelay = DEFAULT_STARTUP_DELAY;
+    @ConfigAttribute
+    private boolean audited = false;
+    @ConfigAttribute(name = "auditLogger")
+    private Class<? extends IJobAuditLogger> auditLoggerClass;
+
+    @Setter(AccessLevel.NONE)
+    private IJobAuditLogger auditLogger;
 
     @Setter(AccessLevel.NONE)
     private ObjectState state = new ObjectState();
@@ -112,6 +120,13 @@ public class ScheduleManager implements IConfigurable, Closeable {
                     }
                 }
             }
+            if (audited) {
+                if (auditLoggerClass == null) {
+                    throw new ConfigurationException("Job auditing is turned on, but no Audit Logger type specified.");
+                }
+                auditLogger = auditLoggerClass.newInstance();
+                auditLogger.configure(node);
+            }
             scheduler.start();
             Date startTime = futureDate(startUpDelay, DateBuilder.IntervalUnit.SECOND);
             for (String key : jobs.keySet()) {
@@ -151,7 +166,7 @@ public class ScheduleManager implements IConfigurable, Closeable {
                 Class<? extends JobConfig> cls = (Class<? extends JobConfig>) Class.forName(cname);
                 JobConfig job = cls.newInstance();
                 job.configure(jnode);
-
+                job.withScheduleManager(this);
                 jobs.put(job.jobKey(), job);
             } catch (Exception ex) {
                 throw new ConfigurationException(ex);
@@ -166,6 +181,9 @@ public class ScheduleManager implements IConfigurable, Closeable {
                 state.setState(EObjectState.Disposed);
                 if (scheduler != null) {
                     scheduler.shutdown(true);
+                }
+                if (auditLogger != null) {
+                    auditLogger.close();
                 }
             }
         } catch (Exception ex) {

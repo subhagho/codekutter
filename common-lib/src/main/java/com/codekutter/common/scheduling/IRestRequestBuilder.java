@@ -15,20 +15,15 @@
  *
  */
 
-package com.codekutter.zconfig.common.scheduling;
+package com.codekutter.common.scheduling;
 
-import com.codekutter.common.scheduling.AbstractJob;
-import com.codekutter.common.scheduling.JobConfig;
-import com.codekutter.common.utils.LogUtils;
-import org.quartz.JobExecutionContext;
+import com.codekutter.common.scheduling.impl.RestJobConfig;
 import org.quartz.JobExecutionException;
 
 import javax.annotation.Nonnull;
+import javax.ws.rs.client.WebTarget;
+import javax.ws.rs.core.Response;
 
-public class DemoJobLog extends AbstractJob {
-    @Override
-    public Object doExecute(@Nonnull JobExecutionContext context, @Nonnull JobConfig config) throws JobExecutionException {
-        LogUtils.debug(getClass(), config);
-        return config;
-    }
+public interface IRestRequestBuilder {
+    Response get(@Nonnull WebTarget target, @Nonnull RestJobConfig config) throws JobExecutionException;
 }

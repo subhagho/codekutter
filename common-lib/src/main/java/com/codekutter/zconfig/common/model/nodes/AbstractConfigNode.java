@@ -144,10 +144,11 @@ public abstract class AbstractConfigNode {
      */
     public void setName(String name) {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(name));
-        if (name.indexOf('.') >= 0 || name.indexOf('/') >= 0) {
-            throw new RuntimeException(
-                    "Invalid name string. Name cannot contain (.) or (/)");
-        }
+        if (!(this instanceof ConfigValueNode))
+            if (name.indexOf('.') >= 0 || name.indexOf('/') >= 0) {
+                throw new RuntimeException(
+                        "Invalid name string. Name cannot contain (.) or (/)");
+            }
         this.name = name;
     }
 
@@ -219,7 +220,7 @@ public abstract class AbstractConfigNode {
      * @return - Node at path
      */
     public AbstractConfigNode find(@Nonnull String path)
-    throws ConfigurationException {
+            throws ConfigurationException {
         path = path.trim();
         Preconditions.checkArgument(!Strings.isNullOrEmpty(path));
         if (path.startsWith(ConfigurationSettings.NODE_SEARCH_SEPERATOR)) {
@@ -235,7 +236,7 @@ public abstract class AbstractConfigNode {
 
         List<String> stack =
                 ConfigUtils.getResolvedPath(path, getConfiguration().getSettings(),
-                                            this);
+                        this);
         if (stack != null && !stack.isEmpty()) {
             String node = stack.get(0);
             if (node.compareTo(getName()) != 0 &&
@@ -255,7 +256,7 @@ public abstract class AbstractConfigNode {
      * @return - Configuration Node found.
      */
     public abstract AbstractConfigNode find(List<String> path, int index)
-    throws ConfigurationException;
+            throws ConfigurationException;
 
     /**
      * Indicate this node has been updated.

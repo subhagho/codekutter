@@ -15,20 +15,24 @@
  *
  */
 
-package com.codekutter.zconfig.common.scheduling;
+package com.codekutter.common.scheduling;
 
-import com.codekutter.common.scheduling.AbstractJob;
-import com.codekutter.common.scheduling.JobConfig;
-import com.codekutter.common.utils.LogUtils;
-import org.quartz.JobExecutionContext;
+import com.codekutter.zconfig.common.IConfigurable;
 import org.quartz.JobExecutionException;
 
 import javax.annotation.Nonnull;
+import javax.ws.rs.core.Response;
 
-public class DemoJobLog extends AbstractJob {
-    @Override
-    public Object doExecute(@Nonnull JobExecutionContext context, @Nonnull JobConfig config) throws JobExecutionException {
-        LogUtils.debug(getClass(), config);
-        return config;
-    }
+/**
+ * Interface to define REST response handlers for scheduled Jobs.
+ */
+public interface IRestResponseHandler extends IConfigurable {
+    /**
+     * Handle response.
+     *
+     * @param response - REST call response.
+     * @return - Processed response object.
+     * @throws JobExecutionException
+     */
+    @Nonnull Object handle(@Nonnull Response response) throws JobExecutionException;
 }

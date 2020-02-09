@@ -24,12 +24,15 @@
 
 package com.codekutter.common.utils;
 
+import com.codekutter.common.GlobalConstants;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.joda.JodaModule;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.annotation.Nonnull;
 
 /**
  * Utility functions for Logging.
@@ -121,10 +124,7 @@ public class LogUtils {
         try {
             String mesg = "";
             if (source != null) {
-                ObjectMapper mapper = new ObjectMapper();
-                mapper.enable(SerializationFeature.INDENT_OUTPUT);
-                mapper.registerModule(new JodaModule());
-
+                ObjectMapper mapper = GlobalConstants.getJsonMapper();
                 mesg = mapper.writeValueAsString(source);
             }
             LOG(caller, mesg, LOGGER, level);
@@ -173,11 +173,24 @@ public class LogUtils {
             level = ELOGLELVEL.DEBUG;
         }
         String mesg = String.format("\n%s[START:%s]%s", StringUtils.repeat("*", 32),
-                                    error.getClass().getCanonicalName(),
-                                    StringUtils.repeat("*", 32));
+                error.getClass().getCanonicalName(),
+                StringUtils.repeat("*", 32));
         LOG(caller, mesg, LOGGER, level);
         ERROR(caller, error, LOGGER, level);
 
+
+        LOG(caller, getStackTrace(error), LOGGER, level);
+
+        mesg = String.format("\n%s[END  :%s]%s", StringUtils.repeat("*", 32),
+                error.getClass().getCanonicalName(),
+                StringUtils.repeat("*", 32));
+        LOG(caller, mesg, LOGGER, level);
+        if (error.getClass() != null) {
+            STACKTRACE(caller, error.getCause(), LOGGER, level);
+        }
+    }
+
+    public static String getStackTrace(@Nonnull Throwable error) {
         StringBuffer buffer = new StringBuffer();
 
         StackTraceElement[] stack = error.getStackTrace();
@@ -186,15 +199,7 @@ public class LogUtils {
                 buffer.append(se.toString()).append("\n");
             }
         }
-        LOG(caller, buffer.toString(), LOGGER, level);
-
-        mesg = String.format("\n%s[END  :%s]%s", StringUtils.repeat("*", 32),
-                             error.getClass().getCanonicalName(),
-                             StringUtils.repeat("*", 32));
-        LOG(caller, mesg, LOGGER, level);
-        if (error.getClass() != null) {
-            STACKTRACE(caller, error.getCause(), LOGGER, level);
-        }
+        return buffer.toString();
     }
 
     /**

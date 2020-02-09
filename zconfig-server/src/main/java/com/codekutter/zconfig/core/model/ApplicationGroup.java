@@ -35,7 +35,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
-import org.springframework.lang.NonNull;
 
 import javax.annotation.Nonnull;
 import java.util.HashMap;
@@ -82,7 +81,7 @@ public class ApplicationGroup extends BaseEntity<StringKey, ApplicationGroup>
      *
      * @param name - Application Group name.
      */
-    public void setName(@NonNull String name) {
+    public void setName(@Nonnull String name) {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(name));
         this.name = name;
     }
@@ -101,7 +100,7 @@ public class ApplicationGroup extends BaseEntity<StringKey, ApplicationGroup>
      *
      * @param description - Application Group description
      */
-    public void setDescription(@NonNull String description) {
+    public void setDescription(@Nonnull String description) {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(description));
 
         this.description = description;

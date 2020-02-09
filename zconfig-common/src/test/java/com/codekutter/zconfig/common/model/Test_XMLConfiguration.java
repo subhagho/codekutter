@@ -35,6 +35,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import java.io.FileInputStream;
+import java.util.Map;
 import java.util.Properties;
 
 import static com.codekutter.common.utils.LogUtils.*;
@@ -127,6 +128,7 @@ class Test_XMLConfiguration {
             assertFalse(Strings.isNullOrEmpty(param));
             debug(getClass(),
                   String.format("[path=%s] property value = %s", path, param));
+
         } catch (Throwable e) {
             error(getClass(), e);
             fail(e);
@@ -155,6 +157,20 @@ class Test_XMLConfiguration {
             assertNotNull(node);
             assertTrue(node instanceof ConfigParametersNode);
             debug(getClass(), node);
+
+            path = "configuration/node_1/node_2/node_3/node_5#";
+            node = configuration.find(path);
+            assertNotNull(node);
+            assertTrue(node instanceof ConfigParametersNode);
+            assertEquals(path, node.getSearchPath());
+            ConfigParametersNode pnode = (ConfigParametersNode)node;
+            Map<String, ConfigValueNode> values = pnode.getKeyValues();
+            for(String key : values.keySet()) {
+                ConfigValueNode vn = values.get(key);
+                Object v = vn.getParsedValue();
+                assertNotNull(v);
+                LogUtils.debug(getClass(), String.format("[type=%s][value=%s]", v.getClass().getCanonicalName(), String.valueOf(v)));
+            }
         } catch (Throwable e) {
             error(getClass(), e);
             fail(e);

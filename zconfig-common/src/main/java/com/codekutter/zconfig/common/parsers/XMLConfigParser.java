@@ -274,20 +274,7 @@ public class XMLConfigParser extends AbstractConfigParser {
                 }
             }
         } else if (node.getNodeType() == Node.ELEMENT_NODE && isTextNode(node)) {
-            ConfigValueNode vn = new ConfigValueNode(configuration, parent);
-            vn.setName(node.getNodeName());
-            String value = node.getTextContent();
-            value = value.trim();
-            if (!Strings.isNullOrEmpty(value)) {
-                vn.setValue(value);
-            }
-            if (node.hasAttribute(XMLConfigConstants.CONFIG_NODE_ENCRYPTED)) {
-                String en =
-                        node.getAttribute(XMLConfigConstants.CONFIG_NODE_ENCRYPTED);
-                if (en.compareToIgnoreCase("true") == 0) {
-                    vn.setEncrypted(true);
-                }
-            }
+            ConfigValueNode vn = parseValueNode(node, parent);
             if (parent instanceof ConfigPathNode) {
                 ((ConfigPathNode) parent).addChildNode(vn);
             } else if (parent instanceof ConfigListValueNode) {
@@ -315,6 +302,7 @@ public class XMLConfigParser extends AbstractConfigParser {
             if (Strings.isNullOrEmpty(name)) {
                 throw new ConfigurationException(String.format("Attribute not found. [name=name][path=%s]", node.getNodeName()));
             }
+            vn.setName(name);
             String value = node.getTextContent();
             value = value.trim();
             if (!Strings.isNullOrEmpty(value)) {
@@ -335,7 +323,7 @@ public class XMLConfigParser extends AbstractConfigParser {
                     if (vt == EValueType.ENUM) {
                         String tt = node.getAttribute(XMLConfigConstants.CONFIG_ATTR_ENUM_TYPE);
                         if (!Strings.isNullOrEmpty(tt)) {
-                            Class<? extends Enum> enumType = (Class<? extends Enum>) Class.forName(et);
+                            Class<? extends Enum> enumType = (Class<? extends Enum>) Class.forName(tt);
                             vn.setEnumType(enumType);
                         }
                     }

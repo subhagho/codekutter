@@ -17,12 +17,9 @@
 
 package com.codekutter.common.scheduling;
 
+import com.codekutter.common.auditing.AuditException;
 import com.codekutter.common.utils.LogUtils;
 import com.codekutter.common.utils.Monitoring;
-import com.codekutter.zconfig.common.IConfigurable;
-import com.codekutter.zconfig.common.model.annotations.ConfigAttribute;
-import com.codekutter.zconfig.common.model.annotations.ConfigPath;
-import com.codekutter.zconfig.common.model.annotations.ConfigValue;
 import com.netflix.spectator.api.Id;
 import com.netflix.spectator.api.Timer;
 import lombok.AccessLevel;
@@ -103,9 +100,27 @@ public abstract class AbstractJob implements Job {
                 throw new JobExecutionException(String.format("[%s.%s] Failed to get job context.", key.getGroup(), key.getName()));
             }
             callLatency.record(() -> {
+                IJobAuditLogger logger = null;
+                String jobId = null;
                 try {
-                    doExecute(context, config);
-                } catch (Exception e) {
+                    if (config.isAudited()) {
+                        logger = config.getManager().auditLogger();
+                    }
+                    if (logger != null) {
+                        jobId = logger.logJobStart(config, context, getClass());
+                    }
+                    Object response = doExecute(context, config);
+                    if (logger != null) {
+                        logger.logJobEnd(jobId, response, null);
+                    }
+                } catch (Throwable e) {
+                    try {
+                        if (logger != null) {
+                            logger.logJobEnd(jobId, null, e);
+                        }
+                    } catch (AuditException ae) {
+                        LogUtils.error(getClass(), ae);
+                    }
                     Monitoring.increment(callErrorCounter.name(), (Map<String, String>) null);
                     LogUtils.error(getClass(), e);
                 }
@@ -116,5 +131,5 @@ public abstract class AbstractJob implements Job {
         }
     }
 
-    public abstract void doExecute(@Nonnull JobExecutionContext context, @Nonnull JobConfig config) throws JobExecutionException;
+    public abstract Object doExecute(@Nonnull JobExecutionContext context, @Nonnull JobConfig config) throws JobExecutionException;
 }

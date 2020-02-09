@@ -17,17 +17,18 @@
 
 package com.codekutter.common.stores.model;
 
-import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
+import lombok.Getter;
+import lombok.Setter;
 
 import javax.annotation.Nonnull;
 import java.security.Principal;
 
+@Getter
+@Setter
 public class User implements Principal {
     private String name;
 
     public User(@Nonnull String name) {
-        Preconditions.checkArgument(!Strings.isNullOrEmpty(name));
         this.name = name;
     }
 

@@ -17,18 +17,23 @@
 
 package com.codekutter.common.stores.impl;
 
+import com.codekutter.common.ValueParseException;
 import com.codekutter.common.stores.AbstractConnection;
 import com.codekutter.common.stores.ConnectionException;
+import com.codekutter.common.stores.EConnectionState;
+import com.codekutter.zconfig.common.ConfigurationAnnotationProcessor;
 import com.codekutter.zconfig.common.ConfigurationException;
 import com.codekutter.zconfig.common.model.annotations.ConfigAttribute;
 import com.codekutter.zconfig.common.model.nodes.AbstractConfigNode;
 import com.codekutter.zconfig.common.model.nodes.ConfigAttributesNode;
 import com.codekutter.zconfig.common.model.nodes.ConfigPathNode;
 import com.codekutter.zconfig.common.model.nodes.ConfigValueNode;
+import com.google.common.base.Preconditions;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
+import org.glassfish.jersey.jackson.internal.jackson.jaxrs.json.JacksonJaxbJsonProvider;
 
 import javax.annotation.Nonnull;
 import javax.net.ssl.SSLContext;
@@ -70,8 +75,10 @@ public class RestConnection extends AbstractConnection<Client> {
      */
     @Override
     public void configure(@Nonnull AbstractConfigNode node) throws ConfigurationException {
+        Preconditions.checkArgument(node instanceof ConfigPathNode);
         try {
-            Map<String, String> config = configuration(node);
+            ConfigurationAnnotationProcessor.readConfigAnnotations(getClass(), (ConfigPathNode) node, this);
+            Map<String, Object> config = configuration(node);
             ClientBuilder builder = ClientBuilder.newBuilder();
             if (config != null && !config.isEmpty()) {
                 for (String key : config.keySet()) {
@@ -81,13 +88,15 @@ public class RestConnection extends AbstractConnection<Client> {
             if (useSSL) {
                 builder.sslContext(SSLContext.getDefault());
             }
-            client = builder.build();
+            client = builder.register(JacksonJaxbJsonProvider.class).build();
+            state().setState(EConnectionState.Open);
         } catch (Exception ex) {
+            state().setError(ex);
             throw new ConfigurationException(ex);
         }
     }
 
-    private Map<String, String> configuration(AbstractConfigNode node) throws ConfigurationException {
+    private Map<String, Object> configuration(AbstractConfigNode node) throws ConfigurationException, ValueParseException {
         if (node instanceof ConfigPathNode) {
             AbstractConfigNode cnode = node.find(CONFIG_PATH_CONFIG);
             if (cnode instanceof ConfigPathNode) {
@@ -96,10 +105,10 @@ public class RestConnection extends AbstractConnection<Client> {
                     ConfigAttributesNode attrs = cp.attributes();
                     Map<String, ConfigValueNode> map = attrs.getKeyValues();
                     if (map != null && !map.isEmpty()) {
-                        Map<String, String> amap = new HashMap<>();
+                        Map<String, Object> amap = new HashMap<>();
                         for (String key : map.keySet()) {
                             ConfigValueNode vn = map.get(key);
-                            amap.put(key, vn.getValue());
+                            amap.put(key, vn.getParsedValue());
                         }
                         return amap;
                     }

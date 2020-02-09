@@ -97,7 +97,7 @@ public enum EValueType {
     public Object parseValue(@Nonnull EValueType type,
                              @Nonnull Class<?> cType,
                              @Nonnull String value) throws ValueParseException {
-        if (Strings.isNullOrEmpty(value)) {
+        if (!Strings.isNullOrEmpty(value)) {
             try {
                 switch (type) {
                     case STRING:

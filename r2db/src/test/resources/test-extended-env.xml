@@ -89,6 +89,35 @@
                     </connection>
                 </queue>
             </queues>
+            <schedule audited="true" auditLogger="com.codekutter.common.scheduling.impl.DBJobAuditLogger">
+                <quartzConfig>src/test/resources/quartz.properties</quartzConfig>
+                <startUpDelay>10</startUpDelay>
+                <logger connection="TestAuditConnection" />
+                <jobs>
+                    <!--job class="com.codekutter.common.scheduling.impl.RestJobConfig"
+                         namespace="com.codekutter.common.test" name="TEST-REST-JOB" requestType="GET">
+                        <type>com.codekutter.common.scheduling.impl.RESTCallJob</type>
+                        <scheduleInterval>10ss</scheduleInterval>
+                        <requestUrl>https://en.wikipedia.org/wiki/Portal:Current_events</requestUrl>
+                        <connection>TestRestConnection</connection>
+                        <mediaType>text/html</mediaType>
+                        <responseHandler>com.codekutter.common.DummyResponseHandler</responseHandler>
+                    </job -->
+                    <job class="com.codekutter.common.scheduling.impl.RestJobConfig"
+                         namespace="com.codekutter.common.test" name="TEST-REST-EMP-JOB" requestType="GET">
+                        <type>com.codekutter.common.scheduling.impl.RESTCallJob</type>
+                        <scheduleInterval>10ss</scheduleInterval>
+                        <audited>true</audited>
+                        <requestUrl>https%3A%2F%2Fgorest.co.in%2Fpublic-api%2Fusers%3F_format%3Djson%26access-token%3D%7BACCESS_TOKEN%7D</requestUrl>
+                        <connection>TestRestConnection</connection>
+                        <mediaType>application/json</mediaType>
+                        <responseHandler>com.codekutter.common.DummyUserHandler</responseHandler>
+                        <parameters>
+                            <ACCESS_TOKEN>3S-oCGgeU155lXSflhDziwkqF_ECHUl_mDEk</ACCESS_TOKEN>
+                        </parameters>
+                    </job>
+                </jobs>
+            </schedule>
         </env>
         <audit>
             <audit-manager>
@@ -102,6 +131,23 @@
         <r2db>
             <entity-manager>
                 <connections>
+                    <connection name="TestAuditConnection" class="com.codekutter.common.stores.impl.HibernateConnection"
+                                driver="org.mariadb.jdbc.Driver" dialect="org.hibernate.dialect.MariaDBDialect">
+                        <url>jdbc:mariadb://127.0.0.1:3306/test</url>
+                        <port>3306</port>
+                        <username>testDbUser</username>
+                        <password encrypted="true">
+                            <value>iyGiHwGIT2JDgk01E/xjUw==</value>
+                        </password>
+                        <classes>
+                            <class>com.codekutter.common.scheduling.impl.JobAuditLog</class>
+                        </classes>
+                        <hibernate>
+                            <parameters>
+                                <show_sql>true</show_sql>
+                            </parameters>
+                        </hibernate>
+                    </connection>
                     <connection name="TestDbConnection" class="com.codekutter.common.stores.impl.HibernateConnection"
                                 driver="org.mariadb.jdbc.Driver" dialect="org.hibernate.dialect.MariaDBDialect">
                         <url>jdbc:mariadb://127.0.0.1:3306/test</url>
@@ -116,12 +162,17 @@
                             <class>com.codekutter.common.stores.model.Item</class>
                             <class>com.codekutter.common.stores.model.Order</class>
                             <class>com.codekutter.common.model.AuditRecord</class>
+                            <class>com.codekutter.common.scheduling.impl.JobAuditLog</class>
                         </classes>
                         <hibernate>
                             <parameters>
                                 <show_sql>true</show_sql>
                             </parameters>
                         </hibernate>
+                    </connection>
+                    <connection name="TestRestConnection" class="com.codekutter.common.stores.impl.RestConnection"
+                                useSSL="true">
+                        <param name="connection.timeout" type="INT">200</param>
                     </connection>
                 </connections>
                 <dataStoreManager>

@@ -18,6 +18,7 @@
 package com.codekutter.r2db.driver.impl;
 
 import com.codekutter.common.ConfigTestConstants;
+import com.codekutter.common.stores.model.DemoUser;
 import com.codekutter.common.stores.model.User;
 import com.codekutter.common.utils.LogUtils;
 import com.codekutter.r2db.driver.EntityManager;

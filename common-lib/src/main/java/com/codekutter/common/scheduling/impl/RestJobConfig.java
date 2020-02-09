@@ -17,9 +17,10 @@
 
 package com.codekutter.common.scheduling.impl;
 
+import com.codekutter.common.scheduling.IRestRequestBuilder;
+import com.codekutter.common.scheduling.IRestResponseHandler;
 import com.codekutter.common.scheduling.JobConfig;
-import com.codekutter.common.stores.ConnectionManager;
-import com.codekutter.common.stores.impl.RestConnection;
+import com.codekutter.common.utils.LogUtils;
 import com.codekutter.common.utils.UrlUtils;
 import com.codekutter.zconfig.common.ConfigurationException;
 import com.codekutter.zconfig.common.model.annotations.ConfigAttribute;
@@ -28,11 +29,14 @@ import com.codekutter.zconfig.common.model.nodes.AbstractConfigNode;
 import com.codekutter.zconfig.common.model.nodes.ConfigParametersNode;
 import com.codekutter.zconfig.common.model.nodes.ConfigPathNode;
 import com.codekutter.zconfig.common.model.nodes.ConfigValueNode;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 
 import javax.annotation.Nonnull;
-import javax.ws.rs.client.Client;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -45,6 +49,19 @@ public class RestJobConfig extends JobConfig {
     private ERequestType requestType;
     @ConfigValue(name = "connection", required = true)
     private String connectionName;
+    @ConfigValue(required = true)
+    private String mediaType;
+    @ConfigValue(name = "responseHandler")
+    private Class<? extends IRestResponseHandler> responseHandlerClass;
+    @ConfigValue(name = "requestBuilder")
+    private Class<? extends IRestRequestBuilder> requestBuilderClass;
+
+    @Setter(AccessLevel.NONE)
+    @JsonIgnore
+    private IRestRequestBuilder requestBuilder;
+    @Setter(AccessLevel.NONE)
+    @JsonIgnore
+    private IRestResponseHandler responseHandler;
 
     /**
      * Configure this type instance.
@@ -56,10 +73,7 @@ public class RestJobConfig extends JobConfig {
     public void configure(@Nonnull AbstractConfigNode node) throws ConfigurationException {
         super.configure(node);
         try {
-            RestConnection connection = (RestConnection) ConnectionManager.get().connection(connectionName, Client.class);
-            if (connection == null) {
-                throw new ConfigurationException(String.format("Connection not found. [name=%s][type=%s]", connectionName, RestConnection.class.getCanonicalName()));
-            }
+            requestUrl = URLDecoder.decode(requestUrl, StandardCharsets.UTF_8.name());
             if (node instanceof ConfigPathNode) {
                 if (((ConfigPathNode) node).parmeters() != null) {
                     ConfigParametersNode params = ((ConfigPathNode) node).parmeters();
@@ -74,6 +88,14 @@ public class RestJobConfig extends JobConfig {
                         }
                     }
                 }
+            }
+            LogUtils.debug(getClass(), String.format("Request URL [%s]", requestUrl));
+            if (responseHandlerClass != null) {
+                responseHandler = responseHandlerClass.newInstance();
+                responseHandler.configure(node);
+            }
+            if (requestBuilderClass != null) {
+                requestBuilder = requestBuilderClass.newInstance();
             }
         } catch (Exception ex) {
             throw new ConfigurationException(ex);

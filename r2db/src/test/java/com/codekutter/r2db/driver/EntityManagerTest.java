@@ -62,6 +62,8 @@ class EntityManagerTest {
             R2dbEnv.setup(R2dbEnv.class, name, filename, ConfigProviderFactory.EConfigType.XML, vs, encryptionKey);
             entityManager = R2dbEnv.env().getEntityManager();
             assertNotNull(entityManager);
+
+            Thread.sleep(35000);
         } catch (Throwable t) {
             LogUtils.error(EntityManagerTest.class, t);
             throw t;
@@ -71,10 +73,11 @@ class EntityManagerTest {
     @AfterAll
     static void shutdown() {
         try {
+            Thread.sleep(30000);
             R2dbEnv.shutdown();
         } catch (Throwable t) {
             LogUtils.error(EntityManagerTest.class, t);
-            throw t;
+            throw new RuntimeException(t);
         }
     }
 

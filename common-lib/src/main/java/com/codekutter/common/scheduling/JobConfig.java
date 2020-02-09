@@ -26,7 +26,9 @@ import com.codekutter.zconfig.common.model.annotations.ConfigValue;
 import com.codekutter.zconfig.common.model.nodes.AbstractConfigNode;
 import com.codekutter.zconfig.common.model.nodes.ConfigPathNode;
 import com.codekutter.zconfig.common.transformers.TimeWindowParser;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.common.base.Preconditions;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
@@ -49,6 +51,16 @@ public class JobConfig implements IConfigurable {
     private int priority = 999;
     @ConfigValue(required = true)
     private Class<? extends AbstractJob> type;
+    @ConfigValue
+    private boolean audited = false;
+    @Setter(AccessLevel.NONE)
+    @JsonIgnore
+    private ScheduleManager manager;
+
+    public JobConfig withScheduleManager(@Nonnull ScheduleManager manager) {
+        this.manager = manager;
+        return this;
+    }
 
     public String jobKey() {
         return key(namespace, name);

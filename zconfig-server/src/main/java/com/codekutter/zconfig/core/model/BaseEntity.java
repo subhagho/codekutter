@@ -28,7 +28,6 @@ import com.codekutter.common.model.IKey;
 import com.codekutter.common.model.ModifiedBy;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.google.common.base.Preconditions;
-import org.springframework.lang.NonNull;
 
 import javax.annotation.Nonnull;
 
@@ -65,7 +64,7 @@ public abstract class BaseEntity<K extends IKey, T> extends PersistedEntity<K, T
      *
      * @param owner - Group Owner
      */
-    public void setOwner(@NonNull ModifiedBy owner) {
+    public void setOwner(@Nonnull ModifiedBy owner) {
         Preconditions.checkArgument(owner != null);
 
         this.owner = owner;

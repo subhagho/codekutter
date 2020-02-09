@@ -208,6 +208,14 @@
                             <TEST_LONG_LIST>-134981490134</TEST_LONG_LIST>
                         </LONG_VALUE_LIST>
                     </node_4>
+                    <node_5>
+                        <parameters>
+                            <param name="test.integer" type="INT">88878</param>
+                            <param name="test.double" type="DOUBLE">949584.3460</param>
+                            <param name="test.class" type="CLASS">com.codekutter.common.TimeWindow</param>
+                            <param name="test.enum" type="ENUM" enumType="com.codekutter.common.model.EObjectState">Initialized</param>
+                        </parameters>
+                    </node_5>
                     <remoteResource type="FILE" resourceName="data/LICENSE.txt">
                         <url>https://raw.githubusercontent.com/subhagho/zconfig/master/LICENSE</url>
                     </remoteResource>

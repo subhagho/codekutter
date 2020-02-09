@@ -30,7 +30,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.common.base.Preconditions;
 import lombok.Getter;
 import lombok.Setter;
-import org.springframework.lang.NonNull;
 
 /**
  * Abstract base class for defining an entity that is persisted.

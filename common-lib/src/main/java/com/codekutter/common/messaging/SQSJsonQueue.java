@@ -50,6 +50,8 @@ import org.elasticsearch.common.Strings;
 import javax.annotation.Nonnull;
 import javax.jms.*;
 import java.io.IOException;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.security.Principal;
 import java.util.ArrayList;
 import java.util.List;
@@ -206,6 +208,7 @@ public class SQSJsonQueue extends AbstractQueue<SQSConnection, DefaultStringMess
         Preconditions.checkArgument(node instanceof ConfigPathNode);
         try {
             ConfigurationAnnotationProcessor.readConfigAnnotations(getClass(), (ConfigPathNode) node, this);
+            queue = URLDecoder.decode(queue, StandardCharsets.UTF_8.name());
             LogUtils.info(getClass(), String.format("Configuring Queue. [name=%s]...", name()));
             AbstractConfigNode cnode = ConfigUtils.getPathNode(getClass(), (ConfigPathNode) node);
             if (!(cnode instanceof ConfigPathNode)) {

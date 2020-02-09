@@ -15,20 +15,13 @@
  *
  */
 
-package com.codekutter.zconfig.common.scheduling;
+package com.codekutter.common.stores.model;
 
-import com.codekutter.common.scheduling.AbstractJob;
-import com.codekutter.common.scheduling.JobConfig;
-import com.codekutter.common.utils.LogUtils;
-import org.quartz.JobExecutionContext;
-import org.quartz.JobExecutionException;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import lombok.Data;
 
-import javax.annotation.Nonnull;
-
-public class DemoJobLog extends AbstractJob {
-    @Override
-    public Object doExecute(@Nonnull JobExecutionContext context, @Nonnull JobConfig config) throws JobExecutionException {
-        LogUtils.debug(getClass(), config);
-        return config;
-    }
+@Data
+@JsonIgnoreProperties(ignoreUnknown = true)
+public class DemoResponse<T> {
+    private T result;
 }
