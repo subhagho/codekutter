@@ -92,9 +92,9 @@
             <schedule audited="true" auditLogger="com.codekutter.common.scheduling.impl.DBJobAuditLogger">
                 <quartzConfig>src/test/resources/quartz.properties</quartzConfig>
                 <startUpDelay>10</startUpDelay>
-                <logger connection="TestAuditConnection" />
+                <logger connection="TestAuditConnection"/>
                 <jobs>
-                    <job class="com.codekutter.common.scheduling.impl.RestJobConfig"
+                    <!--job class="com.codekutter.common.scheduling.impl.RestJobConfig"
                          namespace="com.codekutter.common.test" name="TEST-REST-JOB" requestType="GET">
                         <type>com.codekutter.common.scheduling.impl.RESTCallJob</type>
                         <scheduleInterval>10ss</scheduleInterval>
@@ -102,14 +102,14 @@
                         <connection>TestRestConnection</connection>
                         <mediaType>text/html</mediaType>
                         <responseHandler>com.codekutter.common.DummyResponseHandler</responseHandler>
-                    </job>
+                    </job-->
                     <job class="com.codekutter.common.scheduling.impl.RestJobConfig"
                          namespace="com.codekutter.common.test" name="TEST-REST-EMP-JOB" requestType="GET">
                         <type>com.codekutter.common.scheduling.impl.RESTCallJob</type>
                         <scheduleInterval>10ss</scheduleInterval>
                         <audited>true</audited>
-                        <requestUrl>https%3A%2F%2Fgorest.co.in%2Fpublic-api%2Fusers%3F_format%3Djson%26access-token%3D%7BACCESS_TOKEN%7D</requestUrl>
-                        <connection>TestRestConnection</connection>
+                        <requestUrl>https%3A%2F%2Fgorest.co.in%2Fpublic-api%2Fusers%3F_format%3Djson</requestUrl>
+                        <connection>TestAuthRestConnection</connection>
                         <mediaType>application/json</mediaType>
                         <responseHandler>com.codekutter.common.DummyUserHandler</responseHandler>
                         <parameters>
@@ -173,6 +173,14 @@
                     <connection name="TestRestConnection" class="com.codekutter.common.stores.impl.RestConnection"
                                 useSSL="true">
                         <param name="connection.timeout" type="INT">200</param>
+                    </connection>
+                    <connection name="TestAuthRestConnection"
+                                class="com.codekutter.common.stores.impl.RestOAuthConnection"
+                                useSSL="true">
+                        <param name="connection.timeout" type="INT">200</param>
+                        <token encrypted="true">
+                            <value>I1wamaUKOAPqAX3lKkYEawBueg3pnFunxyosMgW50F7F7TImy7c4wrV/Jqd+TQfI</value>
+                        </token>
                     </connection>
                 </connections>
                 <dataStoreManager>
