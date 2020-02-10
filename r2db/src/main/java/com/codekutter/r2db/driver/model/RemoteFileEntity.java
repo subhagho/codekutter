@@ -19,13 +19,19 @@ package com.codekutter.r2db.driver.model;
 
 import com.codekutter.common.model.IEntity;
 import com.codekutter.common.model.IKey;
+import lombok.Getter;
+import lombok.Setter;
 
 import javax.annotation.Nonnull;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 
+@Getter
+@Setter
 public abstract class RemoteFileEntity<K extends IKey, C> extends File implements IEntity<K> {
+    private long updateTimestamp;
+
     public RemoteFileEntity(String pathname) {
         super(pathname);
     }

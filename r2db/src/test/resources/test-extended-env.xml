@@ -94,7 +94,7 @@
                 <startUpDelay>10</startUpDelay>
                 <logger connection="TestAuditConnection" />
                 <jobs>
-                    <!--job class="com.codekutter.common.scheduling.impl.RestJobConfig"
+                    <job class="com.codekutter.common.scheduling.impl.RestJobConfig"
                          namespace="com.codekutter.common.test" name="TEST-REST-JOB" requestType="GET">
                         <type>com.codekutter.common.scheduling.impl.RESTCallJob</type>
                         <scheduleInterval>10ss</scheduleInterval>
@@ -102,7 +102,7 @@
                         <connection>TestRestConnection</connection>
                         <mediaType>text/html</mediaType>
                         <responseHandler>com.codekutter.common.DummyResponseHandler</responseHandler>
-                    </job -->
+                    </job>
                     <job class="com.codekutter.common.scheduling.impl.RestJobConfig"
                          namespace="com.codekutter.common.test" name="TEST-REST-EMP-JOB" requestType="GET">
                         <type>com.codekutter.common.scheduling.impl.RESTCallJob</type>

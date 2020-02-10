@@ -105,6 +105,7 @@ public class AwsS3DataStore extends AbstractDirectoryStore<AmazonS3> {
             if (Strings.isNullOrEmpty(key)) {
                 throw new DataStoreException(String.format("Error uploading file to S3. [key=%s]", entity.getKey().stringKey()));
             }
+            ((S3FileEntity) entity).setUpdateTimestamp(System.currentTimeMillis());
         } catch (Exception ex) {
             throw new DataStoreException(ex);
         }
@@ -124,6 +125,7 @@ public class AwsS3DataStore extends AbstractDirectoryStore<AmazonS3> {
             if (Strings.isNullOrEmpty(key)) {
                 throw new DataStoreException(String.format("Error uploading file to S3. [key=%s]", entity.getKey().stringKey()));
             }
+            ((S3FileEntity) entity).setUpdateTimestamp(System.currentTimeMillis());
         } catch (Exception ex) {
             throw new DataStoreException(ex);
         }
@@ -139,16 +141,22 @@ public class AwsS3DataStore extends AbstractDirectoryStore<AmazonS3> {
             if (entity == null) {
                 return false;
             }
+            boolean ret = false;
             S3FileEntity fe = (S3FileEntity) entity;
             if (fe.exists()) {
-                if (!fe.delete()) {
+                ret = fe.delete();
+                if (!ret) {
                     LogUtils.warn(getClass(), String.format("Error deleting local copy. [path=%s]", fe.getAbsolutePath()));
                 }
             }
             if (fe.remoteExists()) {
-                return fe.remoteDelete();
+                ret = fe.remoteDelete();
+                if (!ret) {
+                    throw new DataStoreException(String.format("Error deleting remote copy. [path=%s]", fe.getRemotePath()));
+                }
             }
-            return true;
+
+            return ret;
         } catch (Exception ex) {
             throw new DataStoreException(ex);
         }
@@ -166,6 +174,9 @@ public class AwsS3DataStore extends AbstractDirectoryStore<AmazonS3> {
                 String lfname = getLocalFileName(fk);
                 S3FileEntity entity = new S3FileEntity(fk.bucket(), fk.key(), lfname).
                         withClient(connection().connection());
+                ObjectMetadata meta = obj.getObjectMetadata();
+                entity.setUpdateTimestamp(meta.getLastModified().getTime());
+
                 File lf = entity.copyToLocal();
                 if (!lf.exists()) {
                     throw new DataStoreException(String.format("Local file not found. [path=%s]", lf.getAbsolutePath()));
