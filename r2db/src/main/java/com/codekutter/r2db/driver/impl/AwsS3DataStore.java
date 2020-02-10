@@ -34,19 +34,26 @@ import com.codekutter.r2db.driver.model.S3FileKey;
 import com.codekutter.zconfig.common.ConfigurationException;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.RemovalListener;
+import com.google.common.cache.RemovalNotification;
 import lombok.Getter;
 import lombok.experimental.Accessors;
+import org.apache.commons.io.FileUtils;
 
 import javax.annotation.Nonnull;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 @Getter
 @Accessors(fluent = true)
 public class AwsS3DataStore extends AbstractDirectoryStore<AmazonS3> {
     private File workDirectory;
     private String bucket;
+    private Cache<S3FileKey, S3FileEntity> cache;
 
     @Override
     public <S, T> void move(S source, T target, Context context) throws DataStoreException {
@@ -90,6 +97,24 @@ public class AwsS3DataStore extends AbstractDirectoryStore<AmazonS3> {
                 }
             }
 
+            if (config.useCache()) {
+                RemovalListener<S3FileKey, S3FileEntity> listener = new RemovalListener<S3FileKey, S3FileEntity>() {
+                    @Override
+                    public void onRemoval(RemovalNotification<S3FileKey, S3FileEntity> notification) {
+                        S3FileEntity entity = notification.getValue();
+                        if (entity.exists()) {
+                            if (!entity.delete()) {
+                                LogUtils.warn(getClass(), String.format("Failed to remove local file. [path=%s]", entity.getAbsolutePath()));
+                            }
+                        }
+                    }
+                };
+                cache = CacheBuilder.newBuilder()
+                        .maximumSize(config.maxCacheSize())
+                        .expireAfterAccess(config.cacheExpiryWindow(), TimeUnit.MILLISECONDS)
+                        .removalListener(listener)
+                        .build();
+            }
         } catch (Throwable t) {
             throw new ConfigurationException(t);
         }
@@ -106,6 +131,9 @@ public class AwsS3DataStore extends AbstractDirectoryStore<AmazonS3> {
                 throw new DataStoreException(String.format("Error uploading file to S3. [key=%s]", entity.getKey().stringKey()));
             }
             ((S3FileEntity) entity).setUpdateTimestamp(System.currentTimeMillis());
+            if (cache != null) {
+                cache.put(((S3FileEntity)entity).getKey(), (S3FileEntity) entity);
+            }
         } catch (Exception ex) {
             throw new DataStoreException(ex);
         }
@@ -126,6 +154,9 @@ public class AwsS3DataStore extends AbstractDirectoryStore<AmazonS3> {
                 throw new DataStoreException(String.format("Error uploading file to S3. [key=%s]", entity.getKey().stringKey()));
             }
             ((S3FileEntity) entity).setUpdateTimestamp(System.currentTimeMillis());
+            if (cache != null) {
+                cache.put(((S3FileEntity)entity).getKey(), (S3FileEntity) entity);
+            }
         } catch (Exception ex) {
             throw new DataStoreException(ex);
         }
@@ -155,7 +186,9 @@ public class AwsS3DataStore extends AbstractDirectoryStore<AmazonS3> {
                     throw new DataStoreException(String.format("Error deleting remote copy. [path=%s]", fe.getRemotePath()));
                 }
             }
-
+            if (cache != null) {
+                cache.invalidate(fe.getKey());
+            }
             return ret;
         } catch (Exception ex) {
             throw new DataStoreException(ex);
@@ -169,6 +202,12 @@ public class AwsS3DataStore extends AbstractDirectoryStore<AmazonS3> {
         Preconditions.checkArgument(ReflectionUtils.isSuperType(S3FileEntity.class, type));
         try {
             S3FileKey fk = (S3FileKey) key;
+            if (cache != null) {
+                S3FileEntity entity = cache.getIfPresent(key);
+                if (entity != null) {
+                    return (E) entity;
+                }
+            }
             S3Object obj = connection().connection().getObject(fk.bucket(), fk.key());
             if (obj != null) {
                 String lfname = getLocalFileName(fk);
@@ -180,6 +219,9 @@ public class AwsS3DataStore extends AbstractDirectoryStore<AmazonS3> {
                 File lf = entity.copyToLocal();
                 if (!lf.exists()) {
                     throw new DataStoreException(String.format("Local file not found. [path=%s]", lf.getAbsolutePath()));
+                }
+                if (cache != null) {
+                    cache.put(entity.getKey(), entity);
                 }
                 return (E) entity;
             }
@@ -200,12 +242,12 @@ public class AwsS3DataStore extends AbstractDirectoryStore<AmazonS3> {
         return doSearch(bucket, query, offset, maxResults, type, context);
     }
 
-    protected  <E extends IEntity> Collection<E> doSearch(@Nonnull String bucket,
-                                                      @Nonnull String query,
-                                                      int offset,
-                                                      int maxResults,
-                                                      @Nonnull Class<? extends E> type,
-                                                      Context context) throws DataStoreException {
+    protected <E extends IEntity> Collection<E> doSearch(@Nonnull String bucket,
+                                                         @Nonnull String query,
+                                                         int offset,
+                                                         int maxResults,
+                                                         @Nonnull Class<? extends E> type,
+                                                         Context context) throws DataStoreException {
         Preconditions.checkArgument(ReflectionUtils.isSuperType(S3FileEntity.class, type));
         try {
             S3StoreContext ctx = (S3StoreContext) context;
@@ -277,5 +319,11 @@ public class AwsS3DataStore extends AbstractDirectoryStore<AmazonS3> {
 
     private String getLocalFileName(S3FileKey key) {
         return String.format("%s/bucket-%s/%s", workDirectory.getAbsolutePath(), key.bucket(), key.key());
+    }
+
+    @Override
+    public void close() throws IOException {
+        FileUtils.deleteDirectory(workDirectory);
+        super.close();
     }
 }

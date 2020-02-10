@@ -32,4 +32,10 @@ public class S3StoreConfig extends DataStoreConfig {
     private String bucket;
     @ConfigValue
     private String tempDirectory;
+    @ConfigAttribute
+    private boolean useCache = true;
+    @ConfigValue
+    private int maxCacheSize = 100;
+    @ConfigValue
+    private long cacheExpiryWindow = 5 * 60 * 1000;
 }
