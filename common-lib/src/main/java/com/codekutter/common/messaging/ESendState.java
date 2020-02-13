@@ -17,21 +17,17 @@
 
 package com.codekutter.common.messaging;
 
-import com.codekutter.zconfig.common.model.annotations.ConfigPath;
-import com.codekutter.zconfig.common.model.annotations.ConfigValue;
-import lombok.Getter;
-import lombok.Setter;
-import lombok.experimental.Accessors;
-
-@Getter
-@Setter
-@Accessors(fluent = true)
-@ConfigPath(path = "cacheConfig")
-public class QueueCachingConfig {
-    private static final int DEFAULT_EXECUTOR_POOL_SIZE = 8;
-
-    @ConfigValue
-    private String queueCacheDir;
-    @ConfigValue
-    private int executorPoolSize = DEFAULT_EXECUTOR_POOL_SIZE;
+public enum ESendState  {
+    /**
+     * Message is new, pending send.
+     */
+    New,
+    /**
+     * Message has been sent.
+     */
+    Sent,
+    /**
+     * Message send resulted in error.
+     */
+    Error
 }

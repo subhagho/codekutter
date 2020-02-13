@@ -50,6 +50,7 @@ import java.util.concurrent.TimeUnit;
 
 @Getter
 @Accessors(fluent = true)
+@SuppressWarnings("rawtypes")
 public class AwsS3DataStore extends AbstractDirectoryStore<AmazonS3> {
     private File workDirectory;
     private String bucket;
@@ -126,13 +127,17 @@ public class AwsS3DataStore extends AbstractDirectoryStore<AmazonS3> {
         Preconditions.checkArgument(connection() != null && connection().state().isOpen());
 
         try {
-            String key = ((S3FileEntity) entity).withClient(connection().connection()).copyToRemote();
+            S3FileEntity fe = (S3FileEntity) entity;
+            if (fe.remoteExists()) {
+                throw new DataStoreException(String.format("Duplicate file: Remote file with key already exists. [key=%s]", fe.getKey().key()));
+            }
+            String key = fe.withClient(connection().connection()).copyToRemote();
             if (Strings.isNullOrEmpty(key)) {
                 throw new DataStoreException(String.format("Error uploading file to S3. [key=%s]", entity.getKey().stringKey()));
             }
-            ((S3FileEntity) entity).setUpdateTimestamp(System.currentTimeMillis());
+            fe.setUpdateTimestamp(System.currentTimeMillis());
             if (cache != null) {
-                cache.put(((S3FileEntity)entity).getKey(), (S3FileEntity) entity);
+                cache.put(fe.getKey(), fe);
             }
         } catch (Exception ex) {
             throw new DataStoreException(ex);
@@ -146,16 +151,18 @@ public class AwsS3DataStore extends AbstractDirectoryStore<AmazonS3> {
         Preconditions.checkArgument(connection() != null && connection().state().isOpen());
 
         try {
-            if (!((S3FileEntity) entity).remoteExists()) {
+            S3FileEntity fe = (S3FileEntity)entity;
+
+            if (!fe.withClient(connection().connection()).remoteExists()) {
                 throw new DataStoreException(String.format("Specified file doesn't exist. [key=%s]", entity.getKey().stringKey()));
             }
-            String key = ((S3FileEntity) entity).withClient(connection().connection()).copyToRemote();
+            fe.setUpdateTimestamp(System.currentTimeMillis());
+            String key = fe.copyToRemote();
             if (Strings.isNullOrEmpty(key)) {
                 throw new DataStoreException(String.format("Error uploading file to S3. [key=%s]", entity.getKey().stringKey()));
             }
-            ((S3FileEntity) entity).setUpdateTimestamp(System.currentTimeMillis());
             if (cache != null) {
-                cache.put(((S3FileEntity)entity).getKey(), (S3FileEntity) entity);
+                cache.put(fe.getKey(), fe);
             }
         } catch (Exception ex) {
             throw new DataStoreException(ex);

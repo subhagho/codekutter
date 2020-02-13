@@ -55,6 +55,21 @@ public class CypherUtils {
         return new String(d, StandardCharsets.UTF_8);
     }
 
+    /**
+     * Get an MD5 hash of the specified byte array.
+     *
+     * @param data - Input byte array.
+     * @return - String value of the Hash
+     * @throws Exception
+     */
+    public static String getHash(@Nonnull byte[] data) throws Exception {
+        Preconditions.checkArgument(data != null && data.length > 0);
+
+        MessageDigest digest = MessageDigest.getInstance(HASH_ALGO);
+        byte[] d = digest.digest(data);
+        d = Base64.encodeBase64(d);
+        return new String(d, StandardCharsets.UTF_8);
+    }
 
     /**
      * Encrypt the passed data buffer using the passcode.

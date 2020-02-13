@@ -114,7 +114,13 @@ public class S3FileEntity extends RemoteFileEntity<S3FileKey, AmazonS3> {
         if (client == null) {
             throw new IOException("AWS S3 Client not set.");
         }
-        if (exists()) {
+
+        File dir = getParentFile();
+        if (!dir.exists()) {
+            if (!dir.mkdirs()) {
+                throw new IOException(String.format("Error creating parent folder. [path=%s]", dir.getAbsolutePath()));
+            }
+        } else if (exists()) {
             if (!delete()) {
                 throw new IOException(String.format("Error deleting existing file. [path=%s]", getAbsolutePath()));
             }

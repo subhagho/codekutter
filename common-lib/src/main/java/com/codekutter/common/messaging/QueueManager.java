@@ -49,9 +49,6 @@ import java.util.Map;
 @SuppressWarnings("rawtypes")
 public class QueueManager implements IConfigurable, Closeable {
     @Setter(AccessLevel.NONE)
-    private QueueCachingConfig cachingConfig;
-
-    @Setter(AccessLevel.NONE)
     private Map<String, AbstractQueue> queues = new HashMap<>();
 
     @SuppressWarnings("unchecked")
@@ -87,11 +84,6 @@ public class QueueManager implements IConfigurable, Closeable {
                     queues.put(queue.name(), queue);
                 }
             }
-        }
-        AbstractConfigNode qcnode = ConfigUtils.getPathNode(QueueCachingConfig.class, (ConfigPathNode) node);
-        if (qcnode instanceof ConfigPathNode) {
-            cachingConfig = new QueueCachingConfig();
-            cachingConfig = ConfigurationAnnotationProcessor.readConfigAnnotations(cachingConfig.getClass(), (ConfigPathNode) qcnode, cachingConfig);
         }
     }
 
