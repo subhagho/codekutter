@@ -48,6 +48,8 @@ public class DbMessage {
     private ESendState state;
     @Column(name = "body")
     private byte[] body;
+    @Column(name = "message_class")
+    private String messageType;
     @Column(name = "sender")
     private String sender;
     @Column(name = "error")

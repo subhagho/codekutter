@@ -17,6 +17,7 @@
 
 package com.codekutter.common.messaging;
 
+import com.codekutter.common.GlobalConstants;
 import com.codekutter.common.model.DbMessage;
 import com.codekutter.common.model.EObjectState;
 import com.codekutter.common.model.IKeyed;
@@ -59,13 +60,13 @@ public abstract class DbCachedQueue<C, M extends IKeyed> extends AbstractQueue<C
     public static final int DEFAULT_FETCH_BATCH_SIZE = 32;
 
     @ConfigValue(name = "dbConnection")
-    private String dbConnection;
+    private String dbConnectionName;
     @ConfigValue
     private int threadPoolSize = DEFAULT_THREAD_POOL_SIZE;
     @ConfigValue
     private int fetchBatchSize = DEFAULT_FETCH_BATCH_SIZE;
     @Setter(AccessLevel.NONE)
-    private HibernateConnection connection;
+    private HibernateConnection dbConnection;
     @Setter(AccessLevel.NONE)
     private AbstractQueue<C, M> queue;
 
@@ -77,16 +78,16 @@ public abstract class DbCachedQueue<C, M extends IKeyed> extends AbstractQueue<C
     @Setter(AccessLevel.NONE)
     private ObjectState state = new ObjectState();
 
-    public HibernateConnection getConnection() throws Exception {
+    public HibernateConnection getDbConnection() throws Exception {
         __lock.lock();
         try {
-            if (connection == null) {
-                connection = (HibernateConnection) ConnectionManager.get().connection(dbConnection, Session.class);
-                if (connection == null) {
-                    throw new Exception(String.format("Error getting DB connection. [name=%s][type=%s]", dbConnection, HibernateConnection.class));
+            if (dbConnection == null) {
+                dbConnection = (HibernateConnection) ConnectionManager.get().connection(dbConnectionName, Session.class);
+                if (dbConnection == null) {
+                    throw new Exception(String.format("Error getting DB connection. [name=%s][type=%s]", dbConnectionName, HibernateConnection.class));
                 }
             }
-            return connection;
+            return dbConnection;
         } finally {
             __lock.unlock();
         }
@@ -105,11 +106,13 @@ public abstract class DbCachedQueue<C, M extends IKeyed> extends AbstractQueue<C
             dbm.setMessageId(UUID.randomUUID().toString());
             dbm.setQueue(queue.name());
             dbm.setBody(data);
+            dbm.setMessageType(message.getClass().getCanonicalName());
             dbm.setChecksum(checksum);
             dbm.setLength(data.length);
             dbm.setState(ESendState.New);
             dbm.setCreatedTimestamp(System.currentTimeMillis());
-            dbm.setSender(user.getName());
+            String userJson = GlobalConstants.getJsonMapper().writeValueAsString(user);
+            dbm.setSender(userJson);
 
             session.save(dbm);
         } catch (Exception ex) {
