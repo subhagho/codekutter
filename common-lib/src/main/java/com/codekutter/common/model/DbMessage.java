@@ -30,6 +30,8 @@ import javax.persistence.*;
 public class DbMessage {
     @Column(name = "queue_name")
     private String queue;
+    @Column(name = "partition")
+    private int partition;
     @Id
     @Column(name = "id")
     private String messageId;

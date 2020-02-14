@@ -67,8 +67,6 @@ public abstract class DbCachedQueue<C, M extends IKeyed> extends AbstractQueue<C
     private int fetchBatchSize = DEFAULT_FETCH_BATCH_SIZE;
     @Setter(AccessLevel.NONE)
     private HibernateConnection dbConnection;
-    @Setter(AccessLevel.NONE)
-    private AbstractQueue<C, M> queue;
 
     @Getter(AccessLevel.NONE)
     @Setter(AccessLevel.NONE)
@@ -104,7 +102,8 @@ public abstract class DbCachedQueue<C, M extends IKeyed> extends AbstractQueue<C
             String checksum = CypherUtils.getHash(data);
             DbMessage dbm = new DbMessage();
             dbm.setMessageId(UUID.randomUUID().toString());
-            dbm.setQueue(queue.name());
+            dbm.setQueue(name());
+            dbm.setPartition((int) (Thread.currentThread().getId() % threadPoolSize));
             dbm.setBody(data);
             dbm.setMessageType(message.getClass().getCanonicalName());
             dbm.setChecksum(checksum);
@@ -122,7 +121,8 @@ public abstract class DbCachedQueue<C, M extends IKeyed> extends AbstractQueue<C
     }
 
     @SuppressWarnings("unchecked")
-    public List<M> readNextBatch(@Nonnull String instanceId,
+    public List<M> sendNextBatch(@Nonnull String instanceId,
+                                 int partition,
                                  @Nonnull Session session,
                                  @Nonnull Class<? extends M> type) throws JMSException {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(instanceId));
@@ -131,14 +131,18 @@ public abstract class DbCachedQueue<C, M extends IKeyed> extends AbstractQueue<C
             Transaction tx = session.beginTransaction();
             try {
                 state.check(EObjectState.Available, getClass());
-                String qstr = String.format("FROM %s WHERE (state = :state_n OR state = :state_e) AND instanceId is null ORDER BY createdTimestamp", DbMessage.class.getCanonicalName());
+                String qstr = String.format("FROM %s WHERE queue = :queue AND partition = :partition " +
+                        "AND (state = :state_n OR state = :state_e) AND instanceId is null ORDER BY createdTimestamp",
+                        DbMessage.class.getCanonicalName());
                 Query query = session.createQuery(qstr).setLockMode(LockModeType.PESSIMISTIC_WRITE).setMaxResults(fetchBatchSize);
-                query.setParameter("state_n", ESendState.New);
-                query.setParameter("state_e", ESendState.Error);
+                query.setParameter("queue", name());
+                query.setParameter("partition", partition);
+                query.setParameter("state_n", ESendState.New.name());
+                query.setParameter("state_e", ESendState.Error.name());
 
+                List<M> resutls = new ArrayList<>();
                 List<DbMessage> messages = query.getResultList();
                 if (messages != null && !messages.isEmpty()) {
-                    List<M> resutls = new ArrayList<>(messages.size());
                     for (DbMessage dbm : messages) {
                         byte[] body = dbm.getBody();
                         try {
@@ -159,10 +163,14 @@ public abstract class DbCachedQueue<C, M extends IKeyed> extends AbstractQueue<C
                         }
                         session.save(dbm);
                     }
-
-                    return resutls;
                 }
                 tx.commit();
+                if (!resutls.isEmpty()) {
+                    for (M message : resutls) {
+
+                    }
+                    return resutls;
+                }
                 return null;
             } catch (Exception ex) {
                 tx.rollback();
