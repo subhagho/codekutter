@@ -18,10 +18,7 @@
 package com.codekutter.common.messaging;
 
 import com.codekutter.common.GlobalConstants;
-import com.codekutter.common.model.DbMessage;
-import com.codekutter.common.model.EObjectState;
-import com.codekutter.common.model.IKeyed;
-import com.codekutter.common.model.ObjectState;
+import com.codekutter.common.model.*;
 import com.codekutter.common.stores.ConnectionManager;
 import com.codekutter.common.stores.impl.HibernateConnection;
 import com.codekutter.common.utils.CypherUtils;
@@ -47,34 +44,20 @@ import javax.persistence.Query;
 import java.io.IOException;
 import java.security.Principal;
 import java.util.*;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.locks.ReentrantLock;
 
 @Getter
 @Setter
 @Accessors(fluent = true)
 @SuppressWarnings("rawtypes")
-public abstract class DbCachedQueue<C, M extends IKeyed> extends AbstractQueue<C, M> {
-    public static final int DEFAULT_THREAD_POOL_SIZE = 8;
-    public static final int DEFAULT_FETCH_BATCH_SIZE = 32;
+public abstract class DbCachedQueue<C, M extends IKeyed> extends CachedQueue<C, M> {
 
     @ConfigValue(name = "dbConnection")
     private String dbConnectionName;
-    @ConfigValue
-    private int threadPoolSize = DEFAULT_THREAD_POOL_SIZE;
-    @ConfigValue
-    private int fetchBatchSize = DEFAULT_FETCH_BATCH_SIZE;
     @Setter(AccessLevel.NONE)
     private HibernateConnection dbConnection;
 
-    @Getter(AccessLevel.NONE)
-    @Setter(AccessLevel.NONE)
-    private ExecutorService executorService;
     private ReentrantLock __lock = new ReentrantLock();
-
-    @Setter(AccessLevel.NONE)
-    private ObjectState state = new ObjectState();
 
     public HibernateConnection getDbConnection() throws Exception {
         __lock.lock();
@@ -120,11 +103,26 @@ public abstract class DbCachedQueue<C, M extends IKeyed> extends AbstractQueue<C
         }
     }
 
+    @Override
+    public List<MessageStruct<M>> sendNextBatch(@Nonnull String instanceId,
+                                                int partition,
+                                                @Nonnull Class<? extends M> type) throws JMSException {
+        Preconditions.checkArgument(partition >= 0 && partition < threadPoolSize);
+        try {
+            try (Session session = getDbConnection().connection()) {
+                return sendNextBatch(instanceId, partition, session, type);
+            }
+        } catch (Exception ex) {
+            LogUtils.error(getClass(), ex);
+            throw new JMSException(ex.getLocalizedMessage());
+        }
+    }
+
     @SuppressWarnings("unchecked")
-    public List<M> sendNextBatch(@Nonnull String instanceId,
-                                 int partition,
-                                 @Nonnull Session session,
-                                 @Nonnull Class<? extends M> type) throws JMSException {
+    private List<MessageStruct<M>> sendNextBatch(@Nonnull String instanceId,
+                                                 int partition,
+                                                 @Nonnull Session session,
+                                                 @Nonnull Class<? extends M> type) throws JMSException {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(instanceId));
         __lock.lock();
         try {
@@ -132,7 +130,7 @@ public abstract class DbCachedQueue<C, M extends IKeyed> extends AbstractQueue<C
             try {
                 state.check(EObjectState.Available, getClass());
                 String qstr = String.format("FROM %s WHERE queue = :queue AND partition = :partition " +
-                        "AND (state = :state_n OR state = :state_e) AND instanceId is null ORDER BY createdTimestamp",
+                                "AND (state = :state_n OR state = :state_e) AND instanceId is null ORDER BY createdTimestamp",
                         DbMessage.class.getCanonicalName());
                 Query query = session.createQuery(qstr).setLockMode(LockModeType.PESSIMISTIC_WRITE).setMaxResults(fetchBatchSize);
                 query.setParameter("queue", name());
@@ -140,8 +138,10 @@ public abstract class DbCachedQueue<C, M extends IKeyed> extends AbstractQueue<C
                 query.setParameter("state_n", ESendState.New.name());
                 query.setParameter("state_e", ESendState.Error.name());
 
-                List<M> resutls = new ArrayList<>();
+                List<MessageStruct<M>> resutls = new ArrayList<>();
                 List<DbMessage> messages = query.getResultList();
+                Map<String, String> errors = new HashMap<>();
+
                 if (messages != null && !messages.isEmpty()) {
                     for (DbMessage dbm : messages) {
                         byte[] body = dbm.getBody();
@@ -152,23 +152,45 @@ public abstract class DbCachedQueue<C, M extends IKeyed> extends AbstractQueue<C
                                 String err = String.format("Error reading entity from record. [type=%s][id=%s]", type.getCanonicalName(), dbm.getMessageId());
                                 dbm.setError(err);
                                 LogUtils.error(getClass(), err);
+                                errors.put(dbm.getMessageId(), err);
+                                dbm.setRetryCount(dbm.getRetryCount() + 1);
                             } else {
                                 dbm.setInstanceId(instanceId);
-                                resutls.add(m);
+                                MessageStruct<M> ms = new MessageStruct<>();
+                                ms.message(m);
+                                ms.user(GlobalConstants.getJsonMapper().readValue(dbm.getSender(), Principal.class));
+                                resutls.add(ms);
                             }
                         } catch (Exception ex) {
                             dbm.setState(ESendState.Error);
                             dbm.setError(ex.getLocalizedMessage());
                             LogUtils.error(getClass(), ex);
+                            errors.put(dbm.getMessageId(), ex.getLocalizedMessage());
+                            dbm.setRetryCount(dbm.getRetryCount() + 1);
+                            dbm.setEx(ex);
                         }
-                        session.save(dbm);
+                        boolean saved = false;
+                        if (dbm.getState() == ESendState.Error) {
+                            if (dbm.getRetryCount() > retryCount) {
+                                String err = dbm.getError();
+                                if (dbm.getEx() != null) {
+                                    err = LogUtils.getStackTrace(dbm.getEx());
+                                }
+                                sendError(session, dbm, type, err);
+                                session.delete(dbm);
+                                saved = true;
+                            }
+                        }
+                        if (!saved)
+                            session.save(dbm);
                     }
                 }
                 tx.commit();
                 if (!resutls.isEmpty()) {
-                    for (M message : resutls) {
-
+                    for (MessageStruct<M> message : resutls) {
+                        send(message.message(), message.user());
                     }
+                    updateProcessed(instanceId, session, resutls, errors, type);
                     return resutls;
                 }
                 return null;
@@ -184,18 +206,35 @@ public abstract class DbCachedQueue<C, M extends IKeyed> extends AbstractQueue<C
         }
     }
 
+    private void sendError(Session session, DbMessage message, Class<? extends M> type, String err) throws Exception {
+        DbMessageError error = new DbMessageError();
+        error.setBody(message.getBody());
+        error.setChecksum(message.getChecksum());
+        error.setCreatedTimestamp(message.getCreatedTimestamp());
+        error.setError(err);
+        error.setLength(message.getLength());
+        error.setMessageId(message.getMessageId());
+        error.setMessageType(type.getCanonicalName());
+        error.setQueue(message.getQueue());
+        error.setSender(message.getSender());
+        error.setSentTimestamp(message.getSentTimestamp());
+        error.setState(ESendState.Error);
+
+        session.save(error);
+    }
+
     @SuppressWarnings("unchecked")
-    public void updateProcessed(@Nonnull String instanceId,
-                                @Nonnull Session session,
-                                @Nonnull List<M> records,
-                                Map<String, String> errors,
-                                Class<? extends M> type) throws JMSException {
+    private void updateProcessed(@Nonnull String instanceId,
+                                 @Nonnull Session session,
+                                 @Nonnull List<MessageStruct<M>> records,
+                                 Map<String, String> errors,
+                                 Class<? extends M> type) throws JMSException {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(instanceId));
         Preconditions.checkArgument(!records.isEmpty());
 
         Map<String, M> rMap = new HashMap<>();
-        for (M r : records) {
-            rMap.put(r.getKey().stringKey(), r);
+        for (MessageStruct<M> r : records) {
+            rMap.put(r.message().getKey().stringKey(), r.message());
         }
         __lock.lock();
         try {
@@ -255,7 +294,7 @@ public abstract class DbCachedQueue<C, M extends IKeyed> extends AbstractQueue<C
             Preconditions.checkArgument(node instanceof ConfigPathNode);
             ConfigurationAnnotationProcessor.readConfigAnnotations(getClass(), (ConfigPathNode) node, this);
 
-            executorService = Executors.newFixedThreadPool(threadPoolSize);
+            start();
 
             state.setState(EObjectState.Available);
         } catch (Exception ex) {
@@ -266,7 +305,6 @@ public abstract class DbCachedQueue<C, M extends IKeyed> extends AbstractQueue<C
 
     @Override
     public void close() throws IOException {
-        executorService.shutdown();
     }
 
     public abstract byte[] getBytes(@Nonnull M message) throws JMSException;

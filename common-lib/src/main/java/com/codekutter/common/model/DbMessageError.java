@@ -18,7 +18,6 @@
 package com.codekutter.common.model;
 
 import com.codekutter.common.messaging.ESendState;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -27,17 +26,13 @@ import javax.persistence.*;
 @Getter
 @Setter
 @Entity
-@Table(name = "tb_message_cache")
-public class DbMessage {
+@Table(name = "tb_message_errors")
+public class DbMessageError {
     @Column(name = "queue_name")
     private String queue;
-    @Column(name = "partition")
-    private int partition;
     @Id
     @Column(name = "id")
     private String messageId;
-    @Column(name = "jms_message_id")
-    private String jmsMessageId;
     @Column(name = "checksum")
     private String checksum;
     @Column(name = "length")
@@ -57,11 +52,4 @@ public class DbMessage {
     private String sender;
     @Column(name = "error")
     private String error;
-    @Column(name = "read_instance_id")
-    private String instanceId;
-    @Column(name = "retry_count")
-    private int retryCount = -1;
-    @JsonIgnore
-    @Transient
-    private Throwable ex;
 }
