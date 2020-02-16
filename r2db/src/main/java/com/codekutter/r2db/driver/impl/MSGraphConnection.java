@@ -56,8 +56,6 @@ public class MSGraphConnection extends AbstractConnection<IGraphServiceClient> {
     @ConfigValue(required = true)
     private String clientId;
     @ConfigValue(required = true)
-    private String requestUrl;
-    @ConfigValue(required = true)
     private String username;
     @ConfigValue(required = true)
     private EncryptedValue password;
@@ -144,7 +142,7 @@ public class MSGraphConnection extends AbstractConnection<IGraphServiceClient> {
                 resourceId,
                 clientId,
                 username,
-                password);
+                password.getDecryptedValue());
         writer.write(payload);
         writer.close();
         try {

@@ -27,6 +27,8 @@ import com.microsoft.graph.concurrency.ChunkedUploadProvider;
 import com.microsoft.graph.concurrency.IProgressCallback;
 import com.microsoft.graph.core.ClientException;
 import com.microsoft.graph.models.extensions.*;
+import com.microsoft.graph.options.Option;
+import com.microsoft.graph.options.QueryOption;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
@@ -39,12 +41,16 @@ import java.io.File;
 import java.net.URI;
 import java.nio.channels.Channels;
 import java.nio.channels.ReadableByteChannel;
+import java.util.LinkedList;
 import java.util.concurrent.locks.ReentrantLock;
 
 @Getter
 @Setter
 @Accessors(fluent = true)
 public class OneDriveFileEntity extends RemoteFileEntity<OneDriveFileKey, IGraphServiceClient> {
+    private static final String KEY_TARGET_FORMAT = "format";
+    private static final String TARGET_FORMAT_PDF = "pdf";
+
     @Setter(AccessLevel.NONE)
     private OneDriveFileKey key;
     @Setter(AccessLevel.NONE)
@@ -200,6 +206,50 @@ public class OneDriveFileEntity extends RemoteFileEntity<OneDriveFileKey, IGraph
             } catch (Exception ex) {
                 throw new IOException(ex);
             }
+        }
+        return null;
+    }
+
+    public File convertToPdf() throws IOException {
+        if (!isRemoteFile()) {
+            throw new IOException(String.format("Cannot convert to PDF. [path=%s]", key.path()));
+        }
+        return downloadPDF();
+    }
+
+    private File downloadPDF() throws IOException {
+        Preconditions.checkState(state.getState() != ESyncStatus.Unknown);
+        syncLock.lock();
+        try {
+            if (!state.canSync()) {
+                throw new IOException(String.format("Invalid State: Cannot sync. [key=%s][state=%s]", key.stringKey(), state.getState().name()));
+            }
+
+            state.setState(ESyncStatus.Downloading);
+            String outfile = String.format("%s/%s.%s", getParentFile().getAbsolutePath(), getName(), TARGET_FORMAT_PDF);
+            File outf = new File(outfile);
+            if (outf.exists()) {
+                if (!outf.delete()) {
+                    throw new IOException(String.format("Error deleting file. [path=%s]", outf.getAbsolutePath()));
+                }
+            }
+            LinkedList<Option> requestOptions = new LinkedList<>();
+            requestOptions.add(new QueryOption(KEY_TARGET_FORMAT, TARGET_FORMAT_PDF));
+            InputStream stream = client.me().drive().items(key.id()).content().buildRequest(requestOptions).get();
+            if (stream != null) {
+                try (
+                        ReadableByteChannel remoteChannel = Channels
+                                .newChannel(stream)) {
+                    try (FileOutputStream fos = new FileOutputStream(outf)) {
+                        long size = fos.getChannel()
+                                .transferFrom(remoteChannel, 0, Long.MAX_VALUE);
+                        LogUtils.debug(getClass(), String.format("Downloaded to local file. [path=%s][size=%d]", outf.getAbsolutePath(), size));
+                    }
+                    return outf;
+                }
+            }
+        } finally {
+            syncLock.unlock();
         }
         return null;
     }
