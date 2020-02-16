@@ -66,6 +66,9 @@ public class LogUtils {
 
     private static final Logger LOGGER = LoggerFactory.getLogger("DEFAULT");
 
+    public static boolean isDebugEnabled() {
+        return LOGGER.isDebugEnabled();
+    }
 
     /**
      * Log an INFO message to the default logger handle.

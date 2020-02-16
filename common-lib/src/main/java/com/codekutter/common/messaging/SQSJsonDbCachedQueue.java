@@ -17,28 +17,19 @@
 
 package com.codekutter.common.messaging;
 
-import com.codekutter.common.GlobalConstants;
 import com.codekutter.common.model.DefaultStringMessage;
 import com.codekutter.common.utils.LogUtils;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.base.Strings;
 
 import javax.annotation.Nonnull;
 import javax.jms.JMSException;
 import javax.jms.TextMessage;
-import java.nio.charset.StandardCharsets;
 import java.security.Principal;
 
 public class SQSJsonDbCachedQueue extends AbstractSQSDbCachedQueue<DefaultStringMessage> {
     @Override
-    public TextMessage message(DefaultStringMessage message) throws JMSException {
+    public TextMessage message(DefaultStringMessage message) throws  JMSException {
         try {
-            message.setQueue(queue());
-            message.setTimestamp(System.currentTimeMillis());
-
-            ObjectMapper mapper = GlobalConstants.getJsonMapper();
-            String json = mapper.writeValueAsString(message);
-            return session().createTextMessage(json);
+            return DefaultStringMessageUtils.message(session(), queue(), message);
         } catch (Exception ex) {
             LogUtils.error(getClass(), ex);
             throw new JMSException(ex.getLocalizedMessage());
@@ -48,10 +39,7 @@ public class SQSJsonDbCachedQueue extends AbstractSQSDbCachedQueue<DefaultString
     @Override
     public DefaultStringMessage message(TextMessage message, Principal user) throws JMSException {
         try {
-            ObjectMapper mapper = GlobalConstants.getJsonMapper();
-            DefaultStringMessage m = mapper.readValue(message.getText(), DefaultStringMessage.class);
-            m.setMessageId(message.getJMSMessageID());
-            return m;
+            return DefaultStringMessageUtils.message(message);
         } catch (Exception ex) {
             LogUtils.error(getClass(), ex);
             throw new JMSException(ex.getLocalizedMessage());
@@ -61,11 +49,7 @@ public class SQSJsonDbCachedQueue extends AbstractSQSDbCachedQueue<DefaultString
     @Override
     public byte[] getBytes(@Nonnull DefaultStringMessage message) throws JMSException {
         try {
-            String json = GlobalConstants.getJsonMapper().writeValueAsString(message);
-            if (!Strings.isNullOrEmpty(json)) {
-                return json.getBytes(StandardCharsets.UTF_8);
-            }
-            return new byte[0];
+            return DefaultStringMessageUtils.getBytes(message);
         } catch (Exception ex) {
             LogUtils.error(getClass(), ex);
             throw new JMSException(ex.getLocalizedMessage());
@@ -75,9 +59,7 @@ public class SQSJsonDbCachedQueue extends AbstractSQSDbCachedQueue<DefaultString
     @Override
     public DefaultStringMessage readMessage(@Nonnull byte[] body) throws JMSException {
         try {
-            DefaultStringMessage message = GlobalConstants.getJsonMapper().readValue(body, DefaultStringMessage.class);
-            LogUtils.debug(getClass(), message);
-            return message;
+            return DefaultStringMessageUtils.readMessage(body);
         } catch (Exception ex) {
             LogUtils.error(getClass(), ex);
             throw new JMSException(ex.getLocalizedMessage());

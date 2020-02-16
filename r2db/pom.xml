@@ -52,6 +52,17 @@
             <artifactId>hibernate-ogm-core</artifactId>
             <version>5.4.1.Final</version>
         </dependency>
+        <!-- https://mvnrepository.com/artifact/com.github.scribejava/scribejava-apis -->
+        <dependency>
+            <groupId>com.github.scribejava</groupId>
+            <artifactId>scribejava-apis</artifactId>
+            <version>6.9.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.microsoft.graph</groupId>
+            <artifactId>microsoft-graph</artifactId>
+            <version>1.5.0</version>
+        </dependency>
         <dependency>
             <groupId>com.codekutter</groupId>
             <artifactId>common-lib</artifactId>
@@ -69,7 +80,6 @@
             <version>2.5.2</version>
             <scope>test</scope>
         </dependency>
-
     </dependencies>
 
     <build>

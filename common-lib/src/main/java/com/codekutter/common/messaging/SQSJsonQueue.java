@@ -39,12 +39,7 @@ public class SQSJsonQueue extends AbstractSQSQueue<DefaultStringMessage> {
     @Override
     public TextMessage message(DefaultStringMessage message) throws  JMSException {
         try {
-            message.setQueue(queue());
-            message.setTimestamp(System.currentTimeMillis());
-
-            ObjectMapper mapper = GlobalConstants.getJsonMapper();
-            String json = mapper.writeValueAsString(message);
-            return session().createTextMessage(json);
+            return DefaultStringMessageUtils.message(session(), queue(), message);
         } catch (Exception ex) {
             LogUtils.error(getClass(), ex);
             throw new JMSException(ex.getLocalizedMessage());
@@ -54,10 +49,7 @@ public class SQSJsonQueue extends AbstractSQSQueue<DefaultStringMessage> {
     @Override
     public DefaultStringMessage message(TextMessage message, Principal user) throws JMSException {
         try {
-            ObjectMapper mapper = GlobalConstants.getJsonMapper();
-            DefaultStringMessage m = mapper.readValue(message.getText(), DefaultStringMessage.class);
-            m.setMessageId(message.getJMSMessageID());
-            return m;
+            return DefaultStringMessageUtils.message(message);
         } catch (Exception ex) {
             LogUtils.error(getClass(), ex);
             throw new JMSException(ex.getLocalizedMessage());
