@@ -21,6 +21,7 @@ import com.amazon.sqs.javamessaging.ProviderConfiguration;
 import com.amazon.sqs.javamessaging.SQSConnection;
 import com.amazon.sqs.javamessaging.SQSConnectionFactory;
 import com.amazonaws.ClientConfiguration;
+import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.auth.profile.ProfileCredentialsProvider;
 import com.amazonaws.services.sqs.AmazonSQSClientBuilder;
 import com.codekutter.common.stores.AbstractConnection;
@@ -94,11 +95,14 @@ public class AwsSQSConnection extends AbstractConnection<SQSConnection> {
                 throw new ConfigurationException(String.format("Invalid connection configuration. [node=%s]", node.getAbsolutePath()));
             }
             ClientConfiguration config = configBuilder((ConfigPathNode) cnode);
+            ProfileCredentialsProvider provider = new ProfileCredentialsProvider(profile);
+            // Only to check a valid profile is specified.
+            provider.getCredentials();
             connectionFactory = new SQSConnectionFactory(
                     new ProviderConfiguration(),
                     AmazonSQSClientBuilder.standard()
                             .withRegion(region).withClientConfiguration(config)
-                            .withCredentials(new ProfileCredentialsProvider(profile))
+                            .withCredentials(provider)
             );
             connection = connectionFactory.createConnection();
             connection.start();

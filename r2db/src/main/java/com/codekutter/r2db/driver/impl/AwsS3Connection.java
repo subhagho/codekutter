@@ -90,10 +90,13 @@ public class AwsS3Connection extends AbstractConnection<AmazonS3> {
                 throw new ConfigurationException(String.format("Invalid connection configuration. [node=%s]", node.getAbsolutePath()));
             }
             ClientConfiguration config = configBuilder((ConfigPathNode) cnode);
+            ProfileCredentialsProvider provider = new ProfileCredentialsProvider(profile);
+            // Only to check a valid profile is specified.
+            provider.getCredentials();
             client = AmazonS3ClientBuilder.standard()
                     .withRegion(region)
                     .withClientConfiguration(config)
-                    .withCredentials(new ProfileCredentialsProvider(profile)).build();
+                    .withCredentials(provider).build();
             state().setState(EConnectionState.Open);
         } catch (Throwable t) {
             state().setError(t);
