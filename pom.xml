@@ -28,9 +28,9 @@
     <modules>
         <module>common-lib</module>
         <module>zconfig-common</module>
+        <module>r2db</module>
         <module>zconfig-client</module>
         <module>zconfig-server</module>
-        <module>r2db</module>
     </modules>
 
     <name>codekutter</name>
