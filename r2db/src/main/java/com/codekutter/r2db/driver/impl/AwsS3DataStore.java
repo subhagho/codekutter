@@ -128,10 +128,10 @@ public class AwsS3DataStore extends AbstractDirectoryStore<AmazonS3> {
 
         try {
             S3FileEntity fe = (S3FileEntity) entity;
-            if (fe.remoteExists()) {
+            if (fe.withClient(connection().connection()).remoteExists()) {
                 throw new DataStoreException(String.format("Duplicate file: Remote file with key already exists. [key=%s]", fe.getKey().key()));
             }
-            String key = fe.withClient(connection().connection()).copyToRemote();
+            String key = fe.copyToRemote();
             if (Strings.isNullOrEmpty(key)) {
                 throw new DataStoreException(String.format("Error uploading file to S3. [key=%s]", entity.getKey().stringKey()));
             }

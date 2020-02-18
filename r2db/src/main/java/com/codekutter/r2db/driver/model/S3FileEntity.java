@@ -33,7 +33,7 @@ import java.io.*;
 import java.net.URI;
 
 public class S3FileEntity extends RemoteFileEntity<S3FileKey, AmazonS3> {
-    private static final int DEFAULT_BUFFER_SIZE = 2048;
+    private static final int DEFAULT_BUFFER_SIZE = 8 * 1024;
     private S3FileKey key;
     private AmazonS3 client;
 
@@ -133,13 +133,11 @@ public class S3FileEntity extends RemoteFileEntity<S3FileKey, AmazonS3> {
                 source.getObjectContent())) {
             try (FileOutputStream fos = new FileOutputStream(this)) {
                 byte[] buffer = new byte[DEFAULT_BUFFER_SIZE];
-                int offset = 0;
                 while (true) {
-                    int size = reader.read(buffer, offset, DEFAULT_BUFFER_SIZE);
+                    int size = reader.read(buffer, 0, DEFAULT_BUFFER_SIZE);
                     if (size <= 0) break;
-                    fos.write(buffer, offset, size);
+                    fos.write(buffer, 0, size);
                     if (size < DEFAULT_BUFFER_SIZE) break;
-                    offset += size;
                 }
             }
         }

@@ -21,6 +21,7 @@ import com.amazon.sqs.javamessaging.ProviderConfiguration;
 import com.amazon.sqs.javamessaging.SQSConnection;
 import com.amazon.sqs.javamessaging.SQSConnectionFactory;
 import com.amazonaws.ClientConfiguration;
+import com.amazonaws.auth.profile.ProfileCredentialsProvider;
 import com.amazonaws.services.sqs.AmazonSQSClientBuilder;
 import com.codekutter.common.stores.AbstractConnection;
 import com.codekutter.common.stores.ConnectionException;
@@ -50,8 +51,11 @@ import java.util.concurrent.ConcurrentHashMap;
 @Setter
 @Accessors(fluent = true)
 public class AwsSQSConnection extends AbstractConnection<SQSConnection> {
+    public static final String DEFAULT_PROFILE = "default";
     @ConfigAttribute(required = true)
     private String region;
+    @ConfigAttribute
+    private String profile = DEFAULT_PROFILE;
     @Setter(AccessLevel.NONE)
     @Getter(AccessLevel.NONE)
     private SQSConnectionFactory connectionFactory = null;
@@ -94,6 +98,7 @@ public class AwsSQSConnection extends AbstractConnection<SQSConnection> {
                     new ProviderConfiguration(),
                     AmazonSQSClientBuilder.standard()
                             .withRegion(region).withClientConfiguration(config)
+                            .withCredentials(new ProfileCredentialsProvider(profile))
             );
             connection = connectionFactory.createConnection();
             connection.start();

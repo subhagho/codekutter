@@ -18,6 +18,7 @@
 package com.codekutter.r2db.driver.impl;
 
 import com.amazonaws.ClientConfiguration;
+import com.amazonaws.auth.profile.ProfileCredentialsProvider;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.codekutter.common.messaging.AwsSQSConnection;
@@ -48,8 +49,12 @@ import java.util.Map;
 @Setter
 @Accessors(fluent = true)
 public class AwsS3Connection extends AbstractConnection<AmazonS3> {
+    public static final String DEFAULT_PROFILE = "profile";
+
     @ConfigAttribute(required = true)
     private String region;
+    @ConfigAttribute
+    private String profile = DEFAULT_PROFILE;
     @Getter(AccessLevel.NONE)
     @Setter(AccessLevel.NONE)
     private AmazonS3 client = null;
@@ -86,7 +91,9 @@ public class AwsS3Connection extends AbstractConnection<AmazonS3> {
             }
             ClientConfiguration config = configBuilder((ConfigPathNode) cnode);
             client = AmazonS3ClientBuilder.standard()
-                    .withRegion(region).withClientConfiguration(config).build();
+                    .withRegion(region)
+                    .withClientConfiguration(config)
+                    .withCredentials(new ProfileCredentialsProvider(profile)).build();
             state().setState(EConnectionState.Open);
         } catch (Throwable t) {
             state().setError(t);

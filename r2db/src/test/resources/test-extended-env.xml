@@ -81,7 +81,8 @@
                        queue="ingest-queue-01">
                     <receiveTimeout>50000</receiveTimeout>
                     <connection name="TEST-SQS-CONNECTION" region="us-east-2"
-                                class="com.codekutter.common.messaging.AwsSQSConnection">
+                                class="com.codekutter.common.messaging.AwsSQSConnection"
+                                profile="test">
                         <parameters>
                             <maxConnections>20</maxConnections>
                             <connectionTimeout>20000</connectionTimeout>
@@ -131,13 +132,13 @@
         <r2db>
             <entity-manager>
                 <connections>
-                    <connection name="TestOneDriveConnection" class="com.codekutter.r2db.driver.impl.MSGraphConnection">
+                    <!--connection name="TestOneDriveConnection" class="com.codekutter.r2db.driver.impl.MSGraphConnection">
                         <clientId>3a1bcfe7-d2e4-42d2-a304-e98f9f14dd4b</clientId>
                         <username>subho.ghosh@outlook.com</username>
                         <password encrypted="true">
                             <value>VbbX5Nmm3TO/ELnM7Zssrw==</value>
                         </password>
-                    </connection>
+                    </connection -->
                     <connection name="TestAuditConnection" class="com.codekutter.common.stores.impl.HibernateConnection"
                                 driver="org.mariadb.jdbc.Driver" dialect="org.hibernate.dialect.MariaDBDialect">
                         <url>jdbc:mariadb://127.0.0.1:3306/test</url>
