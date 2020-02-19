@@ -68,7 +68,7 @@ public class ElasticSearchHelper {
             String json = GlobalConstants.getJsonMapper().writeValueAsString(entity);
             IndexRequest request = new IndexRequest(index);
             request.id(entity.getKey().stringKey());
-            request.source(XContentType.JSON, json);
+            request.source(json, XContentType.JSON);
             IndexResponse response = client.index(request, RequestOptions.DEFAULT);
             if (response.getResult() == DocWriteResponse.Result.CREATED) {
                 LogUtils.debug(getClass(), json);
@@ -76,9 +76,12 @@ public class ElasticSearchHelper {
                 LogUtils.debug(getClass(), json);
             }
             ReplicationResponse.ShardInfo shardInfo = response.getShardInfo();
+            /*
             if (shardInfo.getTotal() != shardInfo.getSuccessful()) {
-                throw new DataStoreException(String.format("Error replicating to shards. [count=%d][index=%s]", shardInfo.getSuccessful(), index));
+                throw new DataStoreException(String.format("Error replicating to shards. [total=%d][count=%d][index=%s]",
+                        shardInfo.getTotal(), shardInfo.getSuccessful(), index));
             }
+             */
             if (shardInfo.getFailed() > 0) {
                 StringBuffer buffer = new StringBuffer();
                 for (ReplicationResponse.ShardInfo.Failure failure :
@@ -107,9 +110,8 @@ public class ElasticSearchHelper {
                 }
             }
             String json = GlobalConstants.getJsonMapper().writeValueAsString(entity);
-            UpdateRequest request = new UpdateRequest(index, entity.getKey().stringKey());
-            request.doc(XContentType.JSON, json);
-            UpdateResponse response = client.update(request,RequestOptions.DEFAULT);
+            UpdateRequest request = new UpdateRequest(index, entity.getKey().stringKey()).doc(json, XContentType.JSON);
+            UpdateResponse response = client.update(request, RequestOptions.DEFAULT);
             if (response.getResult() == DocWriteResponse.Result.CREATED) {
                 LogUtils.debug(getClass(), json);
             } else if (response.getResult() == DocWriteResponse.Result.UPDATED) {
@@ -148,7 +150,7 @@ public class ElasticSearchHelper {
                     index = indx.index();
                 }
             }
-            DeleteRequest request = new DeleteRequest(index,  k.stringKey());
+            DeleteRequest request = new DeleteRequest(index, k.stringKey());
             DeleteResponse response = client.delete(request, RequestOptions.DEFAULT);
             if (response.getResult() == DocWriteResponse.Result.DELETED) {
                 return true;

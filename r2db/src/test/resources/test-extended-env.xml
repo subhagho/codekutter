@@ -178,6 +178,11 @@
                             </parameters>
                         </hibernate>
                     </connection>
+                    <connection name="TestEsConnection" class="com.codekutter.r2db.driver.impl.ElasticSearchConnection">
+                        <hosts>
+                            <host>127.0.0.1:9200</host>
+                        </hosts>
+                    </connection>
                     <connection name="TestRestConnection" class="com.codekutter.common.stores.impl.RestConnection"
                                 useSSL="true">
                         <param name="connection.timeout" type="INT">200</param>
@@ -196,6 +201,12 @@
                         <dataStore name="TestDataStore" class="com.codekutter.common.stores.impl.RdbmsConfig"
                                    dataStoreClass="com.codekutter.common.stores.impl.RdbmsDataStore"
                                    connection="TestDbConnection" connectionType="org.hibernate.Session"
+                                   auditContextProvider="com.codekutter.common.stores.DataSourceContextGenerator">
+                        </dataStore>
+                        <dataStore name="TestSearchableStore" class="com.codekutter.common.stores.impl.RdbmsConfig"
+                                   dataStoreClass="com.codekutter.r2db.driver.impl.SearchableRdbmsDataStore"
+                                   connection="TestDbConnection" connectionType="org.hibernate.Session"
+                                   readConnection="TestEsConnection"
                                    auditContextProvider="com.codekutter.common.stores.DataSourceContextGenerator">
                         </dataStore>
                     </dataStores>

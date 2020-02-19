@@ -82,17 +82,21 @@ public class LocalDirectoryStore extends AbstractDirectoryStore<File> {
 
     @Override
     public void configureDataStore(@Nonnull DataStoreManager dataStoreManager) throws ConfigurationException {
-        Preconditions.checkArgument(config() instanceof LocalDirStoreConfig);
-        AbstractConnection<File> connection = dataStoreManager.getConnection(config().connectionName(), File.class);
-        if (!(connection instanceof LocalDirectoryConnection)) {
-            throw new ConfigurationException(String.format("No connection found for name. [name=%s]", config().connectionName()));
-        }
-        withConnection(connection);
-        LocalDirStoreConfig config = (LocalDirStoreConfig)config();
-        directory = new File(config.directory());
-        if (!directory.exists() || !directory.isDirectory()) {
-            throw new ConfigurationException(String.format("Specified directory not found. [path=%s]",
-                    directory.getAbsolutePath()));
+        try {
+            Preconditions.checkArgument(config() instanceof LocalDirStoreConfig);
+            AbstractConnection<File> connection = dataStoreManager.getConnection(config().connectionName(), File.class);
+            if (!(connection instanceof LocalDirectoryConnection)) {
+                throw new ConfigurationException(String.format("No connection found for name. [name=%s]", config().connectionName()));
+            }
+            withConnection(connection);
+            LocalDirStoreConfig config = (LocalDirStoreConfig) config();
+            directory = new File(config.directory());
+            if (!directory.exists() || !directory.isDirectory()) {
+                throw new ConfigurationException(String.format("Specified directory not found. [path=%s]",
+                        directory.getAbsolutePath()));
+            }
+        } catch (DataStoreException ex) {
+            throw new ConfigurationException(ex);
         }
     }
 

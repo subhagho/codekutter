@@ -25,6 +25,7 @@ import com.codekutter.common.model.StringKey;
 import com.codekutter.common.model.ValidationExceptions;
 import com.codekutter.common.stores.annotations.EJoinType;
 import com.codekutter.common.stores.annotations.Reference;
+import com.codekutter.r2db.driver.impl.annotations.Indexed;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -39,6 +40,7 @@ import java.util.List;
 @Entity
 @Table(name = "tb_orders")
 @Audited
+@Indexed(index = "order_index")
 public class Order implements IEntity<OrderKey> {
     @EmbeddedId
     private OrderKey id;

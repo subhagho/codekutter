@@ -55,10 +55,8 @@ public class ConfigSetupUtils {
     private EOperation operation;
 
     private void execute(String[] args) throws Exception {
-        CmdLineParser parser = new CmdLineParser(this);
-        // if you have a wider console, you could increase the value;
-        // here 80 is also the default
-        parser.setUsageWidth(80);
+        ParserProperties props = ParserProperties.defaults().withUsageWidth(256);
+        CmdLineParser parser = new CmdLineParser(this, props);
 
         String value = null;
         try {

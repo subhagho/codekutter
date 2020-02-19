@@ -31,7 +31,7 @@ import javax.persistence.*;
 @Setter
 @Entity
 @Table(name = "tb_product")
-@Indexed(index = "product")
+@Indexed(index = "product_index")
 public class Product implements IEntity<ProductKey> {
     @EmbeddedId
     private ProductKey id;

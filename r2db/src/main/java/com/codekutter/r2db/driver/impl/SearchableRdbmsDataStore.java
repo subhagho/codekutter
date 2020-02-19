@@ -141,7 +141,7 @@ public class SearchableRdbmsDataStore extends RdbmsDataStore implements ISearcha
             CacheEntry cce = entries.get(entity.getKey());
             if (cce.entryType == EAuditType.Create) {
                 cce.entity = entity;
-            } else if (cce.entryType == EAuditType.Delete){
+            } else if (cce.entryType == EAuditType.Delete) {
                 throw new DataStoreException(String.format("Attempt to update an entity that has been deleted. [type=%s][key=%s]",
                         type.getCanonicalName(), entity.getKey().stringKey()));
             } else {
@@ -160,7 +160,7 @@ public class SearchableRdbmsDataStore extends RdbmsDataStore implements ISearcha
             CacheEntry ce = new CacheEntry();
             ce.entryType = EAuditType.Create;
             ce.entity = null;
-            IKey k = (IKey)key;
+            IKey k = (IKey) key;
             Map<IKey, CacheEntry> entries = null;
             if (dirtyCache.containsKey(type)) {
                 entries = dirtyCache.get(type);
@@ -172,7 +172,7 @@ public class SearchableRdbmsDataStore extends RdbmsDataStore implements ISearcha
                 CacheEntry cce = entries.get(k);
                 if (cce.entryType == EAuditType.Create) {
                     entries.remove(k);
-                } else if (cce.entryType == EAuditType.Delete){
+                } else if (cce.entryType == EAuditType.Delete) {
                     throw new DataStoreException(String.format("Attempt to delete an entity that has been deleted. [type=%s][key=%s]",
                             type.getCanonicalName(), k.stringKey()));
                 } else {
@@ -205,15 +205,16 @@ public class SearchableRdbmsDataStore extends RdbmsDataStore implements ISearcha
     }
 
     @Override
-    public void configure(@Nonnull DataStoreManager dataStoreManager) throws ConfigurationException {
+    public void configureDataStore(@Nonnull DataStoreManager dataStoreManager) throws ConfigurationException {
         Preconditions.checkArgument(config() instanceof RdbmsConfig);
-        AbstractConnection<Session> connection =
-                dataStoreManager.getConnection(config().connectionName(), Session.class);
-        if (!(connection instanceof HibernateConnection)) {
-            throw new ConfigurationException(String.format("No connection found for name. [name=%s]", config().connectionName()));
-        }
-        withConnection(connection);
         try {
+            AbstractConnection<Session> connection =
+                    dataStoreManager.getConnection(config().connectionName(), Session.class);
+            if (!(connection instanceof HibernateConnection)) {
+                throw new ConfigurationException(String.format("No connection found for name. [name=%s]", config().connectionName()));
+            }
+            withConnection(connection);
+            session = connection.connection();
             if (!Strings.isNullOrEmpty(((RdbmsConfig) config()).readConnectionName())) {
                 AbstractConnection<RestHighLevelClient> rc =
                         (AbstractConnection<RestHighLevelClient>) dataStoreManager.getConnection(((RdbmsConfig) config()).readConnectionName(), RestHighLevelClient.class);

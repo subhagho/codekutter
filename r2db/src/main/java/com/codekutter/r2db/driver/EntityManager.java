@@ -131,6 +131,10 @@ public class EntityManager implements IConfigurable {
         if (dataStore == null) {
             throw new DataStoreException(String.format("No data store found for entity. [type=%s]", type.getCanonicalName()));
         }
+        beingTransaction(dataStore);
+    }
+
+    public <T> void beingTransaction(@Nonnull AbstractDataStore<T> dataStore) throws DataStoreException {
         if ((dataStore instanceof TransactionDataStore)) {
             if (!((TransactionDataStore) dataStore).isInTransaction()) {
                 ((TransactionDataStore) dataStore).beingTransaction();
@@ -218,6 +222,7 @@ public class EntityManager implements IConfigurable {
             throw new DataStoreException(String.format("No data store found for entity. [type=%s]",
                     type.getCanonicalName()));
         }
+
         return create(entity, type, dataStore, user, context);
     }
 
@@ -228,9 +233,8 @@ public class EntityManager implements IConfigurable {
                                            @Nonnull Principal user,
                                            Context context) throws DataStoreException {
         try {
+            beingTransaction(dataStore);
             entity.validate();
-
-
             entity = (E) formatEntity(entity, context);
             entity.validate();
             entity = dataStore.create(entity, type, context);
@@ -358,6 +362,7 @@ public class EntityManager implements IConfigurable {
                                            @Nonnull Principal user,
                                            Context context) throws DataStoreException {
         try {
+            beingTransaction(dataStore);
             entity.validate();
             E prev = null;
             if (type.isAnnotationPresent(Audited.class)) {
@@ -532,6 +537,7 @@ public class EntityManager implements IConfigurable {
                                                                     @Nonnull Principal user,
                                                                     Context context) throws DataStoreException {
         try {
+            beingTransaction(dataStore);
             E prev = null;
             if (type.isAnnotationPresent(Audited.class)) {
                 prev = (E) find(entity.getKey(), type, dataStore, context);

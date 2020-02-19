@@ -62,11 +62,11 @@ public class DataStoreManager implements IConfigurable {
         private Map<Integer, String> shards = new HashMap<>();
     }
 
-    private Map<String, AbstractConnection<?>> connections = new HashMap<>();
-    private Map<Class<? extends IEntity>, Map<Class<? extends AbstractDataStore>, DataStoreConfig>> entityIndex = new HashMap<>();
-    private Map<String, DataStoreConfig> dataStoreConfigs = new HashMap<>();
-    private Map<Class<? extends IShardedEntity>, ShardConfig> shardConfigs = new HashMap<>();
-    private MapThreadCache<String, AbstractDataStore> openedStores = new MapThreadCache<>();
+    private final Map<String, AbstractConnection<?>> connections = new HashMap<>();
+    private final Map<Class<? extends IEntity>, Map<Class<? extends AbstractDataStore>, DataStoreConfig>> entityIndex = new HashMap<>();
+    private final Map<String, DataStoreConfig> dataStoreConfigs = new HashMap<>();
+    private final Map<Class<? extends IShardedEntity>, ShardConfig> shardConfigs = new HashMap<>();
+    private final MapThreadCache<String, AbstractDataStore> openedStores = new MapThreadCache<>();
 
     public boolean isTypeSupported(@Nonnull Class<?> type) {
         if (ReflectionUtils.implementsInterface(IEntity.class, type)) {
@@ -76,8 +76,17 @@ public class DataStoreManager implements IConfigurable {
     }
 
     @SuppressWarnings("unchecked")
-    public <T> AbstractConnection<T> getConnection(@Nonnull String name, Class<? extends T> type) {
-        return (AbstractConnection<T>) connections.get(name);
+    public <T> AbstractConnection<T> getConnection(@Nonnull String name, Class<? extends T> type) throws DataStoreException {
+        AbstractConnection<T> connection = (AbstractConnection<T>) connections.get(name);
+        if (connection == null) {
+            synchronized (connections) {
+                connection = ConnectionManager.get().connection(name, type);
+                if (connection != null) {
+                    connections.put(connection.name(), connection);
+                }
+            }
+        }
+        return connection;
     }
 
     @SuppressWarnings("rawtypes")

@@ -19,9 +19,9 @@ package com.codekutter.r2db.driver;
 
 import com.codekutter.common.ConfigTestConstants;
 import com.codekutter.common.TestDataHelper;
-import com.codekutter.common.stores.impl.RdbmsDataStore;
 import com.codekutter.common.stores.model.*;
 import com.codekutter.common.utils.LogUtils;
+import com.codekutter.r2db.driver.impl.SearchableRdbmsDataStore;
 import com.codekutter.zconfig.common.ConfigProviderFactory;
 import com.codekutter.zconfig.common.R2dbEnv;
 import com.codekutter.zconfig.common.model.Version;
@@ -63,7 +63,7 @@ class EntityManagerTest {
             entityManager = R2dbEnv.env().getEntityManager();
             assertNotNull(entityManager);
 
-            Thread.sleep(35000);
+            Thread.sleep(15000);
         } catch (Throwable t) {
             LogUtils.error(EntityManagerTest.class, t);
             throw t;
@@ -73,7 +73,7 @@ class EntityManagerTest {
     @AfterAll
     static void shutdown() {
         try {
-            Thread.sleep(30000);
+            Thread.sleep(10000);
             R2dbEnv.shutdown();
         } catch (Throwable t) {
             LogUtils.error(EntityManagerTest.class, t);
@@ -100,15 +100,14 @@ class EntityManagerTest {
     @Test
     void create() {
         try {
-            entityManager.beingTransaction(Customer.class, RdbmsDataStore.class);
             try {
                 List<Product> products = TestDataHelper.createProducts(5, null);
                 for (Product p : products) {
-                    entityManager.create(p, Product.class, user, null, RdbmsDataStore.class);
+                    entityManager.create(p, Product.class, user, null, SearchableRdbmsDataStore.class);
                 }
                 List<Order> orders = TestDataHelper.createData(products, 10);
                 for (Order order : orders) {
-                    entityManager.create(order, Order.class, user, null, RdbmsDataStore.class);
+                    entityManager.create(order, Order.class, user, null, SearchableRdbmsDataStore.class);
                 }
                 entityManager.commit();
             } catch (Throwable t) {
@@ -131,7 +130,7 @@ class EntityManagerTest {
             assertNotNull(orders);
             assertEquals(3, orders.size());
 
-            Order order = entityManager.find(orders.get(2).getKey(), Order.class, RdbmsDataStore.class, null);
+            Order order = entityManager.find(orders.get(2).getKey(), Order.class, SearchableRdbmsDataStore.class, null);
             assertNotNull(order);
             List<Item> items = order.getItems();
             assertNotNull(items);
@@ -140,9 +139,8 @@ class EntityManagerTest {
                 assertTrue(item.getQuantity() > 0);
             }
             items.remove(0);
-            entityManager.beingTransaction(Customer.class, RdbmsDataStore.class);
             try {
-                entityManager.update(order, Order.class, user, null, RdbmsDataStore.class);
+                entityManager.update(order, Order.class, user, null, SearchableRdbmsDataStore.class);
                 entityManager.commit();
             } catch (Throwable t) {
                 entityManager.rollback();
@@ -169,7 +167,7 @@ class EntityManagerTest {
             assertNotNull(orders);
             assertEquals(3, orders.size());
 
-            Order order = entityManager.find(orders.get(2).getKey(), Order.class, RdbmsDataStore.class, null);
+            Order order = entityManager.find(orders.get(2).getKey(), Order.class, SearchableRdbmsDataStore.class, null);
             assertNotNull(order);
             List<Item> items = order.getItems();
             assertNotNull(items);
@@ -222,15 +220,15 @@ class EntityManagerTest {
 
     private List<Order> createOrders(String productPrefix, int count, int orderCount) throws Exception {
         try {
-            entityManager.beingTransaction(Customer.class, RdbmsDataStore.class);
+            entityManager.beingTransaction(Customer.class, SearchableRdbmsDataStore.class);
             try {
                 List<Product> products = TestDataHelper.createProducts(count, productPrefix);
                 for (Product p : products) {
-                    entityManager.create(p, Product.class, user, null, RdbmsDataStore.class);
+                    entityManager.create(p, Product.class, user, null, SearchableRdbmsDataStore.class);
                 }
                 List<Order> orders = TestDataHelper.createData(products, orderCount);
                 for (Order order : orders) {
-                    entityManager.create(order, Order.class, user, null, RdbmsDataStore.class);
+                    entityManager.create(order, Order.class, user, null, SearchableRdbmsDataStore.class);
                 }
                 entityManager.commit();
 
