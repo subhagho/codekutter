@@ -18,14 +18,12 @@
 package com.codekutter.r2db.driver.impl;
 
 import com.codekutter.common.Context;
+import com.codekutter.common.stores.*;
 import com.codekutter.common.stores.impl.DataStoreAuditContext;
+import com.codekutter.common.stores.impl.EntitySearchResult;
 import com.codekutter.r2db.driver.model.FileEntity;
 import com.codekutter.common.model.IEntity;
 import com.codekutter.common.model.StringEntity;
-import com.codekutter.common.stores.AbstractConnection;
-import com.codekutter.common.stores.AbstractDirectoryStore;
-import com.codekutter.common.stores.DataStoreException;
-import com.codekutter.common.stores.DataStoreManager;
 import com.codekutter.common.utils.ReflectionUtils;
 import com.codekutter.zconfig.common.ConfigurationException;
 import com.google.common.base.Preconditions;
@@ -165,7 +163,7 @@ public class LocalDirectoryStore extends AbstractDirectoryStore<File> {
 
     @Override
     @SuppressWarnings("unchecked")
-    public <E extends IEntity> Collection<E> doSearch(@Nonnull String query,
+    public <E extends IEntity> BaseSearchResult<E> doSearch(@Nonnull String query,
                                                       int offset,
                                                       int maxResults,
                                                       @Nonnull Class<? extends E> type,
@@ -192,7 +190,12 @@ public class LocalDirectoryStore extends AbstractDirectoryStore<File> {
                 array = array.subList(0, maxResults - 1);
             }
             if (!array.isEmpty()) {
-                return (Collection<E>) array;
+                EntitySearchResult<FileEntity> er = new EntitySearchResult<>();
+                er.query(query);
+                er.offset(offset);
+                er.count(array.size());
+                er.entities(array);
+                return (BaseSearchResult<E>) er;
             }
             return null;
         } catch (Exception ex) {
@@ -219,12 +222,12 @@ public class LocalDirectoryStore extends AbstractDirectoryStore<File> {
     }
 
     @Override
-    public <E extends IEntity> Collection<E> doSearch(@Nonnull String query,
-                                                      int offset,
-                                                      int maxResults,
-                                                      Map<String, Object> parameters,
-                                                      @Nonnull Class<? extends E> type,
-                                                      Context context) throws DataStoreException {
+    public <E extends IEntity> BaseSearchResult<E> doSearch(@Nonnull String query,
+                                                            int offset,
+                                                            int maxResults,
+                                                            Map<String, Object> parameters,
+                                                            @Nonnull Class<? extends E> type,
+                                                            Context context) throws DataStoreException {
         return doSearch(query, offset, maxResults, type, context);
     }
 

@@ -18,17 +18,30 @@
 package com.codekutter.common.stores;
 
 import com.codekutter.common.Context;
+import com.codekutter.common.model.IEntity;
 import org.apache.lucene.search.Query;
 
 import javax.annotation.Nonnull;
 import java.util.List;
 
 public interface ISearchable {
-    <T> List<T> textSearch(@Nonnull Query query, @Nonnull Class<? extends T> type, Context context) throws DataStoreException;
+    <T extends IEntity> BaseSearchResult<T> textSearch(@Nonnull Query query,
+                                                       @Nonnull Class<? extends T> type,
+                                                       Context context) throws DataStoreException;
 
-    <T> List<T> textSearch(@Nonnull Query query, int batchSize, int offset, @Nonnull Class<? extends T> type, Context context) throws DataStoreException;
+    <T extends IEntity> BaseSearchResult<T> textSearch(@Nonnull Query query,
+                                                       int batchSize,
+                                                       int offset,
+                                                       @Nonnull Class<? extends T> type,
+                                                       Context context) throws DataStoreException;
 
-    <T> List<T> textSearch(@Nonnull String query, @Nonnull Class<? extends T> type, Context context) throws DataStoreException;
+    <T extends IEntity> BaseSearchResult<T> textSearch(@Nonnull String query,
+                                                       @Nonnull Class<? extends T> type,
+                                                       Context context) throws DataStoreException;
 
-    <T> List<T> textSearch(@Nonnull String query, int batchSize, int offset,  @Nonnull Class<? extends T> type, Context context) throws DataStoreException;
+    <T extends IEntity> BaseSearchResult<T> textSearch(@Nonnull String query,
+                                                       int batchSize,
+                                                       int offset,
+                                                       @Nonnull Class<? extends T> type,
+                                                       Context context) throws DataStoreException;
 }

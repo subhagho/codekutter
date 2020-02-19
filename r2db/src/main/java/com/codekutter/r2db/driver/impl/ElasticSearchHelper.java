@@ -21,11 +21,16 @@ import com.codekutter.common.Context;
 import com.codekutter.common.GlobalConstants;
 import com.codekutter.common.model.IEntity;
 import com.codekutter.common.model.IKey;
+import com.codekutter.common.stores.BaseSearchResult;
 import com.codekutter.common.stores.DataStoreException;
+import com.codekutter.common.stores.impl.EntitySearchResult;
 import com.codekutter.common.utils.LogUtils;
 import com.codekutter.r2db.driver.impl.annotations.Indexed;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import org.apache.http.StatusLine;
+import org.apache.http.protocol.HTTP;
+import org.apache.http.util.EntityUtils;
 import org.elasticsearch.action.DocWriteResponse;
 import org.elasticsearch.action.delete.DeleteRequest;
 import org.elasticsearch.action.delete.DeleteResponse;
@@ -39,8 +44,7 @@ import org.elasticsearch.action.search.SearchScrollRequest;
 import org.elasticsearch.action.support.replication.ReplicationResponse;
 import org.elasticsearch.action.update.UpdateRequest;
 import org.elasticsearch.action.update.UpdateResponse;
-import org.elasticsearch.client.RequestOptions;
-import org.elasticsearch.client.RestHighLevelClient;
+import org.elasticsearch.client.*;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.rest.RestStatus;
@@ -49,6 +53,7 @@ import org.elasticsearch.search.SearchHits;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 
 import javax.annotation.Nonnull;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -58,13 +63,7 @@ public class ElasticSearchHelper {
                                               @Nonnull Class<? extends IEntity> type,
                                               Context context) throws DataStoreException {
         try {
-            String index = type.getCanonicalName();
-            if (type.isAnnotationPresent(Indexed.class)) {
-                Indexed indx = type.getAnnotation(Indexed.class);
-                if (!Strings.isNullOrEmpty(indx.index())) {
-                    index = indx.index();
-                }
-            }
+            String index = getIndexName(type);
             String json = GlobalConstants.getJsonMapper().writeValueAsString(entity);
             IndexRequest request = new IndexRequest(index);
             request.id(entity.getKey().stringKey());
@@ -102,13 +101,7 @@ public class ElasticSearchHelper {
                                               @Nonnull Class<? extends IEntity> type,
                                               Context context) throws DataStoreException {
         try {
-            String index = type.getCanonicalName();
-            if (type.isAnnotationPresent(Indexed.class)) {
-                Indexed indx = type.getAnnotation(Indexed.class);
-                if (!Strings.isNullOrEmpty(indx.index())) {
-                    index = indx.index();
-                }
-            }
+            String index = getIndexName(type);
             String json = GlobalConstants.getJsonMapper().writeValueAsString(entity);
             UpdateRequest request = new UpdateRequest(index, entity.getKey().stringKey()).doc(json, XContentType.JSON);
             UpdateResponse response = client.update(request, RequestOptions.DEFAULT);
@@ -118,9 +111,6 @@ public class ElasticSearchHelper {
                 LogUtils.debug(getClass(), json);
             }
             ReplicationResponse.ShardInfo shardInfo = response.getShardInfo();
-            if (shardInfo.getTotal() != shardInfo.getSuccessful()) {
-                throw new DataStoreException(String.format("Error replicating to shards. [count=%d][index=%s]", shardInfo.getSuccessful(), index));
-            }
             if (shardInfo.getFailed() > 0) {
                 StringBuffer buffer = new StringBuffer();
                 for (ReplicationResponse.ShardInfo.Failure failure :
@@ -143,22 +133,13 @@ public class ElasticSearchHelper {
         Preconditions.checkArgument(key instanceof IKey);
         IKey k = (IKey) key;
         try {
-            String index = type.getCanonicalName();
-            if (type.isAnnotationPresent(Indexed.class)) {
-                Indexed indx = type.getAnnotation(Indexed.class);
-                if (!Strings.isNullOrEmpty(indx.index())) {
-                    index = indx.index();
-                }
-            }
+            String index = getIndexName(type);
             DeleteRequest request = new DeleteRequest(index, k.stringKey());
             DeleteResponse response = client.delete(request, RequestOptions.DEFAULT);
             if (response.getResult() == DocWriteResponse.Result.DELETED) {
                 return true;
             }
             ReplicationResponse.ShardInfo shardInfo = response.getShardInfo();
-            if (shardInfo.getTotal() != shardInfo.getSuccessful()) {
-                throw new DataStoreException(String.format("Error replicating to shards. [count=%d][index=%s]", shardInfo.getSuccessful(), index));
-            }
             if (shardInfo.getFailed() > 0) {
                 StringBuffer buffer = new StringBuffer();
                 for (ReplicationResponse.ShardInfo.Failure failure :
@@ -182,12 +163,6 @@ public class ElasticSearchHelper {
         IKey k = (IKey) key;
         try {
             String index = type.getCanonicalName();
-            if (type.isAnnotationPresent(Indexed.class)) {
-                Indexed indx = type.getAnnotation(Indexed.class);
-                if (!Strings.isNullOrEmpty(indx.index())) {
-                    index = indx.index();
-                }
-            }
             GetRequest request = new GetRequest(index, k.stringKey());
             GetResponse response = client.get(request, RequestOptions.DEFAULT);
             if (response.isExists()) {
@@ -204,7 +179,7 @@ public class ElasticSearchHelper {
     }
 
 
-    private <T> List<T> scroll(RestHighLevelClient client,
+    private <T extends IEntity> BaseSearchResult<T> scroll(RestHighLevelClient client,
                                String index,
                                @Nonnull String query,
                                int batchSize,
@@ -233,7 +208,6 @@ public class ElasticSearchHelper {
             if (response.status() == RestStatus.FOUND) {
                 SearchHits hits = response.getHits();
                 if (hits != null) {
-                    context.scrollId(response.getScrollId());
                     List<T> entities = new ArrayList<T>();
                     SearchHit[] results = hits.getHits();
                     for (SearchHit hit : results) {
@@ -241,7 +215,13 @@ public class ElasticSearchHelper {
                         T entity = GlobalConstants.getJsonMapper().readValue(json, type);
                         entities.add(entity);
                     }
-                    return entities;
+                    EntitySearchResult<T> er = new EntitySearchResult<>();
+                    er.query(query);
+                    er.offset(offset);
+                    er.count(entities.size());
+                    er.totalRecords(response.getHits().getTotalHits().value);
+                    er.entities(entities);
+                    er.scrollId(response.getScrollId());
                 }
             }
             return null;
@@ -250,19 +230,13 @@ public class ElasticSearchHelper {
         }
     }
 
-    public <T> List<T> textSearch(@Nonnull RestHighLevelClient client,
-                                  @Nonnull String query,
-                                  int batchSize,
-                                  int offset,
-                                  @Nonnull Class<? extends T> type,
-                                  Context context) throws DataStoreException {
-        String index = type.getCanonicalName();
-        if (type.isAnnotationPresent(Indexed.class)) {
-            Indexed indx = type.getAnnotation(Indexed.class);
-            if (!Strings.isNullOrEmpty(indx.index())) {
-                index = indx.index();
-            }
-        }
+    public <T extends IEntity> BaseSearchResult<T> textSearch(@Nonnull RestHighLevelClient client,
+                                                              @Nonnull String query,
+                                                              int batchSize,
+                                                              int offset,
+                                                              @Nonnull Class<? extends T> type,
+                                                              Context context) throws DataStoreException {
+        String index = getIndexName(type);
         boolean scroll = false;
         if (context instanceof ElasticSearchContext) {
             scroll = ((ElasticSearchContext) context).doScroll();
@@ -274,7 +248,7 @@ public class ElasticSearchHelper {
         }
     }
 
-    private <T> List<T> _search(RestHighLevelClient client,
+    private <T extends IEntity> BaseSearchResult<T> _search(RestHighLevelClient client,
                                 String index,
                                 @Nonnull String query,
                                 int batchSize,
@@ -303,12 +277,51 @@ public class ElasticSearchHelper {
                         T entity = GlobalConstants.getJsonMapper().readValue(json, type);
                         entities.add(entity);
                     }
-                    return entities;
+                    EntitySearchResult<T> er = new EntitySearchResult<>();
+                    er.query(query);
+                    er.offset(offset);
+                    er.count(entities.size());
+                    er.totalRecords(response.getHits().getTotalHits().value);
+                    er.entities(entities);
+                    er.scrollId(response.getScrollId());
                 }
             }
             return null;
         } catch (Throwable t) {
             throw new DataStoreException(t);
         }
+    }
+
+    public <T extends IEntity> String parseQuery(@Nonnull String query,
+                                                  @Nonnull RestClient client,
+                                                  @Nonnull Class<? extends T> type) throws DataStoreException {
+        try {
+            String index = getIndexName(type);
+            Request request = new Request("POST", "/_sql");
+            String json = String.format("{\"query\":\"%s\"", query);
+            request.setJsonEntity(json);
+            Response response = client.performRequest(request);
+            StatusLine status = response.getStatusLine();
+            if (status.getStatusCode() != RestStatus.OK.getStatus()) {
+                throw new DataStoreException(String.format("Request failed. [status=%d]", status.getStatusCode()));
+            }
+            query = EntityUtils.toString(response.getEntity());
+            LogUtils.debug(getClass(), String.format("[query=%s]", query));
+            return query;
+        } catch (IOException ex) {
+            throw new DataStoreException(ex);
+        }
+    }
+
+    public String getIndexName(@Nonnull Class<?> type) throws DataStoreException {
+        if (type.isAnnotationPresent(Indexed.class)) {
+            Indexed indx = type.getAnnotation(Indexed.class);
+            String index = indx.index();
+            if (Strings.isNullOrEmpty(index)) {
+                index = type.getCanonicalName().replaceAll("\\.", "_").toLowerCase();
+            }
+            return index;
+        }
+        throw new DataStoreException(String.format("Specified type is not indexed. [type=%s]", type.getCanonicalName()));
     }
 }

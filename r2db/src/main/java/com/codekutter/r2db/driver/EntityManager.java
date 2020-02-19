@@ -25,6 +25,7 @@ import com.codekutter.common.model.IEntity;
 import com.codekutter.common.model.IKey;
 import com.codekutter.common.stores.*;
 import com.codekutter.common.stores.annotations.*;
+import com.codekutter.common.stores.impl.EntitySearchResult;
 import com.codekutter.common.utils.ConfigUtils;
 import com.codekutter.common.utils.LogUtils;
 import com.codekutter.common.utils.ReflectionUtils;
@@ -70,7 +71,7 @@ public class EntityManager implements IConfigurable {
     @Setter(AccessLevel.NONE)
     private Map<Class<? extends IShardProvider>, IShardProvider> shardProviders = new ConcurrentHashMap<>();
 
-    public <T extends IEntity> List<T> textSearch(@Nonnull Query query,
+    public <T extends IEntity> BaseSearchResult<T> textSearch(@Nonnull Query query,
                                                   @Nonnull Class<? extends T> type,
                                                   Class<? extends AbstractDataStore<T>> storeType,
                                                   Context context) throws DataStoreException {
@@ -84,7 +85,7 @@ public class EntityManager implements IConfigurable {
         return ((ISearchable) dataStore).textSearch(query, type, context);
     }
 
-    public <T extends IEntity> List<T> textSearch(@Nonnull Query query, int batchSize, int offset,
+    public <T extends IEntity> BaseSearchResult<T> textSearch(@Nonnull Query query, int batchSize, int offset,
                                                   @Nonnull Class<? extends T> type,
                                                   Class<? extends AbstractDataStore<T>> storeType,
                                                   Context context) throws DataStoreException {
@@ -98,7 +99,7 @@ public class EntityManager implements IConfigurable {
         return ((ISearchable) dataStore).textSearch(query, batchSize, offset, type, context);
     }
 
-    public <T extends IEntity> List<T> textSearch(@Nonnull String query,
+    public <T extends IEntity> BaseSearchResult<T> textSearch(@Nonnull String query,
                                                   @Nonnull Class<? extends T> type,
                                                   Class<? extends AbstractDataStore<T>> storeType,
                                                   Context context) throws DataStoreException {
@@ -112,7 +113,7 @@ public class EntityManager implements IConfigurable {
         return ((ISearchable) dataStore).textSearch(query, type, context);
     }
 
-    public <T extends IEntity> List<T> textSearch(@Nonnull String query, int batchSize, int offset,
+    public <T extends IEntity> BaseSearchResult<T> textSearch(@Nonnull String query, int batchSize, int offset,
                                                   @Nonnull Class<? extends T> type,
                                                   Class<? extends AbstractDataStore<T>> storeType,
                                                   Context context) throws DataStoreException {
@@ -406,12 +407,15 @@ public class EntityManager implements IConfigurable {
                         if (ReflectionUtils.implementsInterface(List.class, type) | ReflectionUtils.implementsInterface(Set.class, type)) {
                             type = ReflectionUtils.getGenericListType(f);
                             Collection values = (Collection) value;
-                            Collection<? extends IEntity> result = getReferenceEntity(f, entity, entityType, (Class<? extends IEntity>) type, context, false);
+                            BaseSearchResult<? extends IEntity> result = getReferenceEntity(f, entity, entityType, (Class<? extends IEntity>) type, context, false);
                             Map<String, Object> rmap = new HashMap<>();
-                            if (result != null && !result.isEmpty()) {
-                                for (Object o : result) {
-                                    IEntity e = (IEntity) o;
-                                    rmap.put(e.getKey().stringKey(), e);
+                            if (result instanceof EntitySearchResult) {
+                                if (((EntitySearchResult<? extends IEntity>) result).entities() != null
+                                        && !((EntitySearchResult<? extends IEntity>) result).entities().isEmpty()) {
+                                    for (Object o : ((EntitySearchResult<? extends IEntity>) result).entities()) {
+                                        IEntity e = (IEntity) o;
+                                        rmap.put(e.getKey().stringKey(), e);
+                                    }
                                 }
                             }
                             for (Object v : values) {
@@ -459,35 +463,38 @@ public class EntityManager implements IConfigurable {
                                 }
                             }
                         } else {
-                            Collection<? extends IEntity> result = getReferenceEntity(f, entity, entityType, (Class<? extends IEntity>) f.getType(), context, false);
-                            if (result == null || result.isEmpty()) {
-                                Object t = create((IEntity) value, (Class<? extends IEntity>) type, null, user, context);
-                                if (t == null) {
-                                    throw new DataStoreException(
-                                            String.format("Error creating nested entity. [type=%s][key=%s]",
-                                                    type.getCanonicalName(), ((IEntity) value).getKey().stringKey()));
-                                }
-                            } else {
-                                while (result.iterator().hasNext()) {
-                                    IEntity e = result.iterator().next();
-                                    IEntity v = (IEntity) value;
-                                    if (e.getKey().compareTo(v.getKey()) != 0) {
-                                        if (!delete(e, e.getClass(), null, user, context)) {
-                                            throw new DataStoreException(String.format("Error deleting reference. [type=%s][key=%s]",
-                                                    e.getClass().getCanonicalName(), e.getKey().stringKey()));
-                                        }
-                                        Object t = create(v, v.getClass(), null, user, context);
-                                        if (t == null) {
-                                            throw new DataStoreException(
-                                                    String.format("Error creating nested entity. [type=%s][key=%s]",
-                                                            type.getCanonicalName(), ((IEntity) value).getKey().stringKey()));
-                                        }
-                                    } else {
-                                        Object t = update(v, v.getClass(), null, user, context);
-                                        if (t == null) {
-                                            throw new DataStoreException(
-                                                    String.format("Error creating nested entity. [type=%s][key=%s]",
-                                                            type.getCanonicalName(), ((IEntity) value).getKey().stringKey()));
+                            BaseSearchResult<? extends IEntity> result = getReferenceEntity(f, entity, entityType, (Class<? extends IEntity>) f.getType(), context, false);
+                            if (result instanceof EntitySearchResult) {
+                                if (((EntitySearchResult<? extends IEntity>) result).entities() == null
+                                        || ((EntitySearchResult<? extends IEntity>) result).entities().isEmpty()) {
+                                    Object t = create((IEntity) value, (Class<? extends IEntity>) type, null, user, context);
+                                    if (t == null) {
+                                        throw new DataStoreException(
+                                                String.format("Error creating nested entity. [type=%s][key=%s]",
+                                                        type.getCanonicalName(), ((IEntity) value).getKey().stringKey()));
+                                    }
+                                } else {
+                                    while (((EntitySearchResult<? extends IEntity>) result).entities().iterator().hasNext()) {
+                                        IEntity e = ((EntitySearchResult<? extends IEntity>) result).entities().iterator().next();
+                                        IEntity v = (IEntity) value;
+                                        if (e.getKey().compareTo(v.getKey()) != 0) {
+                                            if (!delete(e, e.getClass(), null, user, context)) {
+                                                throw new DataStoreException(String.format("Error deleting reference. [type=%s][key=%s]",
+                                                        e.getClass().getCanonicalName(), e.getKey().stringKey()));
+                                            }
+                                            Object t = create(v, v.getClass(), null, user, context);
+                                            if (t == null) {
+                                                throw new DataStoreException(
+                                                        String.format("Error creating nested entity. [type=%s][key=%s]",
+                                                                type.getCanonicalName(), ((IEntity) value).getKey().stringKey()));
+                                            }
+                                        } else {
+                                            Object t = update(v, v.getClass(), null, user, context);
+                                            if (t == null) {
+                                                throw new DataStoreException(
+                                                        String.format("Error creating nested entity. [type=%s][key=%s]",
+                                                                type.getCanonicalName(), ((IEntity) value).getKey().stringKey()));
+                                            }
                                         }
                                     }
                                 }
@@ -575,26 +582,32 @@ public class EntityManager implements IConfigurable {
                         Class<?> type = f.getType();
                         if (ReflectionUtils.implementsInterface(List.class, type) | ReflectionUtils.implementsInterface(Set.class, type)) {
                             type = ReflectionUtils.getGenericListType(f);
-                            Collection<? extends IEntity> result = getReferenceEntity(f, entity, entityType, (Class<? extends IEntity>) type, context, false);
-                            for (IEntity v : result) {
-                                String sk = v.getKey().stringKey();
-                                if (!delete(v, v.getClass(), user, context, null)) {
-                                    throw new DataStoreException(String.format("Error deleting reference. [type=%s][key=%s]",
+                            BaseSearchResult<? extends IEntity> result
+                                    = getReferenceEntity(f, entity, entityType, (Class<? extends IEntity>) type, context, false);
+                            if (result instanceof EntitySearchResult) {
+                                for (IEntity v : ((EntitySearchResult<? extends IEntity>) result).entities()) {
+                                    String sk = v.getKey().stringKey();
+                                    if (!delete(v, v.getClass(), user, context, null)) {
+                                        throw new DataStoreException(String.format("Error deleting reference. [type=%s][key=%s]",
+                                                v.getClass().getCanonicalName(), v.getKey().stringKey()));
+                                    }
+                                    LogUtils.debug(getClass(), String.format("Deleted entity reference. [type=%s][key=%s]",
                                             v.getClass().getCanonicalName(), v.getKey().stringKey()));
                                 }
-                                LogUtils.debug(getClass(), String.format("Deleted entity reference. [type=%s][key=%s]",
-                                        v.getClass().getCanonicalName(), v.getKey().stringKey()));
                             }
                         } else {
-                            Collection<? extends IEntity> result = getReferenceEntity(f, entity, entityType, (Class<? extends IEntity>) f.getType(), context, false);
-                            while (result.iterator().hasNext()) {
-                                IEntity e = result.iterator().next();
-                                if (!delete(e, e.getClass(), user, context, null)) {
-                                    throw new DataStoreException(String.format("Error deleting reference. [type=%s][key=%s]",
+                            BaseSearchResult<? extends IEntity> result
+                                    = getReferenceEntity(f, entity, entityType, (Class<? extends IEntity>) f.getType(), context, false);
+                            if (result instanceof EntitySearchResult) {
+                                while (((EntitySearchResult<? extends IEntity>) result).entities().iterator().hasNext()) {
+                                    IEntity e = ((EntitySearchResult<? extends IEntity>) result).entities().iterator().next();
+                                    if (!delete(e, e.getClass(), user, context, null)) {
+                                        throw new DataStoreException(String.format("Error deleting reference. [type=%s][key=%s]",
+                                                e.getClass().getCanonicalName(), e.getKey().stringKey()));
+                                    }
+                                    LogUtils.debug(getClass(), String.format("Deleted entity reference. [type=%s][key=%s]",
                                             e.getClass().getCanonicalName(), e.getKey().stringKey()));
                                 }
-                                LogUtils.debug(getClass(), String.format("Deleted entity reference. [type=%s][key=%s]",
-                                        e.getClass().getCanonicalName(), e.getKey().stringKey()));
                             }
                         }
                     }
@@ -728,10 +741,10 @@ public class EntityManager implements IConfigurable {
         return value;
     }
 
-    public <T, E extends IEntity> Collection<E> search(@Nonnull String query,
-                                                       @Nonnull Class<? extends E> type,
-                                                       Class<? extends AbstractDataStore<T>> storeType,
-                                                       Context context) throws DataStoreException {
+    public <T, E extends IEntity> BaseSearchResult<E> search(@Nonnull String query,
+                                                             @Nonnull Class<? extends E> type,
+                                                             Class<? extends AbstractDataStore<T>> storeType,
+                                                             Context context) throws DataStoreException {
         Preconditions.checkArgument(!type.isAnnotationPresent(SchemaSharded.class));
         AbstractDataStore<T> dataStore = findStore(type, storeType);
         if (dataStore == null) {
@@ -743,22 +756,24 @@ public class EntityManager implements IConfigurable {
         return search(query, type, dataStore, context);
     }
 
-    public <T, E extends IEntity> Collection<E> search(@Nonnull String query,
-                                                       @Nonnull Class<? extends E> type,
-                                                       @Nonnull AbstractDataStore<T> dataStore,
-                                                       Context context) throws DataStoreException {
-        Collection<E> values = dataStore.search(query, type, context);
-        if (!values.isEmpty())
-            return findReferences(values, type, context);
+    public <T, E extends IEntity> BaseSearchResult<E> search(@Nonnull String query,
+                                                             @Nonnull Class<? extends E> type,
+                                                             @Nonnull AbstractDataStore<T> dataStore,
+                                                             Context context) throws DataStoreException {
+        BaseSearchResult<E> values = dataStore.search(query, type, context);
+        if (values instanceof EntitySearchResult) {
+            if (!((EntitySearchResult<E>) values).entities().isEmpty())
+                return findReferences(((EntitySearchResult<E>) values).entities(), type, context);
+        }
         return null;
     }
 
     @SuppressWarnings("unchecked")
-    public <T, E extends IEntity> Collection<E> search(Object shardKey,
-                                                       @Nonnull String query,
-                                                       @Nonnull Class<? extends E> type,
-                                                       Class<? extends AbstractDataStore<T>> storeType,
-                                                       Context context) throws DataStoreException {
+    public <T, E extends IEntity> BaseSearchResult<E> search(Object shardKey,
+                                                             @Nonnull String query,
+                                                             @Nonnull Class<? extends E> type,
+                                                             Class<? extends AbstractDataStore<T>> storeType,
+                                                             Context context) throws DataStoreException {
         if (!ReflectionUtils.implementsInterface(IShardedEntity.class, type)) {
             throw new DataStoreException(String.format("Not a sharded entity. [type=%s]", type.getCanonicalName()));
         }
@@ -767,9 +782,11 @@ public class EntityManager implements IConfigurable {
             if (dataStore == null) {
                 throw new DataStoreException(String.format("No data store found for entity. [type=%s]", type.getCanonicalName()));
             }
-            Collection<E> values = dataStore.search(query, type, context);
-            if (!values.isEmpty())
-                return findReferences(values, type, context);
+            BaseSearchResult<E> values = dataStore.search(query, type, context);
+            if (values instanceof EntitySearchResult) {
+                if (!((EntitySearchResult<E>) values).entities().isEmpty())
+                    return findReferences(((EntitySearchResult<E>) values).entities(), type, context);
+            }
         } else {
             List<AbstractDataStore<T>> dataStores = dataStoreManager.getShards(storeType, (Class<? extends IShardedEntity>) type);
             List<E> values = new ArrayList<>();
@@ -785,12 +802,12 @@ public class EntityManager implements IConfigurable {
         return null;
     }
 
-    public <T, E extends IEntity> Collection<E> search(@Nonnull String query,
-                                                       int offset,
-                                                       int maxResults,
-                                                       @Nonnull Class<? extends E> type,
-                                                       Context context,
-                                                       Class<? extends AbstractDataStore<T>> storeType) throws DataStoreException {
+    public <T, E extends IEntity> BaseSearchResult<E> search(@Nonnull String query,
+                                                             int offset,
+                                                             int maxResults,
+                                                             @Nonnull Class<? extends E> type,
+                                                             Context context,
+                                                             Class<? extends AbstractDataStore<T>> storeType) throws DataStoreException {
         Preconditions.checkArgument(!type.isAnnotationPresent(SchemaSharded.class));
         AbstractDataStore<T> dataStore = findStore(type, storeType);
         if (dataStore == null) {
@@ -802,26 +819,28 @@ public class EntityManager implements IConfigurable {
         return search(query, offset, maxResults, type, dataStore, context);
     }
 
-    public <T, E extends IEntity> Collection<E> search(@Nonnull String query,
-                                                       int offset,
-                                                       int maxResults,
-                                                       @Nonnull Class<? extends E> type,
-                                                       @Nonnull AbstractDataStore<T> dataStore,
-                                                       Context context) throws DataStoreException {
-        Collection<E> values = dataStore.search(query, offset, maxResults, type, context);
-        if (!values.isEmpty())
-            return findReferences(values, type, context);
+    public <T, E extends IEntity> BaseSearchResult<E> search(@Nonnull String query,
+                                                             int offset,
+                                                             int maxResults,
+                                                             @Nonnull Class<? extends E> type,
+                                                             @Nonnull AbstractDataStore<T> dataStore,
+                                                             Context context) throws DataStoreException {
+        BaseSearchResult<E> values = dataStore.search(query, offset, maxResults, type, context);
+        if (values instanceof EntitySearchResult) {
+            if (!((EntitySearchResult<E>) values).entities().isEmpty())
+                return findReferences(((EntitySearchResult<E>) values).entities(), type, context);
+        }
         return null;
     }
 
     @SuppressWarnings("unchecked")
-    public <T, E extends IEntity> Collection<E> search(Object shardKey,
-                                                       @Nonnull String query,
-                                                       int offset,
-                                                       int maxResults,
-                                                       @Nonnull Class<? extends E> type,
-                                                       Class<? extends AbstractDataStore<T>> storeType,
-                                                       Context context) throws DataStoreException {
+    public <T, E extends IEntity> BaseSearchResult<E> search(Object shardKey,
+                                                             @Nonnull String query,
+                                                             int offset,
+                                                             int maxResults,
+                                                             @Nonnull Class<? extends E> type,
+                                                             Class<? extends AbstractDataStore<T>> storeType,
+                                                             Context context) throws DataStoreException {
         if (!ReflectionUtils.implementsInterface(IShardedEntity.class, type)) {
             throw new DataStoreException(String.format("Not a sharded entity. [type=%s]", type.getCanonicalName()));
         }
@@ -830,9 +849,11 @@ public class EntityManager implements IConfigurable {
             if (dataStore == null) {
                 throw new DataStoreException(String.format("No data store found for entity. [type=%s]", type.getCanonicalName()));
             }
-            Collection<E> values = dataStore.search(query, offset, maxResults, type, context);
-            if (!values.isEmpty())
-                return findReferences(values, type, context);
+            BaseSearchResult<E> values = dataStore.search(query, offset, maxResults, type, context);
+            if (values instanceof EntitySearchResult) {
+                if (!((EntitySearchResult<E>) values).entities().isEmpty())
+                    return findReferences(((EntitySearchResult<E>) values).entities(), type, context);
+            }
         } else {
             List<AbstractDataStore<T>> dataStores = dataStoreManager.getShards(storeType, (Class<? extends IShardedEntity>) type);
             List<E> values = new ArrayList<>();
@@ -848,11 +869,11 @@ public class EntityManager implements IConfigurable {
         return null;
     }
 
-    public <T, E extends IEntity> Collection<E> search(@Nonnull String query,
-                                                       Map<String, Object> params,
-                                                       @Nonnull Class<? extends E> type,
-                                                       Class<? extends AbstractDataStore<T>> storeType,
-                                                       Context context) throws DataStoreException {
+    public <T, E extends IEntity> BaseSearchResult<E> search(@Nonnull String query,
+                                                             Map<String, Object> params,
+                                                             @Nonnull Class<? extends E> type,
+                                                             Class<? extends AbstractDataStore<T>> storeType,
+                                                             Context context) throws DataStoreException {
         Preconditions.checkArgument(!type.isAnnotationPresent(SchemaSharded.class));
         AbstractDataStore<T> dataStore = findStore(type, storeType);
         if (dataStore == null) {
@@ -861,19 +882,21 @@ public class EntityManager implements IConfigurable {
         if (ReflectionUtils.implementsInterface(IShardedEntity.class, type)) {
             throw new DataStoreException(String.format("Sharded entity should be called with shard key. [type=%s]", type.getCanonicalName()));
         }
-        Collection<E> values = dataStore.search(query, params, type, context);
-        if (!values.isEmpty())
-            return findReferences(values, type, context);
+        BaseSearchResult<E> values = dataStore.search(query, params, type, context);
+        if (values instanceof EntitySearchResult) {
+            if (!((EntitySearchResult<E>) values).entities().isEmpty())
+                return findReferences(((EntitySearchResult<E>) values).entities(), type, context);
+        }
         return null;
     }
 
     @SuppressWarnings("unchecked")
-    public <T, E extends IEntity> Collection<E> search(Object shardKey,
-                                                       @Nonnull String query,
-                                                       Map<String, Object> params,
-                                                       @Nonnull Class<? extends E> type,
-                                                       Class<? extends AbstractDataStore<T>> storeType,
-                                                       Context context) throws DataStoreException {
+    public <T, E extends IEntity> BaseSearchResult<E> search(Object shardKey,
+                                                             @Nonnull String query,
+                                                             Map<String, Object> params,
+                                                             @Nonnull Class<? extends E> type,
+                                                             Class<? extends AbstractDataStore<T>> storeType,
+                                                             Context context) throws DataStoreException {
         if (!ReflectionUtils.implementsInterface(IShardedEntity.class, type)) {
             throw new DataStoreException(String.format("Not a sharded entity. [type=%s]", type.getCanonicalName()));
         }
@@ -882,9 +905,11 @@ public class EntityManager implements IConfigurable {
             if (dataStore == null) {
                 throw new DataStoreException(String.format("No data store found for entity. [type=%s]", type.getCanonicalName()));
             }
-            Collection<E> values = dataStore.search(query, params, type, context);
-            if (!values.isEmpty())
-                return findReferences(values, type, context);
+            BaseSearchResult<E> values = dataStore.search(query, params, type, context);
+            if (values instanceof EntitySearchResult) {
+                if (!((EntitySearchResult<E>) values).entities().isEmpty())
+                    return findReferences(((EntitySearchResult<E>) values).entities(), type, context);
+            }
         } else {
             List<AbstractDataStore<T>> dataStores = dataStoreManager.getShards(storeType, (Class<? extends IShardedEntity>) type);
             List<E> values = new ArrayList<>();
@@ -900,13 +925,13 @@ public class EntityManager implements IConfigurable {
         return null;
     }
 
-    public <T, E extends IEntity> Collection<E> search(@Nonnull String query,
-                                                       int offset,
-                                                       int maxResults,
-                                                       Map<String, Object> params,
-                                                       @Nonnull Class<? extends E> type,
-                                                       Class<? extends AbstractDataStore<T>> storeType,
-                                                       Context context) throws DataStoreException {
+    public <T, E extends IEntity> BaseSearchResult<E> search(@Nonnull String query,
+                                                             int offset,
+                                                             int maxResults,
+                                                             Map<String, Object> params,
+                                                             @Nonnull Class<? extends E> type,
+                                                             Class<? extends AbstractDataStore<T>> storeType,
+                                                             Context context) throws DataStoreException {
         Preconditions.checkArgument(!type.isAnnotationPresent(SchemaSharded.class));
         AbstractDataStore<T> dataStore = findStore(type, storeType);
         if (dataStore == null) {
@@ -915,22 +940,24 @@ public class EntityManager implements IConfigurable {
         if (ReflectionUtils.implementsInterface(IShardedEntity.class, type)) {
             throw new DataStoreException(String.format("Sharded entity should be called with shard key. [type=%s]", type.getCanonicalName()));
         }
-        Collection<E> values = dataStore.search(query, offset, maxResults, params, type, context);
-        if (!values.isEmpty())
-            return findReferences(values, type, context);
+        BaseSearchResult<E> values = dataStore.search(query, offset, maxResults, params, type, context);
+        if (values instanceof EntitySearchResult) {
+            if (!((EntitySearchResult<E>) values).entities().isEmpty())
+                return findReferences(((EntitySearchResult<E>) values).entities(), type, context);
+        }
         return null;
     }
 
 
     @SuppressWarnings("unchecked")
-    public <T, E extends IEntity> Collection<E> search(Object shardKey,
-                                                       @Nonnull String query,
-                                                       int offset,
-                                                       int maxResults,
-                                                       Map<String, Object> params,
-                                                       @Nonnull Class<? extends E> type,
-                                                       Class<? extends AbstractDataStore<T>> storeType,
-                                                       Context context) throws DataStoreException {
+    public <T, E extends IEntity> BaseSearchResult<E> search(Object shardKey,
+                                                             @Nonnull String query,
+                                                             int offset,
+                                                             int maxResults,
+                                                             Map<String, Object> params,
+                                                             @Nonnull Class<? extends E> type,
+                                                             Class<? extends AbstractDataStore<T>> storeType,
+                                                             Context context) throws DataStoreException {
         if (!ReflectionUtils.implementsInterface(IShardedEntity.class, type)) {
             throw new DataStoreException(String.format("Not a sharded entity. [type=%s]", type.getCanonicalName()));
         }
@@ -939,9 +966,11 @@ public class EntityManager implements IConfigurable {
             if (dataStore == null) {
                 throw new DataStoreException(String.format("No data store found for entity. [type=%s]", type.getCanonicalName()));
             }
-            Collection<E> values = dataStore.search(query, offset, maxResults, params, type, context);
-            if (!values.isEmpty())
-                return findReferences(values, type, context);
+            BaseSearchResult<E> values = dataStore.search(query, offset, maxResults, params, type, context);
+            if (values instanceof EntitySearchResult) {
+                if (!((EntitySearchResult<E>) values).entities().isEmpty())
+                    return findReferences(((EntitySearchResult<E>) values).entities(), type, context);
+            }
         } else {
             List<AbstractDataStore<T>> dataStores = dataStoreManager.getShards(storeType, (Class<? extends IShardedEntity>) type);
             List<E> values = new ArrayList<>();
@@ -959,9 +988,9 @@ public class EntityManager implements IConfigurable {
 
 
     @SuppressWarnings("unchecked")
-    private <E extends IEntity> Collection<E> findReferences(Collection<E> entities,
-                                                             @Nonnull Class<? extends E> entityType,
-                                                             Context context) throws DataStoreException {
+    private <E extends IEntity> BaseSearchResult<E> findReferences(Collection<E> entities,
+                                                                   @Nonnull Class<? extends E> entityType,
+                                                                   Context context) throws DataStoreException {
         try {
             List<Field> fields = getReferenceFields(entityType);
             if (fields != null && !fields.isEmpty()) {
@@ -975,20 +1004,27 @@ public class EntityManager implements IConfigurable {
                     int offset = 0;
                     Multimap<String, E> parentMap = (Multimap<String, E>) mapCollection(entities, reference, true);
                     while (true) {
-                        Collection result = search(query,
+                        BaseSearchResult result = search(query,
                                 offset,
                                 DEFAULT_BATCH_SIZE,
                                 (Class<? extends IEntity>) f.getType(),
                                 null, context);
-                        if (result != null && !result.isEmpty()) {
-                            joinResults(parentMap, result, f, entityType, reference);
+                        if (result instanceof EntitySearchResult) {
+                            if (((EntitySearchResult) result).entities() != null && !((EntitySearchResult) result).entities().isEmpty()) {
+                                joinResults(parentMap, ((EntitySearchResult) result).entities(), f, entityType, reference);
+                            }
+                            if (((EntitySearchResult) result).entities() == null || ((EntitySearchResult) result).entities().size() < DEFAULT_BATCH_SIZE)
+                                break;
+                            offset += ((EntitySearchResult) result).entities().size();
                         }
-                        if (result == null || result.size() < DEFAULT_BATCH_SIZE) break;
-                        offset += result.size();
                     }
                 }
             }
-            return entities;
+            EntitySearchResult<E> er = new EntitySearchResult<>();
+            er.count(entities.size());
+            er.entities(entities);
+
+            return er;
         } catch (Exception ex) {
             throw new DataStoreException(ex);
         }
@@ -1073,19 +1109,23 @@ public class EntityManager implements IConfigurable {
                         itype = ReflectionUtils.getGenericSetType(f);
                     }
 
-                    Collection result = getReferenceEntity(f, entity, entityType, (Class<? extends IEntity>) itype, context, true);
-                    if (result != null && !result.isEmpty()) {
-                        if (ReflectionUtils.implementsInterface(List.class, type)) {
-                            List values = new ArrayList(result);
-                            ReflectionUtils.setObjectValue(entity, f, values);
-                        } else if (ReflectionUtils.implementsInterface(Set.class, type)) {
-                            Set values = new HashSet(result);
-                            ReflectionUtils.setObjectValue(entity, f, values);
-                        } else {
-                            while (result.iterator().hasNext()) {
-                                Object o = result.iterator().next();
-                                ReflectionUtils.setObjectValue(entity, f, o);
-                                break;
+                    BaseSearchResult result = getReferenceEntity(f, entity,
+                            entityType, (Class<? extends IEntity>) itype,
+                            context, true);
+                    if (result instanceof EntitySearchResult) {
+                        if (((EntitySearchResult) result).entities() != null && !((EntitySearchResult) result).entities().isEmpty()) {
+                            if (ReflectionUtils.implementsInterface(List.class, type)) {
+                                List values = new ArrayList(((EntitySearchResult) result).entities());
+                                ReflectionUtils.setObjectValue(entity, f, values);
+                            } else if (ReflectionUtils.implementsInterface(Set.class, type)) {
+                                Set values = new HashSet(((EntitySearchResult) result).entities());
+                                ReflectionUtils.setObjectValue(entity, f, values);
+                            } else {
+                                while (((EntitySearchResult) result).entities().iterator().hasNext()) {
+                                    Object o = ((EntitySearchResult) result).entities().iterator().next();
+                                    ReflectionUtils.setObjectValue(entity, f, o);
+                                    break;
+                                }
                             }
                         }
                     }
@@ -1097,12 +1137,12 @@ public class EntityManager implements IConfigurable {
         }
     }
 
-    private <E extends IEntity> Collection<? extends IEntity> getReferenceEntity(Field f,
-                                                                                 E entity,
-                                                                                 Class<? extends E> entityType,
-                                                                                 Class<? extends IEntity> fieldType,
-                                                                                 Context context,
-                                                                                 boolean appendQuery) throws DataStoreException {
+    private <E extends IEntity> BaseSearchResult<? extends IEntity> getReferenceEntity(Field f,
+                                                                                       E entity,
+                                                                                       Class<? extends E> entityType,
+                                                                                       Class<? extends IEntity> fieldType,
+                                                                                       Context context,
+                                                                                       boolean appendQuery) throws DataStoreException {
         Reference reference = f.getAnnotation(Reference.class);
         String query = JoinPredicateHelper.generateHibernateJoinQuery(reference, entity, f, dataStoreManager, appendQuery);
         if (Strings.isNullOrEmpty(query)) {
@@ -1112,18 +1152,26 @@ public class EntityManager implements IConfigurable {
         int offset = 0;
         List<E> entities = new ArrayList<>();
         while (true) {
-            Collection result = search(query,
+            BaseSearchResult result = search(query,
                     offset,
                     DEFAULT_BATCH_SIZE,
                     fieldType,
                     context, null);
-            if (result != null && !result.isEmpty()) {
-                entities.addAll(result);
+            if (result instanceof EntitySearchResult) {
+                if (((EntitySearchResult) result).entities() != null
+                        && !((EntitySearchResult) result).entities().isEmpty()) {
+                    entities.addAll(((EntitySearchResult) result).entities());
+                }
+                if (((EntitySearchResult) result).entities() == null
+                        || ((EntitySearchResult) result).entities().size() < DEFAULT_BATCH_SIZE) break;
+                offset += ((EntitySearchResult) result).entities().size();
             }
-            if (result == null || result.size() < DEFAULT_BATCH_SIZE) break;
-            offset += result.size();
         }
-        return entities;
+        EntitySearchResult<E> er = new EntitySearchResult<>();
+        er.count(entities.size());
+        er.entities(entities);
+
+        return er;
     }
 
     public void close() throws IOException {

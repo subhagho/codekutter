@@ -56,6 +56,11 @@ public class ElasticSearchConnection extends SearchableConnection<RestHighLevelC
         return client;
     }
 
+    public RestClient restClient() {
+        Preconditions.checkState(state().isOpen());
+        return client.getLowLevelClient();
+    }
+
     @Override
     public boolean hasTransactionSupport() {
         return false;

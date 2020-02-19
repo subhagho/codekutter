@@ -21,10 +21,7 @@ import com.codekutter.common.Context;
 import com.codekutter.common.model.EAuditType;
 import com.codekutter.common.model.IEntity;
 import com.codekutter.common.model.IKey;
-import com.codekutter.common.stores.AbstractConnection;
-import com.codekutter.common.stores.DataStoreException;
-import com.codekutter.common.stores.DataStoreManager;
-import com.codekutter.common.stores.ISearchable;
+import com.codekutter.common.stores.*;
 import com.codekutter.common.stores.impl.HibernateConnection;
 import com.codekutter.common.stores.impl.RdbmsConfig;
 import com.codekutter.common.stores.impl.RdbmsDataStore;
@@ -185,22 +182,22 @@ public class SearchableRdbmsDataStore extends RdbmsDataStore implements ISearcha
     }
 
     @Override
-    public <T> List<T> textSearch(@Nonnull Query query, @Nonnull Class<? extends T> type, Context context) throws DataStoreException {
+    public <T extends IEntity> BaseSearchResult<T> textSearch(@Nonnull Query query, @Nonnull Class<? extends T> type, Context context) throws DataStoreException {
         return textSearch(query.toString(), maxResults(), 0, type, context);
     }
 
     @Override
-    public <T> List<T> textSearch(@Nonnull Query query, int batchSize, int offset, @Nonnull Class<? extends T> type, Context context) throws DataStoreException {
+    public <T extends IEntity> BaseSearchResult<T> textSearch(@Nonnull Query query, int batchSize, int offset, @Nonnull Class<? extends T> type, Context context) throws DataStoreException {
         return textSearch(query.toString(), batchSize, offset, type, context);
     }
 
     @Override
-    public <T> List<T> textSearch(@Nonnull String query, @Nonnull Class<? extends T> type, Context context) throws DataStoreException {
+    public <T extends IEntity> BaseSearchResult<T> textSearch(@Nonnull String query, @Nonnull Class<? extends T> type, Context context) throws DataStoreException {
         return textSearch(query, maxResults(), 0, type, context);
     }
 
     @Override
-    public <T> List<T> textSearch(@Nonnull String query, int batchSize, int offset, @Nonnull Class<? extends T> type, Context context) throws DataStoreException {
+    public <T extends IEntity> BaseSearchResult<T> textSearch(@Nonnull String query, int batchSize, int offset, @Nonnull Class<? extends T> type, Context context) throws DataStoreException {
         return helper.textSearch(readConnection.connection(), query, batchSize, offset, type, context);
     }
 

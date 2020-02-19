@@ -144,7 +144,7 @@ public class RdbmsDataStore extends TransactionDataStore<Session, Transaction> {
 
     @Override
     @SuppressWarnings({"unchecked", "rawtypes"})
-    public <E extends IEntity> Collection<E> doSearch(@Nonnull String query,
+    public <E extends IEntity> BaseSearchResult<E> doSearch(@Nonnull String query,
                                                       int offset, int maxResults,
                                                       @Nonnull Class<? extends E> type,
                                                       Context context)
@@ -155,14 +155,19 @@ public class RdbmsDataStore extends TransactionDataStore<Session, Transaction> {
         Query qq = session.createQuery(query, type).setMaxResults(maxResults).setFirstResult(offset);
         List<?> result = qq.getResultList();
         if (result != null && !result.isEmpty()) {
-            return (Collection<E>) result;
+            EntitySearchResult<E> er = new EntitySearchResult<>();
+            er.query(query);
+            er.offset(offset);
+            er.count(result.size());
+            er.entities((Collection<E>) result);
+            return er;
         }
         return null;
     }
 
     @Override
     @SuppressWarnings({"unchecked", "rawtypes"})
-    public <E extends IEntity> Collection<E> doSearch(@Nonnull String query,
+    public <E extends IEntity> BaseSearchResult<E> doSearch(@Nonnull String query,
                                                       int offset, int maxResults,
                                                       Map<String, Object> parameters,
                                                       @Nonnull Class<? extends E> type,
@@ -179,7 +184,12 @@ public class RdbmsDataStore extends TransactionDataStore<Session, Transaction> {
         }
         List<?> result = qq.getResultList();
         if (result != null && !result.isEmpty()) {
-            return (Collection<E>) result;
+            EntitySearchResult<E> er = new EntitySearchResult<>();
+            er.query(query);
+            er.offset(offset);
+            er.count(result.size());
+            er.entities((Collection<E>) result);
+            return er;
         }
         return null;
     }

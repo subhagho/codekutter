@@ -21,11 +21,9 @@ import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.*;
 import com.codekutter.common.Context;
 import com.codekutter.common.model.IEntity;
-import com.codekutter.common.stores.AbstractConnection;
-import com.codekutter.common.stores.AbstractDirectoryStore;
-import com.codekutter.common.stores.DataStoreException;
-import com.codekutter.common.stores.DataStoreManager;
+import com.codekutter.common.stores.*;
 import com.codekutter.common.stores.impl.DataStoreAuditContext;
+import com.codekutter.common.stores.impl.EntitySearchResult;
 import com.codekutter.common.utils.IOUtils;
 import com.codekutter.common.utils.LogUtils;
 import com.codekutter.common.utils.ReflectionUtils;
@@ -240,7 +238,7 @@ public class AwsS3DataStore extends AbstractDirectoryStore<AmazonS3> {
 
     @Override
     @SuppressWarnings("unchecked")
-    public <E extends IEntity> Collection<E> doSearch(@Nonnull String query,
+    public <E extends IEntity> BaseSearchResult<E> doSearch(@Nonnull String query,
                                                       int offset,
                                                       int maxResults,
                                                       @Nonnull Class<? extends E> type,
@@ -249,7 +247,7 @@ public class AwsS3DataStore extends AbstractDirectoryStore<AmazonS3> {
         return doSearch(bucket, query, offset, maxResults, type, context);
     }
 
-    protected <E extends IEntity> Collection<E> doSearch(@Nonnull String bucket,
+    protected <E extends IEntity> BaseSearchResult<E> doSearch(@Nonnull String bucket,
                                                          @Nonnull String query,
                                                          int offset,
                                                          int maxResults,
@@ -276,7 +274,7 @@ public class AwsS3DataStore extends AbstractDirectoryStore<AmazonS3> {
             if (result != null) {
                 List<S3ObjectSummary> objs = result.getObjectSummaries();
                 if (objs != null && !objs.isEmpty()) {
-                    List<E> array = new ArrayList<>();
+                    List<S3FileEntity> array = new ArrayList<>();
                     int count = 0;
                     for (S3ObjectSummary obj : objs) {
                         if (offset > 0 && count < offset) {
@@ -292,11 +290,17 @@ public class AwsS3DataStore extends AbstractDirectoryStore<AmazonS3> {
                         if (entity == null) {
                             throw new DataStoreException(String.format("invalid key : [key=%s]", key.key()));
                         }
-                        array.add((E) entity);
+                        array.add(entity);
                         count++;
                         if ((count - offset) > maxResults) break;
                     }
-                    return array;
+                    EntitySearchResult<S3FileEntity> er = new EntitySearchResult<>();
+                    er.offset(offset);
+                    er.query(query);
+                    er.count(array.size());
+                    er.entities(array);
+
+                    return (BaseSearchResult<E>) er;
                 }
             }
             return null;
@@ -306,10 +310,10 @@ public class AwsS3DataStore extends AbstractDirectoryStore<AmazonS3> {
     }
 
     @Override
-    public <E extends IEntity> Collection<E> doSearch(@Nonnull String query, int offset, int maxResults,
-                                                      Map<String, Object> parameters,
-                                                      @Nonnull Class<? extends E> type,
-                                                      Context context) throws DataStoreException {
+    public <E extends IEntity> BaseSearchResult<E> doSearch(@Nonnull String query, int offset, int maxResults,
+                                                            Map<String, Object> parameters,
+                                                            @Nonnull Class<? extends E> type,
+                                                            Context context) throws DataStoreException {
         return doSearch(query, offset, maxResults, type, context);
     }
 

@@ -21,10 +21,7 @@ import com.codekutter.common.Context;
 import com.codekutter.common.GlobalConstants;
 import com.codekutter.common.model.IEntity;
 import com.codekutter.common.model.IKey;
-import com.codekutter.common.stores.AbstractConnection;
-import com.codekutter.common.stores.AbstractDataStore;
-import com.codekutter.common.stores.DataStoreException;
-import com.codekutter.common.stores.DataStoreManager;
+import com.codekutter.common.stores.*;
 import com.codekutter.common.stores.annotations.Reference;
 import com.codekutter.common.stores.impl.DataStoreAuditContext;
 import com.codekutter.common.stores.impl.ZookeeperConnection;
@@ -333,12 +330,12 @@ public class ZookeeperDataStore extends AbstractDataStore<CuratorFramework> {
     }
 
     @Override
-    public <E extends IEntity> Collection<E> doSearch(@Nonnull String query, int offset, int maxResults, @Nonnull Class<? extends E> type, Context context) throws DataStoreException {
+    public <E extends IEntity> BaseSearchResult<E> doSearch(@Nonnull String query, int offset, int maxResults, @Nonnull Class<? extends E> type, Context context) throws DataStoreException {
         return null;
     }
 
     @Override
-    public <E extends IEntity> Collection<E> doSearch(@Nonnull String query, int offset, int maxResults, Map<String, Object> parameters, @Nonnull Class<? extends E> type, Context context) throws DataStoreException {
+    public <E extends IEntity> BaseSearchResult<E> doSearch(@Nonnull String query, int offset, int maxResults, Map<String, Object> parameters, @Nonnull Class<? extends E> type, Context context) throws DataStoreException {
         return null;
     }
 

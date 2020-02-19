@@ -48,6 +48,8 @@ public abstract class AbstractConnection<T> implements IConfigurable, Closeable 
     private String name;
     @ConfigAttribute(name = "class")
     private Class<? extends AbstractConnection> type;
+    @ConfigAttribute(name = "source")
+    private EConfigSource configSource = EConfigSource.File;
     @Setter(AccessLevel.NONE)
     private ConnectionState state = new ConnectionState();
     @ConfigValue(name="classes", parser = ClassListParser.class)

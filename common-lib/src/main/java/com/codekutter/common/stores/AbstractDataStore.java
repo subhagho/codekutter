@@ -305,7 +305,7 @@ public abstract class AbstractDataStore<T> implements Closeable {
             DataStoreException;
 
     @SuppressWarnings("rawtypes")
-    public <E extends IEntity> Collection<E> search(@Nonnull String query,
+    public <E extends IEntity> BaseSearchResult<E> search(@Nonnull String query,
                                                     int offset,
                                                     int maxResults,
                                                     @Nonnull Class<? extends E> type, Context context) throws
@@ -321,14 +321,14 @@ public abstract class AbstractDataStore<T> implements Closeable {
     }
 
     @SuppressWarnings("rawtypes")
-    public abstract <E extends IEntity> Collection<E> doSearch(@Nonnull String query,
+    public abstract <E extends IEntity> BaseSearchResult<E> doSearch(@Nonnull String query,
                                                                int offset,
                                                                int maxResults,
                                                                @Nonnull Class<? extends E> type, Context context) throws
             DataStoreException;
 
     @SuppressWarnings("rawtypes")
-    public <E extends IEntity> Collection<E> search(@Nonnull String query,
+    public <E extends IEntity> BaseSearchResult<E> search(@Nonnull String query,
                                                     int offset,
                                                     int maxResults,
                                                     Map<String, Object> parameters,
@@ -345,7 +345,7 @@ public abstract class AbstractDataStore<T> implements Closeable {
     }
 
     @SuppressWarnings("rawtypes")
-    public abstract <E extends IEntity> Collection<E> doSearch(@Nonnull String query,
+    public abstract <E extends IEntity> BaseSearchResult<E> doSearch(@Nonnull String query,
                                                                int offset,
                                                                int maxResults,
                                                                Map<String, Object> parameters,
@@ -353,13 +353,13 @@ public abstract class AbstractDataStore<T> implements Closeable {
             DataStoreException;
 
     @SuppressWarnings("rawtypes")
-    public <E extends IEntity> Collection<E> search(@Nonnull String query, @Nonnull Class<? extends E> type, Context context) throws
+    public <E extends IEntity> BaseSearchResult<E> search(@Nonnull String query, @Nonnull Class<? extends E> type, Context context) throws
             DataStoreException {
         return search(query, 0, maxResults, type, context);
     }
 
     @SuppressWarnings("rawtypes")
-    public <E extends IEntity> Collection<E> search(@Nonnull String query,
+    public <E extends IEntity> BaseSearchResult<E> search(@Nonnull String query,
                                                     Map<String, Object> parameters,
                                                     @Nonnull Class<? extends E> type, Context context) throws
             DataStoreException {

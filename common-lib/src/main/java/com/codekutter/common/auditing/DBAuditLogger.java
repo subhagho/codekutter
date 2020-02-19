@@ -22,8 +22,10 @@ import com.codekutter.common.model.EObjectState;
 import com.codekutter.common.model.IKey;
 import com.codekutter.common.model.IKeyed;
 import com.codekutter.common.stores.AbstractDataStore;
+import com.codekutter.common.stores.BaseSearchResult;
 import com.codekutter.common.stores.DataStoreException;
 import com.codekutter.common.stores.TransactionDataStore;
+import com.codekutter.common.stores.impl.EntitySearchResult;
 import com.codekutter.common.utils.LogUtils;
 import com.google.common.base.Preconditions;
 import org.hibernate.Session;
@@ -56,15 +58,19 @@ public class DBAuditLogger extends AbstractAuditLogger<Session> {
                     AuditRecord.class.getCanonicalName(), query);
             Map<String, Object> params = new HashMap<>();
             params.put("recordType", entityType.getCanonicalName());
-            Collection<AuditRecord> records = dataStore.search(qstr, params, AuditRecord.class, null);
-            if (records != null && !records.isEmpty()) {
-                List<T> entities = new ArrayList<>(records.size());
-                for (AuditRecord record : records) {
-                    T entity = (T) serializer.deserialize(record.getEntityData(), entityType);
-                    LogUtils.debug(getClass(), entity);
-                    entities.add(entity);
+            BaseSearchResult<AuditRecord> result = dataStore.search(qstr, params, AuditRecord.class, null);
+            if (result instanceof EntitySearchResult) {
+                EntitySearchResult<AuditRecord> er = (EntitySearchResult<AuditRecord>)result;
+                Collection<AuditRecord> records = er.entities();
+                if (records != null && !records.isEmpty()) {
+                    List<T> entities = new ArrayList<>(records.size());
+                    for (AuditRecord record : records) {
+                        T entity = (T) serializer.deserialize(record.getEntityData(), entityType);
+                        LogUtils.debug(getClass(), entity);
+                        entities.add(entity);
+                    }
+                    return entities;
                 }
-                return entities;
             }
             return null;
         } catch (Throwable t) {
@@ -94,9 +100,13 @@ public class DBAuditLogger extends AbstractAuditLogger<Session> {
             Map<String, Object> params = new HashMap<>();
             params.put("recordType", entityType.getCanonicalName());
             params.put("entityId", key.toString());
-            Collection<AuditRecord> records = dataStore.search(qstr, params, AuditRecord.class, null);
-            if (records != null && !records.isEmpty()) {
-                return records;
+            BaseSearchResult<AuditRecord> result = dataStore.search(qstr, params, AuditRecord.class, null);
+            if (result instanceof EntitySearchResult) {
+                EntitySearchResult<AuditRecord> er = (EntitySearchResult<AuditRecord>)result;
+                Collection<AuditRecord> records = er.entities();
+                if (records != null && !records.isEmpty()) {
+                    return records;
+                }
             }
             return null;
         } catch (Throwable ex) {
