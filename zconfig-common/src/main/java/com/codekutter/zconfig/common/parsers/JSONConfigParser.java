@@ -124,7 +124,7 @@ public class JSONConfigParser extends AbstractConfigParser {
     public void parse(String name, AbstractConfigReader reader,
                       ConfigurationSettings settings,
                       Version version, String password)
-    throws ConfigurationException {
+            throws ConfigurationException {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(name));
         Preconditions.checkArgument(reader != null);
         Preconditions.checkArgument(version != null);
@@ -200,7 +200,7 @@ public class JSONConfigParser extends AbstractConfigParser {
      */
     private synchronized void parse(String name,
                                     Version version, JsonNode node, String password)
-    throws ConfigurationException {
+            throws ConfigurationException {
         configuration = new Configuration(settings);
         configuration.getState().setState(ENodeState.Loading);
         configuration.setName(name);
@@ -221,7 +221,7 @@ public class JSONConfigParser extends AbstractConfigParser {
      * @throws ConfigurationException
      */
     private void parseBody(JsonNode node, String password)
-    throws ConfigurationException {
+            throws ConfigurationException {
         Iterator<Map.Entry<String, JsonNode>> nodes = node.fields();
         if (nodes != null) {
             while (nodes.hasNext()) {
@@ -244,7 +244,7 @@ public class JSONConfigParser extends AbstractConfigParser {
      * @throws ConfigurationException
      */
     private void parseConfiguration(String name, JsonNode node, String password)
-    throws ConfigurationException {
+            throws ConfigurationException {
         if (node.getNodeType() != JsonNodeType.OBJECT) {
             throw new ConfigurationException(String.format(
                     "Invalid Configuration Node : [expected=%s][actual=%s]",
@@ -271,7 +271,7 @@ public class JSONConfigParser extends AbstractConfigParser {
      */
     private void parseNode(String name, JsonNode node, AbstractConfigNode parent,
                            String password)
-    throws ConfigurationException {
+            throws ConfigurationException {
         if (node.getNodeType() == JsonNodeType.OBJECT) {
             AbstractConfigNode nn = readObjectNode(name, node, parent, password);
             if (nn != null) {
@@ -315,7 +315,7 @@ public class JSONConfigParser extends AbstractConfigParser {
      */
     private void readArrayNode(String name, AbstractConfigNode parent,
                                ArrayNode arrayNode, String password)
-    throws ConfigurationException {
+            throws ConfigurationException {
         // Check if array element types are consistent
         JsonNodeType type = null;
 
@@ -367,7 +367,7 @@ public class JSONConfigParser extends AbstractConfigParser {
                                                                 AbstractConfigNode parent,
                                                                 ArrayNode arrayNode,
                                                                 String password)
-    throws ConfigurationException {
+            throws ConfigurationException {
         setupNode(name, listNode, parent);
         if (arrayNode.size() > 0) {
             for (int ii = 0; ii < arrayNode.size(); ii++) {
@@ -389,7 +389,7 @@ public class JSONConfigParser extends AbstractConfigParser {
      */
     private void setupNode(String name, AbstractConfigNode configNode,
                            AbstractConfigNode parent)
-    throws ConfigurationException {
+            throws ConfigurationException {
         configNode.setName(name);
         configNode.setParent(parent);
         configNode.setConfiguration(configuration);
@@ -409,9 +409,16 @@ public class JSONConfigParser extends AbstractConfigParser {
     private void setupNodeWithChildren(String name, AbstractConfigNode parent,
                                        AbstractConfigNode configNode, JsonNode node,
                                        String password)
-    throws ConfigurationException {
+            throws ConfigurationException {
         setupNode(name, configNode, parent);
         parseChildNodes(configNode, node, password);
+    }
+
+    private boolean ignoreNode(String name, JsonNode node) {
+        if (name.compareTo(JSONConfigConstants.CONFIG_NODE_DB_NODE) == 0) {
+            return true;
+        }
+        return false;
     }
 
     /**
@@ -423,12 +430,14 @@ public class JSONConfigParser extends AbstractConfigParser {
      */
     private void parseChildNodes(AbstractConfigNode parent, JsonNode node,
                                  String password)
-    throws ConfigurationException {
+            throws ConfigurationException {
         Iterator<Map.Entry<String, JsonNode>> nnodes = node.fields();
         if (nnodes != null) {
             while (nnodes.hasNext()) {
                 Map.Entry<String, JsonNode> sn = nnodes.next();
                 if (isProcessed(sn.getValue())) {
+                    continue;
+                } else if (ignoreNode(sn.getKey(), sn.getValue())) {
                     continue;
                 }
                 parseNode(sn.getKey(), sn.getValue(), parent, password);
@@ -444,7 +453,7 @@ public class JSONConfigParser extends AbstractConfigParser {
      * @throws ConfigurationException
      */
     private void addToParentNode(AbstractConfigNode parent, AbstractConfigNode node)
-    throws ConfigurationException {
+            throws ConfigurationException {
         if (parent instanceof ConfigPathNode) {
             ((ConfigPathNode) parent).addChildNode(node);
         } else if (parent instanceof ConfigListElementNode) {
@@ -470,7 +479,7 @@ public class JSONConfigParser extends AbstractConfigParser {
     private AbstractConfigNode readObjectNode(String name, JsonNode node,
                                               AbstractConfigNode parent,
                                               String password)
-    throws ConfigurationException {
+            throws ConfigurationException {
         AbstractConfigNode nn = null;
         if (name.compareTo(
                 configuration.getSettings().getPropertiesNodeName()) == 0) {
@@ -510,7 +519,7 @@ public class JSONConfigParser extends AbstractConfigParser {
             } else if (type == EResourceType.DIRECTORY) {
                 pn = new ConfigResourceDirectory(configuration, parent);
                 parseFolderResourceNode(name, (ConfigResourceDirectory) pn, parent,
-                                        node);
+                        node);
             }
             nn = pn;
         } else {
@@ -532,6 +541,10 @@ public class JSONConfigParser extends AbstractConfigParser {
                 nn = vn;
             } else {
                 ConfigPathNode pn = new ConfigPathNode(configuration, parent);
+                JsonNode en = node.get(JSONConfigConstants.CONFIG_NODE_DATA_TYPE);
+                if (en != null) {
+                    pn.setNodeSource(ENodeSource.DataBase);
+                }
                 setupNodeWithChildren(name, parent, pn, node, password);
                 nn = pn;
             }
@@ -551,7 +564,7 @@ public class JSONConfigParser extends AbstractConfigParser {
     private ConfigValueNode checkExtendedValue(String name,
                                                AbstractConfigNode parent,
                                                JsonNode jsonNode)
-    throws ConfigurationException {
+            throws ConfigurationException {
         JsonNode en = jsonNode.get(JSONConfigConstants.CONFIG_NODE_ENCRYPTED);
         if (en != null) {
             JsonNode vn =
@@ -604,7 +617,7 @@ public class JSONConfigParser extends AbstractConfigParser {
      */
     private void parseFileResourceNode(String name, ConfigResourceFile node,
                                        AbstractConfigNode parent, JsonNode jsonNode)
-    throws ConfigurationException {
+            throws ConfigurationException {
         parseResourceNode(name, node, parent, jsonNode);
         URI uri = node.getLocation();
         if (uri == null) {
@@ -620,7 +633,7 @@ public class JSONConfigParser extends AbstractConfigParser {
             node.setResourceHandle(file);
         } else {
             String filename = String.format("%s/%s", settings.getTempDirectory(),
-                                            node.getResourceName());
+                    node.getResourceName());
             File file = new File(filename);
             IOUtils.CheckParentDirectory(file.getAbsolutePath());
             node.setResourceHandle(file);
@@ -634,7 +647,7 @@ public class JSONConfigParser extends AbstractConfigParser {
                         try {
                             long bread = RemoteFileHelper
                                     .downloadRemoteFile(node.getLocation(),
-                                                        node.getResourceHandle());
+                                            node.getResourceHandle());
                             if (bread <= 0) {
                                 throw new ConfigurationException(String.format(
                                         "No bytes read for remote file. [url=%s]",
@@ -664,7 +677,7 @@ public class JSONConfigParser extends AbstractConfigParser {
     private void parseFolderResourceNode(String name, ConfigResourceDirectory node,
                                          AbstractConfigNode parent,
                                          JsonNode jsonNode)
-    throws ConfigurationException {
+            throws ConfigurationException {
         parseResourceNode(name, node, parent, jsonNode);
         URI uri = node.getLocation();
         if (uri == null) {
@@ -680,7 +693,7 @@ public class JSONConfigParser extends AbstractConfigParser {
             node.setResourceHandle(file);
         } else {
             String filename = String.format("%s/%s", settings.getTempDirectory(),
-                                            node.getResourceName());
+                    node.getResourceName());
             File file = new File(filename);
             IOUtils.CheckDirectory(file.getAbsolutePath());
             node.setResourceHandle(file);
@@ -694,7 +707,7 @@ public class JSONConfigParser extends AbstractConfigParser {
                         try {
                             long bread = RemoteFileHelper
                                     .downloadRemoteDirectory(node.getLocation(),
-                                                             node.getResourceHandle());
+                                            node.getResourceHandle());
                             if (bread <= 0) {
                                 throw new ConfigurationException(String.format(
                                         "No bytes read for remote file. [url=%s]",
@@ -717,7 +730,7 @@ public class JSONConfigParser extends AbstractConfigParser {
      * @throws ConfigurationException
      */
     private EResourceType parseResourceType(JsonNode node)
-    throws ConfigurationException {
+            throws ConfigurationException {
         JsonNode nn = node.get(ConfigResourceNode.NODE_RESOURCE_TYPE);
         if (nn == null) {
             throw ConfigurationException.propertyNotFoundException(
@@ -744,7 +757,7 @@ public class JSONConfigParser extends AbstractConfigParser {
                                    ConfigResourceNode node,
                                    AbstractConfigNode parent,
                                    JsonNode jsonNode)
-    throws ConfigurationException {
+            throws ConfigurationException {
         setupNode(name, node, parent);
         Iterator<Map.Entry<String, JsonNode>> nnodes = jsonNode.fields();
         if (nnodes != null) {
@@ -807,7 +820,7 @@ public class JSONConfigParser extends AbstractConfigParser {
     private void setupIncludeNode(String name, ConfigIncludeNode node,
                                   AbstractConfigNode parent,
                                   JsonNode jsonNode, String password)
-    throws ConfigurationException {
+            throws ConfigurationException {
         setupNode(name, node, parent);
         Iterator<Map.Entry<String, JsonNode>> nnodes = jsonNode.fields();
         if (nnodes != null) {
@@ -900,11 +913,11 @@ public class JSONConfigParser extends AbstractConfigParser {
             if (reader == null) {
                 throw new ConfigurationException(
                         String.format("Error getting reader instance : [URI=%s]",
-                                      uri.toString()));
+                                uri.toString()));
             }
             JSONConfigParser nparser = new JSONConfigParser();
             nparser.parse(node.getConfigName(), reader, settings,
-                          node.getVersion(), password);
+                    node.getVersion(), password);
             if (nparser.configuration != null) {
                 ConfigPathNode configPathNode =
                         nparser.configuration.getRootConfigNode();
@@ -943,7 +956,7 @@ public class JSONConfigParser extends AbstractConfigParser {
      * @throws ConfigurationException
      */
     private void parseHeader(JsonNode node, Version version, String password)
-    throws ConfigurationException {
+            throws ConfigurationException {
         try {
             JsonNode header = node.get(JSONConfigConstants.CONFIG_HEADER_NODE);
             if (header == null) {
@@ -1080,7 +1093,7 @@ public class JSONConfigParser extends AbstractConfigParser {
      * @throws ConfigurationException
      */
     private ModifiedBy parseUpdateInfo(JsonNode node)
-    throws ConfigurationException {
+            throws ConfigurationException {
         if (isProcessed(node)) {
             return null;
         }

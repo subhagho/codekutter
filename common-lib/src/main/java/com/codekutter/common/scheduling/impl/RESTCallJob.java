@@ -78,7 +78,7 @@ public class RESTCallJob extends AbstractJob {
     private Object doPost(WebTarget target, RestJobConfig config) throws JobExecutionException {
         Response response = null;
         if (config.getRequestBuilder() != null) {
-            response = config.getRequestBuilder().get(target, config);
+            response = config.getRequestBuilder().post(target, config);
         } else
             throw new JobExecutionException("Request Builder not specified. Required for POST requests.");
         if (response.getStatus() != HttpStatus.SC_OK) {
@@ -93,7 +93,7 @@ public class RESTCallJob extends AbstractJob {
     private Object doPut(WebTarget target, RestJobConfig config) throws JobExecutionException {
         Response response = null;
         if (config.getRequestBuilder() != null) {
-            response = config.getRequestBuilder().get(target, config);
+            response = config.getRequestBuilder().put(target, config);
         } else
             throw new JobExecutionException("Request Builder not specified. Required for PUT requests.");
         if (response.getStatus() != HttpStatus.SC_OK) {
@@ -108,7 +108,7 @@ public class RESTCallJob extends AbstractJob {
     private Object doDelete(WebTarget target, RestJobConfig config) throws JobExecutionException {
         Response response = null;
         if (config.getRequestBuilder() != null) {
-            response = config.getRequestBuilder().get(target, config);
+            response = config.getRequestBuilder().delete(target, config);
         } else
             throw new JobExecutionException("Request Builder not specified. Required for DELETE requests.");
         if (response.getStatus() != HttpStatus.SC_OK) {
