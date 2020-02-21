@@ -26,16 +26,15 @@ package com.codekutter.zconfig.common.parsers;
 
 import com.codekutter.common.model.EReaderType;
 import com.codekutter.common.model.ModifiedBy;
-import com.codekutter.common.utils.CypherUtils;
-import com.codekutter.common.utils.IOUtils;
-import com.codekutter.common.utils.LogUtils;
-import com.codekutter.common.utils.RemoteFileHelper;
+import com.codekutter.common.stores.AbstractConnection;
+import com.codekutter.common.utils.*;
 import com.codekutter.zconfig.common.*;
 import com.codekutter.zconfig.common.model.*;
 import com.codekutter.zconfig.common.model.nodes.*;
 import com.codekutter.zconfig.common.readers.AbstractConfigReader;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import org.hibernate.Session;
 import org.w3c.dom.*;
 import org.xml.sax.SAXException;
 
@@ -66,7 +65,7 @@ public class XMLConfigParser extends AbstractConfigParser {
     public void parse(String name, AbstractConfigReader reader,
                       ConfigurationSettings settings, Version version,
                       String password)
-            throws ConfigurationException {
+    throws ConfigurationException {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(name));
         Preconditions.checkArgument(reader != null);
         Preconditions.checkArgument(version != null);
@@ -105,7 +104,7 @@ public class XMLConfigParser extends AbstractConfigParser {
                 for (int ii = 0; ii < children.getLength(); ii++) {
                     Node nn = children.item(ii);
                     if (nn.getNodeName()
-                            .compareTo(XMLConfigConstants.CONFIG_HEADER_NODE) == 0) {
+                          .compareTo(XMLConfigConstants.CONFIG_HEADER_NODE) == 0) {
                         continue;
                     }
                     if (!(nn instanceof Element)) {
@@ -143,7 +142,7 @@ public class XMLConfigParser extends AbstractConfigParser {
      * @throws ConfigurationException
      */
     private void parseBody(Element node, String password)
-            throws ConfigurationException {
+    throws ConfigurationException {
         ConfigPathNode rootNode = new ConfigPathNode(configuration, null);
         rootNode.setName(node.getNodeName());
         configuration.setRootConfigNode(rootNode);
@@ -168,7 +167,7 @@ public class XMLConfigParser extends AbstractConfigParser {
      * @throws ConfigurationException
      */
     private void parseNode(Element node, AbstractConfigNode parent, String password)
-            throws ConfigurationException {
+    throws ConfigurationException {
         String name = node.getNodeName();
         short nodeListType = isListNode(node);
         if (nodeListType == Node.ELEMENT_NODE) {
@@ -226,7 +225,8 @@ public class XMLConfigParser extends AbstractConfigParser {
                 if (nodeName.compareTo(settings.getPropertiesNodeName()) == 0) {
                     ConfigPropertiesNode pnode =
                             new ConfigPropertiesNode(configuration, parent);
-                    setupNode(settings.getPropertiesNodeName(), pnode, parent);
+                    setupNode(settings.getPropertiesNodeName(), pnode, parent,
+                              node);
                     //pnode.setName(settings.getPropertiesNodeName());
                     //((ConfigPathNode) parent).addChildNode(pnode);
                     parseChildren(node, pnode, password);
@@ -234,15 +234,17 @@ public class XMLConfigParser extends AbstractConfigParser {
                         0) {
                     ConfigParametersNode pnode =
                             new ConfigParametersNode(configuration, parent);
-                    setupNode(settings.getParametersNodeName(), pnode, parent);
+                    setupNode(settings.getParametersNodeName(), pnode, parent,
+                              node);
                     //pnode.setName(settings.getParametersNodeName());
                     //((ConfigPathNode) parent).addChildNode(pnode);
                     parseChildren(node, pnode, password);
                 } else if (nodeName.compareTo(ConfigIncludeNode.NODE_NAME) == 0) {
                     ConfigIncludeNode pnode =
                             new ConfigIncludeNode(configuration, parent);
-                    setupNode(ConfigIncludeNode.NODE_NAME, pnode, parent);
-                    parseIncludeNode(node, pnode, (ConfigPathNode) parent, password);
+                    setupNode(ConfigIncludeNode.NODE_NAME, pnode, parent, node);
+                    parseIncludeNode(node, pnode, (ConfigPathNode) parent,
+                                     password);
                 } else if (nodeName.compareTo(ConfigResourceNode.NODE_NAME) == 0) {
                     EResourceType type = parseResourceType(node);
                     if (type == null) {
@@ -252,24 +254,29 @@ public class XMLConfigParser extends AbstractConfigParser {
                     ConfigResourceFile pnode = null;
                     if (type == EResourceType.FILE) {
                         pnode = new ConfigResourceFile(configuration, parent);
-                        setupNode(ConfigResourceNode.NODE_NAME, pnode, parent);
+                        setupNode(ConfigResourceNode.NODE_NAME, pnode, parent,
+                                  node);
                         parseResourceFileNode(node, pnode);
                     } else if (type == EResourceType.BLOB) {
                         pnode = new ConfigResourceBlob(configuration, parent);
-                        setupNode(ConfigResourceNode.NODE_NAME, pnode, parent);
+                        setupNode(ConfigResourceNode.NODE_NAME, pnode, parent,
+                                  node);
                         parseResourceFileNode(node, pnode);
                     } else if (type == EResourceType.DIRECTORY) {
                         pnode = new ConfigResourceDirectory(configuration, parent);
-                        setupNode(ConfigResourceNode.NODE_NAME, pnode, parent);
+                        setupNode(ConfigResourceNode.NODE_NAME, pnode, parent,
+                                  node);
                         parseResourceDirNode(node, (ConfigResourceDirectory) pnode);
                     }
                     pnode.setName(nodeName);
+                } else if (node.hasAttribute(CONFIG_ATTR_DB_NODE)) {
+                    ConfigDbNode pnode = new ConfigDbNode(configuration, parent);
+                    setupNode(node.getNodeName(), pnode, parent, node);
+                    parseChildren(node, pnode, password);
                 } else {
                     ConfigPathNode pnode =
                             new ConfigPathNode(configuration, parent);
-                    //pnode.setName(node.getNodeName());
-                    //((ConfigPathNode) parent).addChildNode(pnode);
-                    setupNode(node.getNodeName(), pnode, parent);
+                    setupNode(node.getNodeName(), pnode, parent, node);
                     parseChildren(node, pnode, password);
                 }
             }
@@ -292,7 +299,8 @@ public class XMLConfigParser extends AbstractConfigParser {
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})
-    private ConfigValueNode parseValueNode(Element node, AbstractConfigNode parent) throws ConfigurationException {
+    private ConfigValueNode parseValueNode(Element node, AbstractConfigNode parent)
+    throws ConfigurationException {
         try {
             ConfigValueNode vn = new ConfigValueNode(configuration, parent);
             String name = node.getNodeName();
@@ -300,7 +308,9 @@ public class XMLConfigParser extends AbstractConfigParser {
                 name = node.getAttribute(XMLConfigConstants.CONFIG_HEADER_NAME);
             }
             if (Strings.isNullOrEmpty(name)) {
-                throw new ConfigurationException(String.format("Attribute not found. [name=name][path=%s]", node.getNodeName()));
+                throw new ConfigurationException(
+                        String.format("Attribute not found. [name=name][path=%s]",
+                                      node.getNodeName()));
             }
             vn.setName(name);
             String value = node.getTextContent();
@@ -317,17 +327,23 @@ public class XMLConfigParser extends AbstractConfigParser {
             }
             if (!vn.isEncrypted()) {
                 if (node.hasAttribute(XMLConfigConstants.CONFIG_ATTR_VALUE_TYPE)) {
-                    String et = node.getAttribute(XMLConfigConstants.CONFIG_ATTR_VALUE_TYPE);
+                    String et = node.getAttribute(
+                            XMLConfigConstants.CONFIG_ATTR_VALUE_TYPE);
                     EValueType vt = EValueType.valueOf(et);
                     vn.setValueType(vt);
                     if (vt == EValueType.ENUM) {
-                        String tt = node.getAttribute(XMLConfigConstants.CONFIG_ATTR_ENUM_TYPE);
+                        String tt = node.getAttribute(
+                                XMLConfigConstants.CONFIG_ATTR_ENUM_TYPE);
                         if (!Strings.isNullOrEmpty(tt)) {
-                            Class<? extends Enum> enumType = (Class<? extends Enum>) Class.forName(tt);
+                            Class<? extends Enum> enumType =
+                                    (Class<? extends Enum>) Class.forName(tt);
                             vn.setEnumType(enumType);
                         }
                     }
                 }
+            }
+            if (node.hasAttribute(CONFIG_ATTR_DB_NODE)) {
+                vn.setNodeSource(ENodeSource.DataBase);
             }
             return vn;
         } catch (Throwable t) {
@@ -343,7 +359,7 @@ public class XMLConfigParser extends AbstractConfigParser {
      * @throws ConfigurationException
      */
     private EResourceType parseResourceType(Element node)
-            throws ConfigurationException {
+    throws ConfigurationException {
         String nt = node.getAttribute(ConfigResourceNode.NODE_RESOURCE_TYPE);
         if (Strings.isNullOrEmpty(nt)) {
             throw ConfigurationException.propertyNotFoundException(
@@ -361,7 +377,7 @@ public class XMLConfigParser extends AbstractConfigParser {
      */
     private void parseResourceDirNode(Element node,
                                       ConfigResourceDirectory resource)
-            throws ConfigurationException {
+    throws ConfigurationException {
         setupResourceNode(node, resource);
         URI uri = resource.getLocation();
         if (uri == null) {
@@ -377,7 +393,7 @@ public class XMLConfigParser extends AbstractConfigParser {
             resource.setResourceHandle(file);
         } else {
             String filename = String.format("%s/%s", settings.getTempDirectory(),
-                    resource.getResourceName());
+                                            resource.getResourceName());
             File file = new File(filename);
             IOUtils.CheckDirectory(file.getAbsolutePath());
             resource.setResourceHandle(file);
@@ -392,7 +408,7 @@ public class XMLConfigParser extends AbstractConfigParser {
                         try {
                             long bread = RemoteFileHelper
                                     .downloadRemoteDirectory(resource.getLocation(),
-                                            resource.getResourceHandle());
+                                                             resource.getResourceHandle());
                             if (bread <= 0) {
                                 throw new ConfigurationException(String.format(
                                         "No bytes read for remote file. [url=%s]",
@@ -415,7 +431,7 @@ public class XMLConfigParser extends AbstractConfigParser {
      * @throws ConfigurationException
      */
     private void parseResourceFileNode(Element node, ConfigResourceFile resource)
-            throws ConfigurationException {
+    throws ConfigurationException {
         setupResourceNode(node, resource);
         URI uri = resource.getLocation();
         if (uri == null) {
@@ -431,7 +447,7 @@ public class XMLConfigParser extends AbstractConfigParser {
             resource.setResourceHandle(file);
         } else {
             String filename = String.format("%s/%s", settings.getTempDirectory(),
-                    resource.getResourceName());
+                                            resource.getResourceName());
             File file = new File(filename);
             IOUtils.CheckParentDirectory(file.getAbsolutePath());
             resource.setResourceHandle(file);
@@ -446,7 +462,7 @@ public class XMLConfigParser extends AbstractConfigParser {
                         try {
                             long bread = RemoteFileHelper
                                     .downloadRemoteFile(resource.getLocation(),
-                                            resource.getResourceHandle());
+                                                        resource.getResourceHandle());
                             if (bread <= 0) {
                                 throw new ConfigurationException(String.format(
                                         "No bytes read for remote file. [url=%s]",
@@ -472,11 +488,11 @@ public class XMLConfigParser extends AbstractConfigParser {
      * @throws ConfigurationException
      */
     private void setupResourceNode(Element node, ConfigResourceNode resource)
-            throws ConfigurationException {
+    throws ConfigurationException {
         if (!node.hasAttributes()) {
             throw new ConfigurationException(
                     String.format("No attributes found : [path=%s]",
-                            node.toString()));
+                                  node.toString()));
         }
         String attr = node.getAttribute(ConfigResourceNode.NODE_RESOURCE_TYPE);
         if (Strings.isNullOrEmpty(attr)) {
@@ -499,7 +515,7 @@ public class XMLConfigParser extends AbstractConfigParser {
         if (!node.hasChildNodes()) {
             throw new ConfigurationException(
                     String.format("No child nodes found : [path=%s]",
-                            node.toString()));
+                                  node.toString()));
         }
         NodeList children = node.getChildNodes();
         for (int ii = 0; ii < children.getLength(); ii++) {
@@ -539,7 +555,7 @@ public class XMLConfigParser extends AbstractConfigParser {
                                   ConfigIncludeNode includeNode,
                                   ConfigPathNode parent,
                                   String password)
-            throws ConfigurationException {
+    throws ConfigurationException {
         String attr = node.getAttribute(ConfigIncludeNode.NODE_CONFIG_NAME);
         if (Strings.isNullOrEmpty(attr)) {
             throw ConfigurationException
@@ -586,11 +602,11 @@ public class XMLConfigParser extends AbstractConfigParser {
         if (reader == null) {
             throw new ConfigurationException(
                     String.format("Error getting reader instance : [URI=%s]",
-                            uri.toString()));
+                                  uri.toString()));
         }
         XMLConfigParser nparser = new XMLConfigParser();
         nparser.parse(includeNode.getConfigName(), reader, settings,
-                includeNode.getVersion(), password);
+                      includeNode.getVersion(), password);
         if (nparser.configuration != null) {
             ConfigPathNode configPathNode =
                     nparser.configuration.getRootConfigNode();
@@ -614,12 +630,17 @@ public class XMLConfigParser extends AbstractConfigParser {
      * @throws ConfigurationException
      */
     private void setupNode(String name, AbstractConfigNode configNode,
-                           AbstractConfigNode parent)
-            throws ConfigurationException {
+                           AbstractConfigNode parent, Node node)
+    throws ConfigurationException {
         configNode.setName(name);
         configNode.setParent(parent);
         configNode.setConfiguration(configuration);
         configNode.loading();
+        if (node instanceof Element) {
+            if (((Element) node).hasAttribute(CONFIG_ATTR_DB_NODE)) {
+                configNode.setNodeSource(ENodeSource.DataBase);
+            }
+        }
         addToParentNode(parent, configNode);
     }
 
@@ -632,7 +653,7 @@ public class XMLConfigParser extends AbstractConfigParser {
      * @throws ConfigurationException
      */
     private void addToParentNode(AbstractConfigNode parent, AbstractConfigNode node)
-            throws ConfigurationException {
+    throws ConfigurationException {
         if (parent instanceof ConfigPathNode) {
             ((ConfigPathNode) parent).addChildNode(node);
         } else if (parent instanceof ConfigListElementNode) {
@@ -655,7 +676,7 @@ public class XMLConfigParser extends AbstractConfigParser {
      */
     private void parseChildren(Element node, AbstractConfigNode parent,
                                String password)
-            throws ConfigurationException {
+    throws ConfigurationException {
         if (node.hasAttributes() && (parent instanceof ConfigPathNode)) {
             NamedNodeMap nattrs = node.getAttributes();
             if (nattrs != null) {
@@ -663,7 +684,7 @@ public class XMLConfigParser extends AbstractConfigParser {
                 if (attrs == null) {
                     attrs = new ConfigAttributesNode(configuration, parent);
                     setupNode(configuration.getSettings().getAttributesNodeName(),
-                            attrs, parent);
+                              attrs, parent, node);
                 }
                 for (int ii = 0; ii < nattrs.getLength(); ii++) {
                     Node attr = nattrs.item(ii);
@@ -701,15 +722,16 @@ public class XMLConfigParser extends AbstractConfigParser {
                     value = value.trim();
                     if (!Strings.isNullOrEmpty(value))
                         return true;
+                    else return ((Element) node).hasAttribute(CONFIG_ATTR_DB_NODE);
                 }
-            } else if (((Element) node).hasAttribute(XMLConfigConstants.CONFIG_NODE_ENCRYPTED)) {
-                if (((Element) node).hasAttribute(XMLConfigConstants.CONFIG_NODE_ENCRYPTED)) {
-                    String value = children.item(1).getTextContent();
-                    // Empty element nodes also have empty text
-                    value = value.trim();
-                    if (!Strings.isNullOrEmpty(value))
-                        return true;
-                }
+            } else if (((Element) node)
+                    .hasAttribute(XMLConfigConstants.CONFIG_NODE_ENCRYPTED)) {
+                String value = children.item(1).getTextContent();
+                // Empty element nodes also have empty text
+                value = value.trim();
+                if (!Strings.isNullOrEmpty(value))
+                    return true;
+                else return ((Element) node).hasAttribute(CONFIG_ATTR_DB_NODE);
             }
         }
         return false;
@@ -776,7 +798,7 @@ public class XMLConfigParser extends AbstractConfigParser {
      * @throws ConfigurationException
      */
     private void parseHeader(Element node, Version version, String password)
-            throws ConfigurationException {
+    throws ConfigurationException {
         NodeList hnode =
                 node.getElementsByTagName(XMLConfigConstants.CONFIG_HEADER_NODE);
         if (hnode == null || hnode.getLength() == 0) {
@@ -851,7 +873,7 @@ public class XMLConfigParser extends AbstractConfigParser {
                 for (int ii = 0; ii < children.getLength(); ii++) {
                     Node nn = children.item(ii);
                     if (nn.getNodeName()
-                            .compareTo(XMLConfigConstants.CONFIG_CREATED_BY) ==
+                          .compareTo(XMLConfigConstants.CONFIG_CREATED_BY) ==
                             0) {
                         ModifiedBy modifiedBy = parseUpdateInfo((Element) nn);
                         if (modifiedBy == null) {
@@ -861,7 +883,7 @@ public class XMLConfigParser extends AbstractConfigParser {
                         }
                         configuration.setCreatedBy(modifiedBy);
                     } else if (nn.getNodeName()
-                            .compareTo(XMLConfigConstants.CONFIG_UPDATED_BY) ==
+                                 .compareTo(XMLConfigConstants.CONFIG_UPDATED_BY) ==
                             0) {
                         ModifiedBy modifiedBy = parseUpdateInfo((Element) nn);
                         if (modifiedBy == null) {
@@ -871,8 +893,8 @@ public class XMLConfigParser extends AbstractConfigParser {
                         }
                         configuration.setUpdatedBy(modifiedBy);
                     } else if (nn.getNodeName()
-                            .compareTo(
-                                    XMLConfigConstants.CONFIG_HEADER_DESC) ==
+                                 .compareTo(
+                                         XMLConfigConstants.CONFIG_HEADER_DESC) ==
                             0) {
                         String name = nn.getTextContent();
                         Preconditions.checkState(!Strings.isNullOrEmpty(name));
@@ -895,7 +917,7 @@ public class XMLConfigParser extends AbstractConfigParser {
      * @throws ConfigurationException
      */
     private ModifiedBy parseUpdateInfo(Element node)
-            throws ConfigurationException {
+    throws ConfigurationException {
         if (node.hasAttributes()) {
             ModifiedBy mb = new ModifiedBy();
             if (node.hasAttribute(XMLConfigConstants.CONFIG_CREATED_BY)) {

@@ -28,6 +28,7 @@ import lombok.Setter;
 import org.hibernate.Session;
 
 import javax.annotation.Nonnull;
+import javax.persistence.Query;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -132,12 +133,4 @@ public class ConfigDbNode extends ConfigPathNode {
         return record;
     }
 
-
-    public static ConfigDbNode read(@Nonnull ConfigPathNode parent, @Nonnull String name) throws ConfigurationException {
-        Preconditions.checkState(parent.getConfiguration() != null);
-        Preconditions.checkState(parent.getConfiguration().getConnection() != null);
-        AbstractConnection<Session> connection = parent.getConfiguration().getConnection();
-        
-        return null;
-    }
 }

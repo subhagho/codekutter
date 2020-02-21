@@ -26,9 +26,11 @@ package com.codekutter.zconfig.common.parsers;
 
 import com.codekutter.common.stores.AbstractConnection;
 import com.codekutter.common.stores.ConnectionManager;
+import com.codekutter.common.utils.ConfigUtils;
 import com.codekutter.common.utils.LogUtils;
 import com.codekutter.zconfig.common.ConfigurationException;
 import com.codekutter.zconfig.common.VariableRegexParser;
+import com.codekutter.zconfig.common.model.ConfigDbRecord;
 import com.codekutter.zconfig.common.model.Configuration;
 import com.codekutter.zconfig.common.model.ConfigurationSettings;
 import com.codekutter.zconfig.common.model.Version;
@@ -39,6 +41,7 @@ import com.google.common.base.Strings;
 import org.hibernate.Session;
 
 import javax.annotation.Nonnull;
+import javax.persistence.Query;
 import java.io.Closeable;
 import java.util.HashMap;
 import java.util.List;
@@ -48,6 +51,8 @@ import java.util.Map;
  * Abstract base class for defining configuration parsers.
  */
 public abstract class AbstractConfigParser implements Closeable {
+    public String CONFIG_ATTR_DB_NODE = "__db_node";
+
     /**
      * Configuration settings to be used by this parser.
      */
@@ -77,6 +82,21 @@ public abstract class AbstractConfigParser implements Closeable {
     protected void doPostLoad() throws ConfigurationException {
         ConfigPathNode node = configuration.getRootConfigNode();
         if (node != null) {
+            try {
+                AbstractConfigNode cnode =
+                        ConfigUtils.getPathNode(AbstractConnection.class, node);
+                if (cnode != null) {
+                    AbstractConnection<Session> connection = readConnection(node);
+                    if (connection != null) {
+                        Map<String, ConfigDbRecord> records = fetch(connection);
+                        if (records != null) {
+                            readConfigFromDb(node, records);
+                        }
+                    }
+                }
+            } catch (Exception ex) {
+                throw new ConfigurationException(ex);
+            }
             Map<String, ConfigValueNode> properties = new HashMap<>();
             nodePostLoad(node, properties);
         }
@@ -128,7 +148,7 @@ public abstract class AbstractConfigParser implements Closeable {
                     }
                 }
             }
-        }  else if (node instanceof ConfigListElementNode) {
+        } else if (node instanceof ConfigListElementNode) {
             ConfigListElementNode le = (ConfigListElementNode) node;
             List<ConfigElementNode> nodes = le.getValues();
             if (nodes != null && !nodes.isEmpty()) {
@@ -194,22 +214,67 @@ public abstract class AbstractConfigParser implements Closeable {
         return value;
     }
 
-    protected void readConnection(@Nonnull ConfigPathNode node) throws ConfigurationException {
-        AbstractConnection<Session> connection = ConnectionManager.readConnection(node);
-        LogUtils.debug(getClass(), String.format("Loaded Db connection: [name=%s][type=%s]",
-                connection.name(), connection.getClass().getCanonicalName()));
-        configuration.setConnection(connection);
+    @SuppressWarnings("unchecked")
+    protected Map<String, ConfigDbRecord> fetch(
+            AbstractConnection<Session> connection) throws ConfigurationException {
+        try {
+            String qstr = String.format(
+                    "FROM %s WHERE configId = :config AND majorVersion = :version",
+                    ConfigDbRecord.class.getCanonicalName());
+            Session session = connection.connection();
+            try {
+                Query query = session.createQuery(qstr);
+                query.setParameter("config", configuration.getId());
+                query.setParameter("version",
+                                   configuration.getVersion().getMajorVersion());
+                List<ConfigDbRecord> records = query.getResultList();
+                if (records != null && !records.isEmpty()) {
+                    Map<String, ConfigDbRecord> map = new HashMap<>();
+                    for (ConfigDbRecord record : records) {
+                        String key =
+                                String.format("%s/%s", record.getId().getPath(),
+                                              record.getId().getName());
+                        map.put(key, record);
+                    }
+                    return map;
+                }
+            } finally {
+                session.close();
+            }
+            return null;
+        } catch (Exception ex) {
+            throw new ConfigurationException(ex);
+        }
     }
 
-    protected void readConfigFromDb(@Nonnull ConfigPathNode node) throws ConfigurationException {
+    protected AbstractConnection<Session> readConnection(
+            @Nonnull ConfigPathNode node) throws ConfigurationException {
+        AbstractConnection<Session> connection =
+                ConnectionManager.readConnection(node);
+        LogUtils.debug(getClass(),
+                       String.format("Loaded Db connection: [name=%s][type=%s]",
+                                     connection.name(),
+                                     connection.getClass().getCanonicalName()));
+        configuration.setConnection(connection);
+
+        return connection;
+    }
+
+    private void readConfigFromDb(ConfigPathNode node,
+                                  Map<String, ConfigDbRecord> records)
+    throws ConfigurationException {
         Preconditions.checkState(configuration.getConnection() != null);
 
-        String path = node.getAbsolutePath();
-        int majorVersion = configuration.getVersion().getMajorVersion();
-        String configId = configuration.getId();
-
-
+        if (node instanceof ConfigDbNode) {
+            if (node.attributes() != null) {
+                Map<String, ConfigValueNode> attrs = node.attributes().getKeyValues();
+                if (!attrs.isEmpty()) {
+                    for(String key : )
+                }
+            }
+        }
     }
+
     /**
      * Parse and load the configuration instance using the specified properties.
      *

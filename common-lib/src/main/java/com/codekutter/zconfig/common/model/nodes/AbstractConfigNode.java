@@ -340,4 +340,11 @@ public abstract class AbstractConfigNode {
      * @param configuration - Changed configuration.
      */
     public abstract void changeConfiguration(Configuration configuration);
+
+    /**
+     * Get the node name to be used for DB records.
+     *
+     * @return - DB Node Name
+     */
+    public abstract String getDbNodeName();
 }
