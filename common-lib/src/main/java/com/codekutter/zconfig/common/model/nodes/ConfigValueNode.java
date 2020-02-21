@@ -388,6 +388,16 @@ public class ConfigValueNode extends AbstractConfigNode
     }
 
     /**
+     * Get the node name to be used for DB records.
+     *
+     * @return - DB Node Name
+     */
+    @Override
+    public String getDbNodeName() {
+        return getName();
+    }
+
+    /**
      * Validate that this node has been setup correctly.
      *
      * @throws ConfigurationException

@@ -102,4 +102,14 @@ public class ConfigResourceFile extends ConfigResourceNode {
             throw new ConfigurationException("No File resource handle loaded.");
         }
     }
+
+    /**
+     * Get the node name to be used for DB records.
+     *
+     * @return - DB Node Name
+     */
+    @Override
+    public String getDbNodeName() {
+        return getName();
+    }
 }

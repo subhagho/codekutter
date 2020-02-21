@@ -17,18 +17,12 @@
 
 package com.codekutter.zconfig.common.model.nodes;
 
-import com.codekutter.common.stores.AbstractConnection;
-import com.codekutter.zconfig.common.ConfigurationException;
 import com.codekutter.zconfig.common.model.*;
-import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
-import org.hibernate.Session;
 
-import javax.annotation.Nonnull;
-import javax.persistence.Query;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -63,13 +57,13 @@ public class ConfigDbNode extends ConfigPathNode {
         for (String nn : getChildren().keySet()) {
             AbstractConfigNode node = getChildNode(nn);
             if (node instanceof ConfigValueNode) {
-                records.add(getValueRecord(null, (ConfigValueNode) node, -1));
+                records.add(getValueRecord((ConfigValueNode) node, -1));
             } else if (node instanceof ConfigListValueNode) {
                 ConfigListValueNode listValueNode = (ConfigListValueNode) node;
                 List<ConfigValueNode> values = listValueNode.getValues();
                 int index = 0;
                 for (ConfigValueNode vn : values) {
-                    records.add(getValueRecord(null, vn, index));
+                    records.add(getValueRecord(vn, index));
                     index++;
                 }
             } else if (node instanceof ConfigDbNode) {
@@ -86,21 +80,21 @@ public class ConfigDbNode extends ConfigPathNode {
                 Map<String, ConfigValueNode> props = properties().getKeyValues();
                 for(String key : props.keySet()) {
                     ConfigValueNode vn = props.get(key);
-                    records.add(getValueRecord(settings.getPropertiesNodeName(), vn, -1));
+                    records.add(getValueRecord(vn, -1));
                 }
             }
             if (parmeters() != null && !parmeters().isEmpty()) {
                 Map<String, ConfigValueNode> props = parmeters().getKeyValues();
                 for(String key : props.keySet()) {
                     ConfigValueNode vn = props.get(key);
-                    records.add(getValueRecord(settings.getParametersNodeName(), vn, -1));
+                    records.add(getValueRecord(vn, -1));
                 }
             }
             if (attributes() != null && !attributes().isEmpty()) {
                 Map<String, ConfigValueNode> props = attributes().getKeyValues();
                 for(String key : props.keySet()) {
                     ConfigValueNode vn = props.get(key);
-                    records.add(getValueRecord(settings.getAttributesNodeName(), vn, -1));
+                    records.add(getValueRecord(vn, -1));
                 }
             }
         }
@@ -108,19 +102,16 @@ public class ConfigDbNode extends ConfigPathNode {
         return null;
     }
 
-    private ConfigDbRecord getValueRecord(String prefix, ConfigValueNode node, int index) {
+    private ConfigDbRecord getValueRecord(ConfigValueNode node, int index) {
         ConfigDbRecordId id = new ConfigDbRecordId();
         id.setConfigId(getConfiguration().getId());
         id.setMajorVersion(getConfiguration().getVersion().getMajorVersion());
         if (index < 0)
-            id.setName(node.getName());
+            id.setName(node.getDbNodeName());
         else
             id.setName(String.format("%s/%d", node.getName(), index));
-        if (!Strings.isNullOrEmpty(prefix)) {
-            id.setName(String.format("%s.%s", prefix, node.getName()));
-        }
 
-        id.setPath(getAbsolutePath());
+        id.setPath(node.getParent().getAbsolutePath());
         ConfigDbRecord record = new ConfigDbRecord();
         record.setId(id);
         if (node instanceof EncryptedValue) {

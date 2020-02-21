@@ -30,10 +30,7 @@ import com.codekutter.common.utils.ConfigUtils;
 import com.codekutter.common.utils.LogUtils;
 import com.codekutter.zconfig.common.ConfigurationException;
 import com.codekutter.zconfig.common.VariableRegexParser;
-import com.codekutter.zconfig.common.model.ConfigDbRecord;
-import com.codekutter.zconfig.common.model.Configuration;
-import com.codekutter.zconfig.common.model.ConfigurationSettings;
-import com.codekutter.zconfig.common.model.Version;
+import com.codekutter.zconfig.common.model.*;
 import com.codekutter.zconfig.common.model.nodes.*;
 import com.codekutter.zconfig.common.readers.AbstractConfigReader;
 import com.google.common.base.Preconditions;
@@ -115,7 +112,7 @@ public abstract class AbstractConfigParser implements Closeable {
      */
     private void nodePostLoad(AbstractConfigNode node,
                               Map<String, ConfigValueNode> inputProps)
-    throws ConfigurationException {
+            throws ConfigurationException {
         Map<String, ConfigValueNode> properties = new HashMap<>(inputProps);
         if (node instanceof ConfigPathNode) {
             // Get defined properties, if any.
@@ -226,14 +223,14 @@ public abstract class AbstractConfigParser implements Closeable {
                 Query query = session.createQuery(qstr);
                 query.setParameter("config", configuration.getId());
                 query.setParameter("version",
-                                   configuration.getVersion().getMajorVersion());
+                        configuration.getVersion().getMajorVersion());
                 List<ConfigDbRecord> records = query.getResultList();
                 if (records != null && !records.isEmpty()) {
                     Map<String, ConfigDbRecord> map = new HashMap<>();
                     for (ConfigDbRecord record : records) {
                         String key =
                                 String.format("%s/%s", record.getId().getPath(),
-                                              record.getId().getName());
+                                        record.getId().getName());
                         map.put(key, record);
                     }
                     return map;
@@ -252,9 +249,9 @@ public abstract class AbstractConfigParser implements Closeable {
         AbstractConnection<Session> connection =
                 ConnectionManager.readConnection(node);
         LogUtils.debug(getClass(),
-                       String.format("Loaded Db connection: [name=%s][type=%s]",
-                                     connection.name(),
-                                     connection.getClass().getCanonicalName()));
+                String.format("Loaded Db connection: [name=%s][type=%s]",
+                        connection.name(),
+                        connection.getClass().getCanonicalName()));
         configuration.setConnection(connection);
 
         return connection;
@@ -262,14 +259,60 @@ public abstract class AbstractConfigParser implements Closeable {
 
     private void readConfigFromDb(ConfigPathNode node,
                                   Map<String, ConfigDbRecord> records)
-    throws ConfigurationException {
+            throws ConfigurationException {
         Preconditions.checkState(configuration.getConnection() != null);
 
         if (node instanceof ConfigDbNode) {
             if (node.attributes() != null) {
                 Map<String, ConfigValueNode> attrs = node.attributes().getKeyValues();
                 if (!attrs.isEmpty()) {
-                    for(String key : )
+                    for (String key : attrs.keySet()) {
+                        ConfigValueNode vn = attrs.get(key);
+                        if (vn.getNodeSource() == ENodeSource.DataBase) {
+                            String path = vn.getAbsolutePath();
+                            if (records.containsKey(path)) {
+                                ConfigDbRecord record = records.get(path);
+                                vn.setValueType(record.getValueType());
+                                vn.setValue(record.getValue());
+                            }
+                        }
+                    }
+                }
+            }
+            if (node.parmeters() != null) {
+                Map<String, ConfigValueNode> params = node.parmeters().getKeyValues();
+                if (!params.isEmpty()) {
+                    for (String key : params.keySet()) {
+                        ConfigValueNode vn = params.get(key);
+                        if (vn.getNodeSource() == ENodeSource.DataBase) {
+                            String path = vn.getAbsolutePath();
+                            if (records.containsKey(path)) {
+                                ConfigDbRecord record = records.get(path);
+                                vn.setValueType(record.getValueType());
+                                vn.setValue(record.getValue());
+                                vn.setEncrypted(record.isEncrypted());
+                            }
+                        }
+                    }
+                }
+            }
+            if (node.getChildren() != null && !node.getChildren().isEmpty()) {
+                Map<String, AbstractConfigNode> children = node.getChildren();
+                for (String key : children.keySet()) {
+                    AbstractConfigNode cnode = children.get(key);
+                    if (cnode instanceof ConfigPathNode) {
+                        readConfigFromDb((ConfigPathNode) cnode, records);
+                    } else if (cnode instanceof ConfigValueNode) {
+                        ConfigValueNode vn = (ConfigValueNode)cnode;
+                        if (vn.getNodeSource() == ENodeSource.DataBase) {
+                            if (records.containsKey(cnode.getAbsolutePath())) {
+                                ConfigDbRecord record = records.get(vn.getAbsolutePath());
+                                vn.setValueType(record.getValueType());
+                                vn.setValue(record.getValue());
+                                vn.setEncrypted(record.isEncrypted());
+                            }
+                        }
+                    } 
                 }
             }
         }
@@ -288,6 +331,6 @@ public abstract class AbstractConfigParser implements Closeable {
     public abstract void parse(String name, AbstractConfigReader reader,
                                ConfigurationSettings settings,
                                Version version, String password)
-    throws ConfigurationException;
+            throws ConfigurationException;
 
 }

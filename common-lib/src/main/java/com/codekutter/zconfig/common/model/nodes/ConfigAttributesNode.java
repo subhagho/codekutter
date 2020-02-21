@@ -116,6 +116,16 @@ public class ConfigAttributesNode extends ConfigKeyValueNode {
     }
 
     /**
+     * Get the node name to be used for DB records.
+     *
+     * @return - DB Node Name
+     */
+    @Override
+    public String getDbNodeName() {
+        return String.format("%s.%s", getConfiguration().getSettings().getAttributesNodeName(), getName());
+    }
+
+    /**
      * Get the Search path to reach this node.
      *
      * @return - Node search path.

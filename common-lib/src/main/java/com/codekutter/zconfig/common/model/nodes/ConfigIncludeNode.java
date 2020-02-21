@@ -303,6 +303,16 @@ public class ConfigIncludeNode extends ConfigElementNode {
     }
 
     /**
+     * Get the node name to be used for DB records.
+     *
+     * @return - DB Node Name
+     */
+    @Override
+    public String getDbNodeName() {
+        return getName();
+    }
+
+    /**
      * Get the Search path to reach this node.
      *
      * @return - Node search path.

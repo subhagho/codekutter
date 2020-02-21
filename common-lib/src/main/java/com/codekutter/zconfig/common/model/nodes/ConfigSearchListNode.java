@@ -147,4 +147,14 @@ public class ConfigSearchListNode extends ConfigListNode<AbstractConfigNode> {
     public void loaded() throws ConfigurationException {
         throw new RuntimeException("Method should not be called.");
     }
+
+    /**
+     * Get the node name to be used for DB records.
+     *
+     * @return - DB Node Name
+     */
+    @Override
+    public String getDbNodeName() {
+        return null;
+    }
 }

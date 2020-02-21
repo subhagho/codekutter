@@ -131,4 +131,14 @@ public class ConfigListValueNode extends ConfigListNode<ConfigValueNode> {
             }
         }
     }
+
+    /**
+     * Get the node name to be used for DB records.
+     *
+     * @return - DB Node Name
+     */
+    @Override
+    public String getDbNodeName() {
+        return getName();
+    }
 }
