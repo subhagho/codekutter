@@ -48,7 +48,6 @@ import java.util.Map;
  * Abstract base class for defining configuration parsers.
  */
 public abstract class AbstractConfigParser implements Closeable {
-    public String CONFIG_ATTR_DB_NODE = "__db_node";
 
     /**
      * Configuration settings to be used by this parser.
@@ -312,7 +311,28 @@ public abstract class AbstractConfigParser implements Closeable {
                                 vn.setEncrypted(record.isEncrypted());
                             }
                         }
-                    } 
+                    } else if (cnode instanceof ConfigListValueNode) {
+                        int count = 0;
+                        List<ConfigValueNode> vns = ((ConfigListValueNode) cnode).getValues();
+                        String path = vns.get(0).getAbsolutePath();
+                        while(true) {
+                            String k = String.format("%s/%d", path, count);
+                            if (!records.containsKey(k)) break;
+                            ConfigDbRecord record = records.get(k);
+                            if (count >= vns.size()) {
+                                ConfigValueNode vn = new ConfigValueNode(cnode.getConfiguration(), cnode);
+                                vn.setName(record.getId().getName());
+                                vn.setValue(record.getValue());
+                                vn.setEncrypted(record.isEncrypted());
+                                ((ConfigListValueNode) cnode).addValue(vn);
+                            } else {
+                                ConfigValueNode vn = vns.get(count);
+                                vn.setName(record.getId().getName());
+                                vn.setValue(record.getValue());
+                                vn.setEncrypted(record.isEncrypted());
+                            }
+                        }
+                    }
                 }
             }
         }

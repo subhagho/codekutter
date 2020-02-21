@@ -52,6 +52,7 @@ import java.nio.file.Paths;
  * Configuration Parser implementation that reads the configuration from a XML file.
  */
 public class XMLConfigParser extends AbstractConfigParser {
+    public String CONFIG_ATTR_DB_NODE = "__db_node";
     /**
      * Parse and load the configuration instance using the specified properties.
      *

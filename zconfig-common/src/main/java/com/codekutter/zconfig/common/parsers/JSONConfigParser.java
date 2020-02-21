@@ -514,7 +514,7 @@ public class JSONConfigParser extends AbstractConfigParser {
             }
             nn = pn;
         } else {
-            ConfigValueNode vn = checkEncryptedValue(name, parent, node);
+            ConfigValueNode vn = checkExtendedValue(name, parent, node);
             if (vn != null) {
                 if (parent instanceof ConfigKeyValueNode) {
                     ((ConfigKeyValueNode) parent).addKeyValue(vn);
@@ -548,14 +548,14 @@ public class JSONConfigParser extends AbstractConfigParser {
      * @return - Configuration Value Node.
      * @throws ConfigurationException
      */
-    private ConfigValueNode checkEncryptedValue(String name,
-                                                AbstractConfigNode parent,
-                                                JsonNode jsonNode)
+    private ConfigValueNode checkExtendedValue(String name,
+                                               AbstractConfigNode parent,
+                                               JsonNode jsonNode)
     throws ConfigurationException {
         JsonNode en = jsonNode.get(JSONConfigConstants.CONFIG_NODE_ENCRYPTED);
         if (en != null) {
             JsonNode vn =
-                    jsonNode.get(JSONConfigConstants.CONFIG_NODE_ENCRYPTED_VALUE);
+                    jsonNode.get(JSONConfigConstants.CONFIG_NODE_VALUE);
             if (vn == null) {
                 throw new ConfigurationException(
                         "Invalid Encrypted node: Value is NULL.");
@@ -565,6 +565,29 @@ public class JSONConfigParser extends AbstractConfigParser {
             valueNode.setEncrypted(true);
             valueNode.setValue(vn.textValue());
 
+            return valueNode;
+        }
+        en = jsonNode.get(JSONConfigConstants.CONFIG_NODE_DB_NODE);
+        if (en != null) {
+            ConfigValueNode valueNode = new ConfigValueNode(configuration, parent);
+            valueNode.setName(name);
+            valueNode.setNodeSource(ENodeSource.DataBase);
+
+            return valueNode;
+        }
+        en = jsonNode.get(JSONConfigConstants.CONFIG_NODE_DATA_TYPE);
+        if (en != null) {
+            JsonNode vn =
+                    jsonNode.get(JSONConfigConstants.CONFIG_NODE_VALUE);
+            if (vn == null) {
+                throw new ConfigurationException(
+                        "Invalid Encrypted node: Value is NULL.");
+            }
+            ConfigValueNode valueNode = new ConfigValueNode(configuration, parent);
+            valueNode.setName(name);
+            valueNode.setValue(vn.textValue());
+            EValueType vt = EValueType.valueOf(en.textValue());
+            valueNode.setValueType(vt);
             return valueNode;
         }
         return null;
