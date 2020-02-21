@@ -49,7 +49,7 @@ import java.util.Map;
 @Setter
 @Accessors(fluent = true)
 public class AwsS3Connection extends AbstractConnection<AmazonS3> {
-    public static final String DEFAULT_PROFILE = "profile";
+    public static final String DEFAULT_PROFILE = "default";
 
     @ConfigAttribute(required = true)
     private String region;

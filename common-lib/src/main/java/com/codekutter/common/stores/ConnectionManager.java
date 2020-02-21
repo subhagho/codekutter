@@ -87,7 +87,7 @@ public class ConnectionManager implements IConfigurable, Closeable {
     }
 
     @SuppressWarnings("unchecked")
-    public <T> AbstractConnection<T> readConnection(@Nonnull ConfigPathNode inode) throws ConfigurationException {
+    public static <T> AbstractConnection<T> readConnection(@Nonnull ConfigPathNode inode) throws ConfigurationException {
         try {
             AbstractConfigNode node = ConfigUtils.getPathNode(AbstractConnection.class, inode);
             if (!(node instanceof ConfigPathNode)) {

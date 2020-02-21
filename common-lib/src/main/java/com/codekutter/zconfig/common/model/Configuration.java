@@ -25,6 +25,7 @@
 package com.codekutter.zconfig.common.model;
 
 import com.codekutter.common.model.ModifiedBy;
+import com.codekutter.common.stores.AbstractConnection;
 import com.codekutter.common.utils.ConfigUtils;
 import com.codekutter.common.utils.CypherUtils;
 import com.codekutter.common.utils.LogUtils;
@@ -34,7 +35,9 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import lombok.Data;
+import org.hibernate.Session;
 
+import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.security.MessageDigest;
 import java.util.List;
@@ -117,6 +120,8 @@ public class Configuration {
     private ConfigPathNode rootConfigNode;
 
     private ConfigurationSettings settings;
+
+    private AbstractConnection<Session> connection;
 
     /**
      * Default Empty constructor.
@@ -349,6 +354,14 @@ public class Configuration {
             ConfigPathNode rootConfigNode) {
         Preconditions.checkArgument(rootConfigNode != null);
         this.rootConfigNode = rootConfigNode;
+    }
+
+    public AbstractConnection<Session> getConnection() {
+        return connection;
+    }
+
+    public void setConnection(@Nonnull AbstractConnection<Session> connection) {
+        this.connection = connection;
     }
 
     /**

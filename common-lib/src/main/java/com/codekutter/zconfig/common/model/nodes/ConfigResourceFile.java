@@ -26,6 +26,7 @@ package com.codekutter.zconfig.common.model.nodes;
 
 import com.codekutter.zconfig.common.ConfigurationException;
 import com.codekutter.zconfig.common.model.Configuration;
+import com.codekutter.zconfig.common.model.ENodeSource;
 import com.google.common.base.Preconditions;
 import com.codekutter.zconfig.common.model.EResourceType;
 

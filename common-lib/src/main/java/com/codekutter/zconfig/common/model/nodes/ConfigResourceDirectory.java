@@ -24,6 +24,7 @@
 
 package com.codekutter.zconfig.common.model.nodes;
 
+import com.codekutter.zconfig.common.model.ENodeSource;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.codekutter.zconfig.common.model.Configuration;
@@ -41,6 +42,7 @@ public class ConfigResourceDirectory extends ConfigResourceFile {
      * Default constructor - Initialize the state object.
      */
     public ConfigResourceDirectory() {
+
     }
 
     /**

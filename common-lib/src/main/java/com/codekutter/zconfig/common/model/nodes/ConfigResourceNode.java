@@ -26,6 +26,7 @@ package com.codekutter.zconfig.common.model.nodes;
 
 import com.codekutter.zconfig.common.ConfigurationException;
 import com.codekutter.zconfig.common.model.Configuration;
+import com.codekutter.zconfig.common.model.ENodeSource;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.codekutter.zconfig.common.model.ENodeState;
@@ -74,6 +75,7 @@ public abstract class ConfigResourceNode extends ConfigElementNode {
      * Default constructor - Initialize the state object.
      */
     public ConfigResourceNode() {
+        setNodeSource(ENodeSource.Remote);
     }
 
     /**
@@ -86,6 +88,7 @@ public abstract class ConfigResourceNode extends ConfigElementNode {
             Configuration configuration,
             AbstractConfigNode parent) {
         super(configuration, parent);
+        setNodeSource(ENodeSource.Remote);
     }
 
     /**

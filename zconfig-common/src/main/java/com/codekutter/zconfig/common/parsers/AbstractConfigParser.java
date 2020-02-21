@@ -24,6 +24,9 @@
 
 package com.codekutter.zconfig.common.parsers;
 
+import com.codekutter.common.stores.AbstractConnection;
+import com.codekutter.common.stores.ConnectionManager;
+import com.codekutter.common.utils.LogUtils;
 import com.codekutter.zconfig.common.ConfigurationException;
 import com.codekutter.zconfig.common.VariableRegexParser;
 import com.codekutter.zconfig.common.model.Configuration;
@@ -31,8 +34,11 @@ import com.codekutter.zconfig.common.model.ConfigurationSettings;
 import com.codekutter.zconfig.common.model.Version;
 import com.codekutter.zconfig.common.model.nodes.*;
 import com.codekutter.zconfig.common.readers.AbstractConfigReader;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import org.hibernate.Session;
 
+import javax.annotation.Nonnull;
 import java.io.Closeable;
 import java.util.HashMap;
 import java.util.List;
@@ -188,6 +194,22 @@ public abstract class AbstractConfigParser implements Closeable {
         return value;
     }
 
+    protected void readConnection(@Nonnull ConfigPathNode node) throws ConfigurationException {
+        AbstractConnection<Session> connection = ConnectionManager.readConnection(node);
+        LogUtils.debug(getClass(), String.format("Loaded Db connection: [name=%s][type=%s]",
+                connection.name(), connection.getClass().getCanonicalName()));
+        configuration.setConnection(connection);
+    }
+
+    protected void readConfigFromDb(@Nonnull ConfigPathNode node) throws ConfigurationException {
+        Preconditions.checkState(configuration.getConnection() != null);
+
+        String path = node.getAbsolutePath();
+        int majorVersion = configuration.getVersion().getMajorVersion();
+        String configId = configuration.getId();
+
+
+    }
     /**
      * Parse and load the configuration instance using the specified properties.
      *

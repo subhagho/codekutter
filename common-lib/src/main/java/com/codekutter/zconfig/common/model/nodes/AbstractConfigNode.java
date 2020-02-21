@@ -26,13 +26,10 @@ package com.codekutter.zconfig.common.model.nodes;
 
 import com.codekutter.common.utils.ConfigUtils;
 import com.codekutter.zconfig.common.ConfigurationException;
-import com.codekutter.zconfig.common.model.Configuration;
-import com.codekutter.zconfig.common.model.ConfigurationSettings;
+import com.codekutter.zconfig.common.model.*;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
-import com.codekutter.zconfig.common.model.ENodeState;
-import com.codekutter.zconfig.common.model.NodeState;
 
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
@@ -65,7 +62,10 @@ public abstract class AbstractConfigNode {
      * Note: Name must be unique for a path.
      */
     private String name;
-
+    /**
+     * Source where this node was loaded from.
+     */
+    private ENodeSource nodeSource = ENodeSource.Local;
 
     /**
      * Default constructor - Initialize the state object.
@@ -125,6 +125,14 @@ public abstract class AbstractConfigNode {
      */
     public Configuration getConfiguration() {
         return configuration;
+    }
+
+    public ENodeSource getNodeSource() {
+        return nodeSource;
+    }
+
+    public void setNodeSource(ENodeSource nodeSource) {
+        this.nodeSource = nodeSource;
     }
 
     /**

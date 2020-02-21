@@ -25,6 +25,7 @@
 package com.codekutter.zconfig.common.model.nodes;
 
 import com.codekutter.common.model.EReaderType;
+import com.codekutter.zconfig.common.model.ENodeSource;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.codekutter.zconfig.common.ConfigurationException;
@@ -92,6 +93,7 @@ public class ConfigIncludeNode extends ConfigElementNode {
      */
     public ConfigIncludeNode() {
         setName(NODE_NAME);
+        setNodeSource(ENodeSource.File);
     }
 
     /**
@@ -105,6 +107,7 @@ public class ConfigIncludeNode extends ConfigElementNode {
             AbstractConfigNode parent) {
         super(configuration, parent);
         setName(NODE_NAME);
+        setNodeSource(ENodeSource.File);
     }
 
     /**
