@@ -95,6 +95,11 @@ public class ReflectionUtils {
                 f = findField(ct, parts[indx]);
                 if (f == null) break;
                 ct = f.getType();
+                if (implementsInterface(List.class, ct)) {
+                    ct = getGenericListType(f);
+                } else if (implementsInterface(Set.class, ct)) {
+                    ct = getGenericSetType(f);
+                }
                 indx++;
             }
             return f;

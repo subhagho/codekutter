@@ -19,6 +19,8 @@ package com.codekutter.r2db.driver;
 
 import com.codekutter.common.ConfigTestConstants;
 import com.codekutter.common.TestDataHelper;
+import com.codekutter.common.stores.BaseSearchResult;
+import com.codekutter.common.stores.impl.EntitySearchResult;
 import com.codekutter.common.stores.model.*;
 import com.codekutter.common.utils.LogUtils;
 import com.codekutter.r2db.driver.impl.SearchableRdbmsDataStore;
@@ -26,11 +28,13 @@ import com.codekutter.zconfig.common.ConfigProviderFactory;
 import com.codekutter.zconfig.common.R2dbEnv;
 import com.codekutter.zconfig.common.model.Version;
 import com.google.common.base.Strings;
+import org.apache.lucene.search.Query;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import java.io.FileInputStream;
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -192,6 +196,33 @@ class EntityManagerTest {
 
     @Test
     void testSearch() {
+        try {
+            String prefix = UUID.randomUUID().toString();
+            List<Order> orders = createOrders(prefix, 100, 3);
+            assertNotNull(orders);
+            assertEquals(3, orders.size());
+
+
+            LuceneQueryBuilder<Order> builder = LuceneQueryBuilder.builder(Order.class);
+            SimpleDateFormat df = new SimpleDateFormat("dd/MM/yyyy");
+            Query query = builder
+                    .range("items.quantity", "5", "*")
+                    .term("items.id.productId", new String[]{EntityQueryBuilder.string(orders.get(0).getItems().get(5).getId().getProductId()),
+                            EntityQueryBuilder.string(orders.get(0).getItems().get(8).getId().getProductId()),
+                            EntityQueryBuilder.string(orders.get(0).getItems().get(35).getId().getProductId())})
+                    .build();
+            LogUtils.debug(getClass(), String.format("query=[%s]", query));
+            BaseSearchResult<Order> result = entityManager.textSearch(query, Order.class, SearchableRdbmsDataStore.class, null);
+            assertTrue(result instanceof EntitySearchResult);
+            EntitySearchResult<Order> or = (EntitySearchResult<Order>) result;
+            assertFalse(or.entities().isEmpty());
+            for (Order order : or.entities()) {
+                LogUtils.debug(getClass(), order);
+            }
+        } catch (Exception ex) {
+            LogUtils.error(getClass(), ex);
+            fail(ex);
+        }
     }
 
     @Test

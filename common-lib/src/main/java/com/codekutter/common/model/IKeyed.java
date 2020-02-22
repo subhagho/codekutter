@@ -17,6 +17,8 @@
 
 package com.codekutter.common.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 /**
  * Interface represents a object instance with a key.
  *
@@ -28,5 +30,6 @@ public interface IKeyed<K extends IKey> {
      *
      * @return - Key
      */
+    @JsonIgnore
     K getKey();
 }

@@ -264,10 +264,11 @@ public class ElasticSearchHelper {
             request.source(sourceBuilder);
 
             SearchResponse response = client.search(request, RequestOptions.DEFAULT);
-            if (response.status() != RestStatus.OK && response.status() != RestStatus.NOT_FOUND && response.status() != RestStatus.FOUND) {
+            RestStatus status = response.status();
+            if (status != RestStatus.OK && status != RestStatus.NOT_FOUND && status != RestStatus.FOUND) {
                 throw new DataStoreException(String.format("Search failed. [status=%s][index=%s]", response.status().name(), index));
             }
-            if (response.status() == RestStatus.FOUND) {
+            if (status == RestStatus.FOUND || status == RestStatus.OK) {
                 SearchHits hits = response.getHits();
                 if (hits != null) {
                     List<T> entities = new ArrayList<T>();
@@ -284,6 +285,7 @@ public class ElasticSearchHelper {
                     er.totalRecords(response.getHits().getTotalHits().value);
                     er.entities(entities);
                     er.scrollId(response.getScrollId());
+                    return er;
                 }
             }
             return null;

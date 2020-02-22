@@ -71,8 +71,8 @@ public class EntityManager implements IConfigurable {
     @Setter(AccessLevel.NONE)
     private Map<Class<? extends IShardProvider>, IShardProvider> shardProviders = new ConcurrentHashMap<>();
 
-    public <T extends IEntity> BaseSearchResult<T> textSearch(@Nonnull Query query,
-                                                  @Nonnull Class<? extends T> type,
+    public <T, E extends IEntity> BaseSearchResult<E> textSearch(@Nonnull Query query,
+                                                  @Nonnull Class<? extends E> type,
                                                   Class<? extends AbstractDataStore<T>> storeType,
                                                   Context context) throws DataStoreException {
         AbstractDataStore<T> dataStore = findStore(type, storeType);
@@ -85,8 +85,8 @@ public class EntityManager implements IConfigurable {
         return ((ISearchable) dataStore).textSearch(query, type, context);
     }
 
-    public <T extends IEntity> BaseSearchResult<T> textSearch(@Nonnull Query query, int batchSize, int offset,
-                                                  @Nonnull Class<? extends T> type,
+    public <T, E extends IEntity> BaseSearchResult<E> textSearch(@Nonnull Query query, int batchSize, int offset,
+                                                  @Nonnull Class<? extends E> type,
                                                   Class<? extends AbstractDataStore<T>> storeType,
                                                   Context context) throws DataStoreException {
         AbstractDataStore<T> dataStore = findStore(type, storeType);
@@ -99,8 +99,8 @@ public class EntityManager implements IConfigurable {
         return ((ISearchable) dataStore).textSearch(query, batchSize, offset, type, context);
     }
 
-    public <T extends IEntity> BaseSearchResult<T> textSearch(@Nonnull String query,
-                                                  @Nonnull Class<? extends T> type,
+    public <T, E extends IEntity> BaseSearchResult<E> textSearch(@Nonnull String query,
+                                                  @Nonnull Class<? extends E> type,
                                                   Class<? extends AbstractDataStore<T>> storeType,
                                                   Context context) throws DataStoreException {
         AbstractDataStore<T> dataStore = findStore(type, storeType);
@@ -113,11 +113,11 @@ public class EntityManager implements IConfigurable {
         return ((ISearchable) dataStore).textSearch(query, type, context);
     }
 
-    public <T extends IEntity> BaseSearchResult<T> textSearch(@Nonnull String query, int batchSize, int offset,
-                                                  @Nonnull Class<? extends T> type,
+    public <T, E extends IEntity> BaseSearchResult<E> textSearch(@Nonnull String query, int batchSize, int offset,
+                                                  @Nonnull Class<? extends E> type,
                                                   Class<? extends AbstractDataStore<T>> storeType,
                                                   Context context) throws DataStoreException {
-        AbstractDataStore<T> dataStore = findStore(type, storeType);
+        AbstractDataStore<T> dataStore = (AbstractDataStore<T>) findStore(type, storeType);
         if (dataStore == null) {
             throw new DataStoreException(String.format("No data store found for entity. [type=%s]", type.getCanonicalName()));
         }
