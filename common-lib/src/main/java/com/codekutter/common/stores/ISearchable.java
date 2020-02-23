@@ -22,8 +22,8 @@ import com.codekutter.common.model.IEntity;
 import org.apache.lucene.search.Query;
 
 import javax.annotation.Nonnull;
-import java.util.List;
 
+@SuppressWarnings("rawtypes")
 public interface ISearchable {
     <T extends IEntity> BaseSearchResult<T> textSearch(@Nonnull Query query,
                                                        @Nonnull Class<? extends T> type,
@@ -44,4 +44,7 @@ public interface ISearchable {
                                                        int offset,
                                                        @Nonnull Class<? extends T> type,
                                                        Context context) throws DataStoreException;
+    <T extends IEntity> BaseSearchResult<T> facetedSearch(@Nonnull Object query,
+                                                          @Nonnull Class<? extends T> type,
+                                                          Context context) throws DataStoreException;
 }

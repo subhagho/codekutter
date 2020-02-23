@@ -15,7 +15,7 @@
  *
  */
 
-package com.codekutter.r2db.driver;
+package com.codekutter.r2db.driver.impl.query;
 
 import com.codekutter.common.model.IEntity;
 import com.codekutter.common.model.ValidationException;

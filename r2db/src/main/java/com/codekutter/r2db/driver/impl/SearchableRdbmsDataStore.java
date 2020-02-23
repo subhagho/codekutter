@@ -34,6 +34,8 @@ import lombok.experimental.Accessors;
 import org.apache.lucene.search.Query;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.index.query.QueryBuilder;
+import org.elasticsearch.search.aggregations.AbstractAggregationBuilder;
+import org.elasticsearch.search.aggregations.bucket.terms.TermsAggregationBuilder;
 import org.hibernate.Session;
 
 import javax.annotation.Nonnull;
@@ -200,6 +202,22 @@ public class SearchableRdbmsDataStore extends RdbmsDataStore implements ISearcha
     @Override
     public <T extends IEntity> BaseSearchResult<T> textSearch(@Nonnull String query, int batchSize, int offset, @Nonnull Class<? extends T> type, Context context) throws DataStoreException {
         return helper.textSearch(readConnection.connection(), query, batchSize, offset, type, context);
+    }
+
+    @Override
+    public <T extends IEntity> BaseSearchResult<T> facetedSearch(@Nonnull Object query,
+                                                                 @Nonnull Class<? extends T> type,
+                                                                 Context context) throws DataStoreException {
+        String index = helper.getIndexName(type);
+        if (Strings.isNullOrEmpty(index)) {
+            throw new DataStoreException(String.format("Type is not indexed. [type=%s]", type.getCanonicalName()));
+        }
+        if (query instanceof AbstractAggregationBuilder) {
+            return helper.facetedSearch((AbstractAggregationBuilder) query, index, readConnection.connection(), type);
+        } else if (query instanceof AbstractAggregationBuilder[]) {
+            return helper.facetedSearch((AbstractAggregationBuilder[]) query, index, readConnection.connection(), type);
+        }
+        throw new DataStoreException(String.format("Query type not supported. [type=%s]", query.getClass().getCanonicalName()));
     }
 
     public <T extends IEntity> BaseSearchResult<T> textSearch(@Nonnull QueryBuilder query,

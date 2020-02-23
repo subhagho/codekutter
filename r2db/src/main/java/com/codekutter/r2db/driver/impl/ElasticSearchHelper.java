@@ -51,12 +51,21 @@ import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.rest.RestStatus;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
+import org.elasticsearch.search.aggregations.*;
+import org.elasticsearch.search.aggregations.bucket.histogram.Histogram;
+import org.elasticsearch.search.aggregations.bucket.histogram.ParsedDateHistogram;
+import org.elasticsearch.search.aggregations.bucket.terms.ParsedStringTerms;
+import org.elasticsearch.search.aggregations.bucket.terms.ParsedTerms;
+import org.elasticsearch.search.aggregations.bucket.terms.Terms;
+import org.elasticsearch.search.aggregations.bucket.terms.TermsAggregationBuilder;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 
 import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class ElasticSearchHelper {
     public <E extends IEntity> E createEntity(@Nonnull RestHighLevelClient client,
@@ -411,6 +420,120 @@ public class ElasticSearchHelper {
             return null;
         } catch (Throwable t) {
             throw new DataStoreException(t);
+        }
+    }
+
+    public <T extends IEntity> FacetedSearchResult<T> facetedSearch(@Nonnull AbstractAggregationBuilder[] builders,
+                                                                    @Nonnull String index,
+                                                                    @Nonnull RestHighLevelClient client,
+                                                                    @Nonnull Class<? extends T> type) throws DataStoreException {
+        try {
+            SearchRequest request = new SearchRequest(index);
+            SearchSourceBuilder sourceBuilder = new SearchSourceBuilder();
+            sourceBuilder.from(0);
+            sourceBuilder.size(0);
+            sourceBuilder.query(QueryBuilders.matchAllQuery());
+            for(AbstractAggregationBuilder builder : builders) {
+                sourceBuilder.aggregation(builder);
+            }
+            request.source(sourceBuilder);
+
+            SearchResponse response = client.search(request, RequestOptions.DEFAULT);
+            RestStatus status = response.status();
+            if (status != RestStatus.OK && status != RestStatus.NOT_FOUND && status != RestStatus.FOUND) {
+                throw new DataStoreException(String.format("Search failed. [status=%s][index=%s]", response.status().name(), index));
+            }
+            if (status == RestStatus.FOUND || status == RestStatus.OK) {
+                FacetedSearchResult<T> result = new FacetedSearchResult<>(type);
+                Aggregations aggregations = response.getAggregations();
+                if (aggregations != null) {
+                    for (Aggregation aggregation : aggregations) {
+                        readAggregation(aggregation, result.getFacets());
+                    }
+                }
+                return result;
+            }
+            return null;
+        } catch (Exception ex) {
+            throw new DataStoreException(ex);
+        }
+    }
+
+    public <T extends IEntity> FacetedSearchResult<T> facetedSearch(@Nonnull AbstractAggregationBuilder builder,
+                                                                    @Nonnull String index,
+                                                                    @Nonnull RestHighLevelClient client,
+                                                                    @Nonnull Class<? extends T> type) throws DataStoreException {
+        try {
+            SearchRequest request = new SearchRequest(index);
+            SearchSourceBuilder sourceBuilder = new SearchSourceBuilder();
+            sourceBuilder.from(0);
+            sourceBuilder.size(0);
+            sourceBuilder.query(QueryBuilders.matchAllQuery());
+            sourceBuilder.aggregation(builder);
+            request.source(sourceBuilder);
+
+            SearchResponse response = client.search(request, RequestOptions.DEFAULT);
+            RestStatus status = response.status();
+            if (status != RestStatus.OK && status != RestStatus.NOT_FOUND && status != RestStatus.FOUND) {
+                throw new DataStoreException(String.format("Search failed. [status=%s][index=%s]", response.status().name(), index));
+            }
+            if (status == RestStatus.FOUND || status == RestStatus.OK) {
+                FacetedSearchResult<T> result = new FacetedSearchResult<>(type);
+                Aggregations aggregations = response.getAggregations();
+                if (aggregations != null) {
+                    for (Aggregation aggregation : aggregations) {
+                        readAggregation(aggregation, result.getFacets());
+                    }
+                }
+                return result;
+            }
+            return null;
+        } catch (Exception ex) {
+            throw new DataStoreException(ex);
+        }
+    }
+
+    private void readAggregation(Aggregation aggregation, Map<String, FacetedSearchResult.FacetResult> results) {
+        if (aggregation instanceof ParsedTerms) {
+            ParsedTerms terms = (ParsedTerms) aggregation;
+            String name = terms.getName();
+            List<Terms.Bucket> buckets = (List<Terms.Bucket>) terms.getBuckets();
+            if (buckets != null && buckets.size() > 0) {
+                for (Terms.Bucket bucket : buckets) {
+                    String key = bucket.getKeyAsString();
+                    long count = bucket.getDocCount();
+                    if (!results.containsKey(name)) {
+                        results.put(name, new FacetedSearchResult.FacetResult(name));
+                    }
+                    results.get(name).getResults().put(key, count);
+                    if (bucket.getAggregations() != null) {
+                        for (Aggregation nested : bucket.getAggregations()) {
+                            FacetedSearchResult.FacetResult result = results.get(name);
+                            result.setNested(new HashMap<>());
+                            readAggregation(nested, result.getNested());
+                        }
+                    }
+                }
+            }
+        } else if (aggregation instanceof ParsedDateHistogram) {
+            ParsedDateHistogram dateHistogram = (ParsedDateHistogram) aggregation;
+            String name = dateHistogram.getName();
+            List<Histogram.Bucket> buckets = (List<Histogram.Bucket>) dateHistogram.getBuckets();
+            for (Histogram.Bucket bucket : buckets) {
+                String key = bucket.getKeyAsString();
+                long count = bucket.getDocCount();
+                if (!results.containsKey(name)) {
+                    results.put(name, new FacetedSearchResult.FacetResult(name));
+                }
+                results.get(name).getResults().put(key, count);
+                if (bucket.getAggregations() != null) {
+                    for (Aggregation nested : bucket.getAggregations()) {
+                        FacetedSearchResult.FacetResult result = results.get(name);
+                        result.setNested(new HashMap<>());
+                        readAggregation(nested, result.getNested());
+                    }
+                }
+            }
         }
     }
 

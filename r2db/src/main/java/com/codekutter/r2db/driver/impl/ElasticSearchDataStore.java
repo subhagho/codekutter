@@ -23,9 +23,12 @@ import com.codekutter.common.stores.*;
 import com.codekutter.common.stores.impl.DataStoreAuditContext;
 import com.codekutter.zconfig.common.ConfigurationException;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import org.apache.lucene.search.Query;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.index.query.QueryBuilder;
+import org.elasticsearch.search.aggregations.AbstractAggregationBuilder;
+import org.elasticsearch.search.aggregations.bucket.terms.TermsAggregationBuilder;
 
 import javax.annotation.Nonnull;
 import java.io.IOException;
@@ -155,6 +158,24 @@ public class ElasticSearchDataStore extends AbstractDataStore<RestHighLevelClien
         } catch (ConnectionException ex) {
             throw new DataStoreException(ex);
         }
+    }
+
+    @Override
+    public <T extends IEntity> BaseSearchResult<T> facetedSearch(@Nonnull Object query, @Nonnull Class<? extends T> type, Context context) throws DataStoreException {
+        String index = helper.getIndexName(type);
+        if (Strings.isNullOrEmpty(index)) {
+            throw new DataStoreException(String.format("Type is not indexed. [type=%s]", type.getCanonicalName()));
+        }
+        try {
+            if (query instanceof AbstractAggregationBuilder) {
+                return helper.facetedSearch((AbstractAggregationBuilder) query, index, connection().connection(), type);
+            } else if (query instanceof AbstractAggregationBuilder[]) {
+                return helper.facetedSearch((AbstractAggregationBuilder[]) query, index, connection().connection(), type);
+            }
+        } catch (Exception ex) {
+            throw new DataStoreException(ex);
+        }
+        throw new DataStoreException(String.format("Query type not supported. [type=%s]", query.getClass().getCanonicalName()));
     }
 
     public <T extends IEntity> BaseSearchResult<T> textSearch(@Nonnull QueryBuilder query,

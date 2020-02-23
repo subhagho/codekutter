@@ -24,18 +24,23 @@ import com.codekutter.common.stores.BaseSearchResult;
 import com.codekutter.common.stores.impl.EntitySearchResult;
 import com.codekutter.common.stores.model.*;
 import com.codekutter.common.utils.LogUtils;
+import com.codekutter.r2db.driver.impl.FacetedSearchResult;
 import com.codekutter.r2db.driver.impl.SearchableRdbmsDataStore;
+import com.codekutter.r2db.driver.impl.query.ElasticFacetedQueryBuilder;
+import com.codekutter.r2db.driver.impl.query.LuceneQueryBuilder;
 import com.codekutter.zconfig.common.ConfigProviderFactory;
 import com.codekutter.zconfig.common.R2dbEnv;
 import com.codekutter.zconfig.common.model.Version;
 import com.google.common.base.Strings;
 import org.apache.lucene.search.Query;
+import org.elasticsearch.search.aggregations.AbstractAggregationBuilder;
+import org.elasticsearch.search.aggregations.bucket.histogram.DateHistogramInterval;
+import org.elasticsearch.search.aggregations.bucket.terms.TermsAggregationBuilder;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import java.io.FileInputStream;
-import java.text.SimpleDateFormat;
 import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -226,11 +231,58 @@ class EntityManagerTest {
     }
 
     @Test
-    void testSearch1() {
+    void testSearchFaceted() {
+        try {
+            String prefix = UUID.randomUUID().toString();
+            List<Order> orders = createOrders(prefix, 100, 3);
+            assertNotNull(orders);
+            assertEquals(3, orders.size());
+
+
+            ElasticFacetedQueryBuilder<Order> builder = new ElasticFacetedQueryBuilder<>(Order.class);
+            AbstractAggregationBuilder tb = builder.filter("Product Filter", "items.id.productId", 0)
+                    .dateFilter("Create Date Filter", "createdOn", DateHistogramInterval.days(1)).build();
+            LogUtils.debug(getClass(), String.format("query=[%s]", tb.toString()));
+            BaseSearchResult<Order> result = entityManager.facetedSearch(tb, Order.class, SearchableRdbmsDataStore.class, null);
+            assertTrue(result instanceof FacetedSearchResult);
+            FacetedSearchResult<Order> fr = (FacetedSearchResult<Order>)result;
+            for(String key : fr.keys()) {
+                FacetedSearchResult.FacetResult f = fr.getFacets().get(key);
+                LogUtils.debug(getClass(), f);
+            }
+        } catch (Exception ex) {
+            LogUtils.error(getClass(), ex);
+            fail(ex);
+        }
     }
 
     @Test
-    void testSearch2() {
+    void testSearchMultiFaceted() {
+        try {
+            String prefix = UUID.randomUUID().toString();
+            List<Order> orders = createOrders(prefix, 100, 3);
+            assertNotNull(orders);
+            assertEquals(3, orders.size());
+
+
+            ElasticFacetedQueryBuilder<Order> builder = new ElasticFacetedQueryBuilder<>(Order.class);
+            AbstractAggregationBuilder[] builders = new  AbstractAggregationBuilder[2];
+            builders[0] = builder.filter("Product Filter", "items.id.productId", 100).build();;
+            builder = new ElasticFacetedQueryBuilder<>(Order.class);
+            builders[1] = builder.dateFilter("Create Date Filter", "createdOn", DateHistogramInterval.days(1)).build();;
+
+            LogUtils.debug(getClass(),  builders);
+            BaseSearchResult<Order> result = entityManager.facetedSearch(builders, Order.class, SearchableRdbmsDataStore.class, null);
+            assertTrue(result instanceof FacetedSearchResult);
+            FacetedSearchResult<Order> fr = (FacetedSearchResult<Order>)result;
+            for(String key : fr.keys()) {
+                FacetedSearchResult.FacetResult f = fr.getFacets().get(key);
+                LogUtils.debug(getClass(), f);
+            }
+        } catch (Exception ex) {
+            LogUtils.error(getClass(), ex);
+            fail(ex);
+        }
     }
 
     @Test
