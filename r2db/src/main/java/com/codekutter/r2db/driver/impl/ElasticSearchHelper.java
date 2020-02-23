@@ -46,6 +46,7 @@ import org.elasticsearch.action.update.UpdateRequest;
 import org.elasticsearch.action.update.UpdateResponse;
 import org.elasticsearch.client.*;
 import org.elasticsearch.common.xcontent.XContentType;
+import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.rest.RestStatus;
 import org.elasticsearch.search.SearchHit;
@@ -179,13 +180,102 @@ public class ElasticSearchHelper {
     }
 
 
+    public <T extends IEntity> BaseSearchResult<T> textSearch(@Nonnull RestHighLevelClient client,
+                                                              @Nonnull String query,
+                                                              int batchSize,
+                                                              int offset,
+                                                              @Nonnull Class<? extends T> type,
+                                                              Context context) throws DataStoreException {
+        String index = getIndexName(type);
+        boolean scroll = false;
+        if (context instanceof ElasticSearchContext) {
+            scroll = ((ElasticSearchContext) context).doScroll();
+        }
+        if (scroll) {
+            return scroll(client, index, query, batchSize, offset, type, (ElasticSearchContext) context);
+        } else {
+            return _search(client, index, query, batchSize, offset, type, context);
+        }
+    }
+
+    public <T extends IEntity> BaseSearchResult<T> textSearch(@Nonnull RestHighLevelClient client,
+                                                              @Nonnull QueryBuilder query,
+                                                              int batchSize,
+                                                              int offset,
+                                                              @Nonnull Class<? extends T> type,
+                                                              Context context) throws DataStoreException {
+        String index = getIndexName(type);
+        boolean scroll = false;
+        if (context instanceof ElasticSearchContext) {
+            scroll = ((ElasticSearchContext) context).doScroll();
+        }
+        if (scroll) {
+            return scroll(client, index, query, batchSize, offset, type, (ElasticSearchContext) context);
+        } else {
+            return _search(client, index, query, batchSize, offset, type, context);
+        }
+    }
+
     private <T extends IEntity> BaseSearchResult<T> scroll(RestHighLevelClient client,
-                               String index,
-                               @Nonnull String query,
-                               int batchSize,
-                               int offset,
-                               @Nonnull Class<? extends T> type,
-                               ElasticSearchContext context) throws DataStoreException {
+                                                           String index,
+                                                           @Nonnull QueryBuilder query,
+                                                           int batchSize,
+                                                           int offset,
+                                                           @Nonnull Class<? extends T> type,
+                                                           ElasticSearchContext context) throws DataStoreException {
+        try {
+            String scrollId = context.scrollId();
+            SearchResponse response = null;
+            if (Strings.isNullOrEmpty(scrollId)) {
+                SearchRequest request = new SearchRequest(index);
+                SearchSourceBuilder sourceBuilder = new SearchSourceBuilder();
+                sourceBuilder.from(offset);
+                sourceBuilder.size(batchSize);
+                sourceBuilder.query(query);
+                request.source(sourceBuilder);
+
+                response = client.search(request, RequestOptions.DEFAULT);
+            } else {
+                SearchScrollRequest scrollRequest = new SearchScrollRequest(scrollId);
+                response = client.scroll(scrollRequest, RequestOptions.DEFAULT);
+            }
+            if (response.status() != RestStatus.OK && response.status() != RestStatus.NOT_FOUND && response.status() != RestStatus.FOUND) {
+                throw new DataStoreException(String.format("Search failed. [status=%s][index=%s]", response.status().name(), index));
+            }
+            if (response.status() == RestStatus.FOUND) {
+                SearchHits hits = response.getHits();
+                if (hits != null) {
+                    List<T> entities = new ArrayList<T>();
+                    SearchHit[] results = hits.getHits();
+                    for (SearchHit hit : results) {
+                        String json = hit.getSourceAsString();
+                        T entity = GlobalConstants.getJsonMapper().readValue(json, type);
+                        entities.add(entity);
+                    }
+                    EntitySearchResult<T> er = new EntitySearchResult<>(type);
+                    er.setQuery(query.toString());
+                    er.setOffset(offset);
+                    er.setCount(entities.size());
+                    er.setTotalRecords(response.getHits().getTotalHits().value);
+                    er.setEntities(entities);
+                    er.setScrollId(response.getScrollId());
+
+                    return er;
+                }
+            }
+            return null;
+        } catch (Throwable t) {
+            throw new DataStoreException(t);
+        }
+    }
+
+    private <T extends IEntity> BaseSearchResult<T> scroll(RestHighLevelClient client,
+                                                           String index,
+                                                           @Nonnull String query,
+                                                           int batchSize,
+                                                           int offset,
+                                                           @Nonnull Class<? extends T> type,
+                                                           ElasticSearchContext context) throws DataStoreException {
         try {
             String scrollId = context.scrollId();
             SearchResponse response = null;
@@ -215,13 +305,15 @@ public class ElasticSearchHelper {
                         T entity = GlobalConstants.getJsonMapper().readValue(json, type);
                         entities.add(entity);
                     }
-                    EntitySearchResult<T> er = new EntitySearchResult<>();
-                    er.query(query);
-                    er.offset(offset);
-                    er.count(entities.size());
-                    er.totalRecords(response.getHits().getTotalHits().value);
-                    er.entities(entities);
-                    er.scrollId(response.getScrollId());
+                    EntitySearchResult<T> er = new EntitySearchResult<>(type);
+                    er.setQuery(query.toString());
+                    er.setOffset(offset);
+                    er.setCount(entities.size());
+                    er.setTotalRecords(response.getHits().getTotalHits().value);
+                    er.setEntities(entities);
+                    er.setScrollId(response.getScrollId());
+
+                    return er;
                 }
             }
             return null;
@@ -230,31 +322,59 @@ public class ElasticSearchHelper {
         }
     }
 
-    public <T extends IEntity> BaseSearchResult<T> textSearch(@Nonnull RestHighLevelClient client,
-                                                              @Nonnull String query,
-                                                              int batchSize,
-                                                              int offset,
-                                                              @Nonnull Class<? extends T> type,
-                                                              Context context) throws DataStoreException {
-        String index = getIndexName(type);
-        boolean scroll = false;
-        if (context instanceof ElasticSearchContext) {
-            scroll = ((ElasticSearchContext) context).doScroll();
-        }
-        if (scroll) {
-            return scroll(client, index, query, batchSize, offset, type, (ElasticSearchContext) context);
-        } else {
-            return _search(client, index, query, batchSize, offset, type, context);
+    private <T extends IEntity> BaseSearchResult<T> _search(RestHighLevelClient client,
+                                                            String index,
+                                                            @Nonnull QueryBuilder query,
+                                                            int batchSize,
+                                                            int offset,
+                                                            @Nonnull Class<? extends T> type,
+                                                            Context context) throws DataStoreException {
+        try {
+            SearchRequest request = new SearchRequest(index);
+            SearchSourceBuilder sourceBuilder = new SearchSourceBuilder();
+            sourceBuilder.from(offset);
+            sourceBuilder.size(batchSize);
+            sourceBuilder.query(query);
+            request.source(sourceBuilder);
+
+            SearchResponse response = client.search(request, RequestOptions.DEFAULT);
+            RestStatus status = response.status();
+            if (status != RestStatus.OK && status != RestStatus.NOT_FOUND && status != RestStatus.FOUND) {
+                throw new DataStoreException(String.format("Search failed. [status=%s][index=%s]", response.status().name(), index));
+            }
+            if (status == RestStatus.FOUND || status == RestStatus.OK) {
+                SearchHits hits = response.getHits();
+                if (hits != null) {
+                    List<T> entities = new ArrayList<T>();
+                    SearchHit[] results = hits.getHits();
+                    for (SearchHit hit : results) {
+                        String json = hit.getSourceAsString();
+                        T entity = GlobalConstants.getJsonMapper().readValue(json, type);
+                        entities.add(entity);
+                    }
+                    EntitySearchResult<T> er = new EntitySearchResult<>(type);
+                    er.setQuery(query.toString());
+                    er.setOffset(offset);
+                    er.setCount(entities.size());
+                    er.setTotalRecords(response.getHits().getTotalHits().value);
+                    er.setEntities(entities);
+                    er.setScrollId(response.getScrollId());
+                    return er;
+                }
+            }
+            return null;
+        } catch (Throwable t) {
+            throw new DataStoreException(t);
         }
     }
 
     private <T extends IEntity> BaseSearchResult<T> _search(RestHighLevelClient client,
-                                String index,
-                                @Nonnull String query,
-                                int batchSize,
-                                int offset,
-                                @Nonnull Class<? extends T> type,
-                                Context context) throws DataStoreException {
+                                                            String index,
+                                                            @Nonnull String query,
+                                                            int batchSize,
+                                                            int offset,
+                                                            @Nonnull Class<? extends T> type,
+                                                            Context context) throws DataStoreException {
         try {
             SearchRequest request = new SearchRequest(index);
             SearchSourceBuilder sourceBuilder = new SearchSourceBuilder();
@@ -278,13 +398,13 @@ public class ElasticSearchHelper {
                         T entity = GlobalConstants.getJsonMapper().readValue(json, type);
                         entities.add(entity);
                     }
-                    EntitySearchResult<T> er = new EntitySearchResult<>();
-                    er.query(query);
-                    er.offset(offset);
-                    er.count(entities.size());
-                    er.totalRecords(response.getHits().getTotalHits().value);
-                    er.entities(entities);
-                    er.scrollId(response.getScrollId());
+                    EntitySearchResult<T> er = new EntitySearchResult<>(type);
+                    er.setQuery(query.toString());
+                    er.setOffset(offset);
+                    er.setCount(entities.size());
+                    er.setTotalRecords(response.getHits().getTotalHits().value);
+                    er.setEntities(entities);
+                    er.setScrollId(response.getScrollId());
                     return er;
                 }
             }
@@ -295,10 +415,13 @@ public class ElasticSearchHelper {
     }
 
     public <T extends IEntity> String parseQuery(@Nonnull String query,
-                                                  @Nonnull RestClient client,
-                                                  @Nonnull Class<? extends T> type) throws DataStoreException {
+                                                 @Nonnull RestClient client,
+                                                 @Nonnull Class<? extends T> type) throws DataStoreException {
         try {
             String index = getIndexName(type);
+            if (Strings.isNullOrEmpty(index)) {
+                throw new DataStoreException(String.format("Index not specified for type. [type=%s]", type.getCanonicalName()));
+            }
             Request request = new Request("POST", "/_sql");
             String json = String.format("{\"query\":\"%s\"", query);
             request.setJsonEntity(json);

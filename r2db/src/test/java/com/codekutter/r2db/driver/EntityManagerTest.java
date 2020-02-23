@@ -18,6 +18,7 @@
 package com.codekutter.r2db.driver;
 
 import com.codekutter.common.ConfigTestConstants;
+import com.codekutter.common.GlobalConstants;
 import com.codekutter.common.TestDataHelper;
 import com.codekutter.common.stores.BaseSearchResult;
 import com.codekutter.common.stores.impl.EntitySearchResult;
@@ -204,19 +205,18 @@ class EntityManagerTest {
 
 
             LuceneQueryBuilder<Order> builder = LuceneQueryBuilder.builder(Order.class);
-            SimpleDateFormat df = new SimpleDateFormat("dd/MM/yyyy");
             Query query = builder
                     .range("items.quantity", "5", "*")
-                    .term("items.id.productId", new String[]{EntityQueryBuilder.string(orders.get(0).getItems().get(5).getId().getProductId()),
-                            EntityQueryBuilder.string(orders.get(0).getItems().get(8).getId().getProductId()),
-                            EntityQueryBuilder.string(orders.get(0).getItems().get(35).getId().getProductId())})
+                    .term("items.id.productId", new String[]{GlobalConstants.quote(orders.get(0).getItems().get(5).getId().getProductId()),
+                            GlobalConstants.quote(orders.get(0).getItems().get(8).getId().getProductId()),
+                            GlobalConstants.quote(orders.get(0).getItems().get(35).getId().getProductId())})
                     .build();
-            LogUtils.debug(getClass(), String.format("query=[%s]", query));
+            LogUtils.debug(getClass(), String.format("query=[%s]", query.toString()));
             BaseSearchResult<Order> result = entityManager.textSearch(query, Order.class, SearchableRdbmsDataStore.class, null);
             assertTrue(result instanceof EntitySearchResult);
             EntitySearchResult<Order> or = (EntitySearchResult<Order>) result;
-            assertFalse(or.entities().isEmpty());
-            for (Order order : or.entities()) {
+            assertFalse(or.getEntities().isEmpty());
+            for (Order order : or.getEntities()) {
                 LogUtils.debug(getClass(), order);
             }
         } catch (Exception ex) {

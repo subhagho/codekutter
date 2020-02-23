@@ -28,6 +28,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.joda.JodaModule;
 
+import javax.annotation.Nonnull;
+
 /**
  * Class defines static global constants.
  */
@@ -127,5 +129,9 @@ public class GlobalConstants {
         mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
         mapper.enable(SerializationFeature.INDENT_OUTPUT);
         return mapper;
+    }
+
+    public static String quote(@Nonnull String value) {
+        return String.format("\"%s\"", value);
     }
 }

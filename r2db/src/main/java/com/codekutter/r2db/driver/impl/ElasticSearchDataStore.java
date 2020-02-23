@@ -25,6 +25,7 @@ import com.codekutter.zconfig.common.ConfigurationException;
 import com.google.common.base.Preconditions;
 import org.apache.lucene.search.Query;
 import org.elasticsearch.client.RestHighLevelClient;
+import org.elasticsearch.index.query.QueryBuilder;
 
 import javax.annotation.Nonnull;
 import java.io.IOException;
@@ -91,16 +92,16 @@ public class ElasticSearchDataStore extends AbstractDataStore<RestHighLevelClien
 
     @Override
     public <E extends IEntity> BaseSearchResult<E> doSearch(@Nonnull String query, int offset, int maxResults,
-                                                      @Nonnull Class<? extends E> type,
-                                                      Context context) throws DataStoreException {
+                                                            @Nonnull Class<? extends E> type,
+                                                            Context context) throws DataStoreException {
         return textSearch(query, maxResults, offset, type, context);
     }
 
     @Override
     public <E extends IEntity> BaseSearchResult<E> doSearch(@Nonnull String query, int offset, int maxResults,
-                                                      Map<String, Object> parameters,
-                                                      @Nonnull Class<? extends E> type,
-                                                      Context context) throws DataStoreException {
+                                                            Map<String, Object> parameters,
+                                                            @Nonnull Class<? extends E> type,
+                                                            Context context) throws DataStoreException {
         return textSearch(query, maxResults, offset, type, context);
     }
 
@@ -121,34 +122,52 @@ public class ElasticSearchDataStore extends AbstractDataStore<RestHighLevelClien
 
     @Override
     public <T extends IEntity> BaseSearchResult<T> textSearch(@Nonnull Query query,
-                                  @Nonnull Class<? extends T> type,
-                                  Context context) throws DataStoreException {
+                                                              @Nonnull Class<? extends T> type,
+                                                              Context context) throws DataStoreException {
         return textSearch(query, maxResults(), 0, type, context);
     }
 
     @Override
     public <T extends IEntity> BaseSearchResult<T> textSearch(@Nonnull Query query,
-                                  int batchSize,
-                                  int offset,
-                                  @Nonnull Class<? extends T> type,
-                                  Context context) throws DataStoreException {
+                                                              int batchSize,
+                                                              int offset,
+                                                              @Nonnull Class<? extends T> type,
+                                                              Context context) throws DataStoreException {
         String q = query.toString();
         return textSearch(q, batchSize, offset, type, context);
     }
 
     @Override
     public <T extends IEntity> BaseSearchResult<T> textSearch(@Nonnull String query,
-                                  @Nonnull Class<? extends T> type,
-                                  Context context) throws DataStoreException {
+                                                              @Nonnull Class<? extends T> type,
+                                                              Context context) throws DataStoreException {
         return textSearch(query, maxResults(), 0, type, context);
     }
 
     @Override
     public <T extends IEntity> BaseSearchResult<T> textSearch(@Nonnull String query,
-                                  int batchSize,
-                                  int offset,
-                                  @Nonnull Class<? extends T> type,
-                                  Context context) throws DataStoreException {
+                                                              int batchSize,
+                                                              int offset,
+                                                              @Nonnull Class<? extends T> type,
+                                                              Context context) throws DataStoreException {
+        try {
+            return helper.textSearch(connection().connection(), query, batchSize, offset, type, context);
+        } catch (ConnectionException ex) {
+            throw new DataStoreException(ex);
+        }
+    }
+
+    public <T extends IEntity> BaseSearchResult<T> textSearch(@Nonnull QueryBuilder query,
+                                                              @Nonnull Class<? extends T> type,
+                                                              Context context) throws DataStoreException {
+        return textSearch(query, maxResults(), 0, type, context);
+    }
+
+    public <T extends IEntity> BaseSearchResult<T> textSearch(@Nonnull QueryBuilder query,
+                                                              int batchSize,
+                                                              int offset,
+                                                              @Nonnull Class<? extends T> type,
+                                                              Context context) throws DataStoreException {
         try {
             return helper.textSearch(connection().connection(), query, batchSize, offset, type, context);
         } catch (ConnectionException ex) {

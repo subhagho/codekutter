@@ -29,9 +29,12 @@ import java.util.Collection;
 
 @Getter
 @Setter
-@Accessors(fluent = true)
 public class EntitySearchResult<T extends IEntity> extends BaseSearchResult<T> {
     private Collection<T> entities;
+
+    public EntitySearchResult(@Nonnull Class<? extends IEntity> type) {
+        super(type);
+    }
 
     public void add(@Nonnull T entity) {
         if (entities == null) {

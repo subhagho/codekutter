@@ -190,11 +190,11 @@ public class LocalDirectoryStore extends AbstractDirectoryStore<File> {
                 array = array.subList(0, maxResults - 1);
             }
             if (!array.isEmpty()) {
-                EntitySearchResult<FileEntity> er = new EntitySearchResult<>();
-                er.query(query);
-                er.offset(offset);
-                er.count(array.size());
-                er.entities(array);
+                EntitySearchResult<FileEntity> er = new EntitySearchResult<>(type);
+                er.setQuery(query);
+                er.setOffset(offset);
+                er.setCount(array.size());
+                er.setEntities(array);
                 return (BaseSearchResult<E>) er;
             }
             return null;

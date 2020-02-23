@@ -155,11 +155,11 @@ public class RdbmsDataStore extends TransactionDataStore<Session, Transaction> {
         Query qq = session.createQuery(query, type).setMaxResults(maxResults).setFirstResult(offset);
         List<?> result = qq.getResultList();
         if (result != null && !result.isEmpty()) {
-            EntitySearchResult<E> er = new EntitySearchResult<>();
-            er.query(query);
-            er.offset(offset);
-            er.count(result.size());
-            er.entities((Collection<E>) result);
+            EntitySearchResult<E> er = new EntitySearchResult<>(type);
+            er.setQuery(query);
+            er.setOffset(offset);
+            er.setCount(result.size());
+            er.setEntities((Collection<E>) result);
             return er;
         }
         return null;
@@ -184,11 +184,11 @@ public class RdbmsDataStore extends TransactionDataStore<Session, Transaction> {
         }
         List<?> result = qq.getResultList();
         if (result != null && !result.isEmpty()) {
-            EntitySearchResult<E> er = new EntitySearchResult<>();
-            er.query(query);
-            er.offset(offset);
-            er.count(result.size());
-            er.entities((Collection<E>) result);
+            EntitySearchResult<E> er = new EntitySearchResult<>(type);
+            er.setQuery(query);
+            er.setOffset(offset);
+            er.setCount(result.size());
+            er.setEntities((Collection<E>) result);
             return er;
         }
         return null;

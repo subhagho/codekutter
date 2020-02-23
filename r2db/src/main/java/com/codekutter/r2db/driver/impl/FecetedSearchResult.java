@@ -15,26 +15,25 @@
  *
  */
 
-package com.codekutter.common.stores;
+package com.codekutter.r2db.driver.impl;
 
 import com.codekutter.common.model.IEntity;
+import com.codekutter.common.stores.BaseSearchResult;
 import lombok.Getter;
 import lombok.Setter;
-import lombok.experimental.Accessors;
 
 import javax.annotation.Nonnull;
+import java.util.HashMap;
+import java.util.Map;
 
 @Getter
 @Setter
-public class BaseSearchResult<T extends IEntity> {
-    private Class<? extends IEntity> type;
-    private String query;
-    private int count;
-    private long totalRecords;
-    private int offset;
-    private String scrollId;
+public class FecetedSearchResult<T extends IEntity> extends BaseSearchResult<T> {
+    private Map<String, Long> facets = new HashMap<>();
 
-    public BaseSearchResult(@Nonnull Class<? extends IEntity> type) {
-        this.type = type;
+    public FecetedSearchResult(@Nonnull Class<? extends IEntity> type) {
+        super(type);
     }
+
+
 }

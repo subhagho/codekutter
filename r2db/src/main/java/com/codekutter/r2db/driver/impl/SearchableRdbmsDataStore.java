@@ -33,6 +33,7 @@ import lombok.Setter;
 import lombok.experimental.Accessors;
 import org.apache.lucene.search.Query;
 import org.elasticsearch.client.RestHighLevelClient;
+import org.elasticsearch.index.query.QueryBuilder;
 import org.hibernate.Session;
 
 import javax.annotation.Nonnull;
@@ -198,6 +199,20 @@ public class SearchableRdbmsDataStore extends RdbmsDataStore implements ISearcha
 
     @Override
     public <T extends IEntity> BaseSearchResult<T> textSearch(@Nonnull String query, int batchSize, int offset, @Nonnull Class<? extends T> type, Context context) throws DataStoreException {
+        return helper.textSearch(readConnection.connection(), query, batchSize, offset, type, context);
+    }
+
+    public <T extends IEntity> BaseSearchResult<T> textSearch(@Nonnull QueryBuilder query,
+                                                              @Nonnull Class<? extends T> type,
+                                                              Context context) throws DataStoreException {
+        return textSearch(query, maxResults(), 0, type, context);
+    }
+
+    public <T extends IEntity> BaseSearchResult<T> textSearch(@Nonnull QueryBuilder query,
+                                                              int batchSize,
+                                                              int offset,
+                                                              @Nonnull Class<? extends T> type,
+                                                              Context context) throws DataStoreException {
         return helper.textSearch(readConnection.connection(), query, batchSize, offset, type, context);
     }
 

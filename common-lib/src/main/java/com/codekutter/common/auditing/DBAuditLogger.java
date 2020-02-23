@@ -61,7 +61,7 @@ public class DBAuditLogger extends AbstractAuditLogger<Session> {
             BaseSearchResult<AuditRecord> result = dataStore.search(qstr, params, AuditRecord.class, null);
             if (result instanceof EntitySearchResult) {
                 EntitySearchResult<AuditRecord> er = (EntitySearchResult<AuditRecord>)result;
-                Collection<AuditRecord> records = er.entities();
+                Collection<AuditRecord> records = er.getEntities();
                 if (records != null && !records.isEmpty()) {
                     List<T> entities = new ArrayList<>(records.size());
                     for (AuditRecord record : records) {
@@ -103,7 +103,7 @@ public class DBAuditLogger extends AbstractAuditLogger<Session> {
             BaseSearchResult<AuditRecord> result = dataStore.search(qstr, params, AuditRecord.class, null);
             if (result instanceof EntitySearchResult) {
                 EntitySearchResult<AuditRecord> er = (EntitySearchResult<AuditRecord>)result;
-                Collection<AuditRecord> records = er.entities();
+                Collection<AuditRecord> records = er.getEntities();
                 if (records != null && !records.isEmpty()) {
                     return records;
                 }

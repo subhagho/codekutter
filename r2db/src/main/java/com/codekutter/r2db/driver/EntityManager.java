@@ -410,9 +410,9 @@ public class EntityManager implements IConfigurable {
                             BaseSearchResult<? extends IEntity> result = getReferenceEntity(f, entity, entityType, (Class<? extends IEntity>) type, context, false);
                             Map<String, Object> rmap = new HashMap<>();
                             if (result instanceof EntitySearchResult) {
-                                if (((EntitySearchResult<? extends IEntity>) result).entities() != null
-                                        && !((EntitySearchResult<? extends IEntity>) result).entities().isEmpty()) {
-                                    for (Object o : ((EntitySearchResult<? extends IEntity>) result).entities()) {
+                                if (((EntitySearchResult<? extends IEntity>) result).getEntities() != null
+                                        && !((EntitySearchResult<? extends IEntity>) result).getEntities().isEmpty()) {
+                                    for (Object o : ((EntitySearchResult<? extends IEntity>) result).getEntities()) {
                                         IEntity e = (IEntity) o;
                                         rmap.put(e.getKey().stringKey(), e);
                                     }
@@ -465,8 +465,8 @@ public class EntityManager implements IConfigurable {
                         } else {
                             BaseSearchResult<? extends IEntity> result = getReferenceEntity(f, entity, entityType, (Class<? extends IEntity>) f.getType(), context, false);
                             if (result instanceof EntitySearchResult) {
-                                if (((EntitySearchResult<? extends IEntity>) result).entities() == null
-                                        || ((EntitySearchResult<? extends IEntity>) result).entities().isEmpty()) {
+                                if (((EntitySearchResult<? extends IEntity>) result).getEntities() == null
+                                        || ((EntitySearchResult<? extends IEntity>) result).getEntities().isEmpty()) {
                                     Object t = create((IEntity) value, (Class<? extends IEntity>) type, null, user, context);
                                     if (t == null) {
                                         throw new DataStoreException(
@@ -474,8 +474,8 @@ public class EntityManager implements IConfigurable {
                                                         type.getCanonicalName(), ((IEntity) value).getKey().stringKey()));
                                     }
                                 } else {
-                                    while (((EntitySearchResult<? extends IEntity>) result).entities().iterator().hasNext()) {
-                                        IEntity e = ((EntitySearchResult<? extends IEntity>) result).entities().iterator().next();
+                                    while (((EntitySearchResult<? extends IEntity>) result).getEntities().iterator().hasNext()) {
+                                        IEntity e = ((EntitySearchResult<? extends IEntity>) result).getEntities().iterator().next();
                                         IEntity v = (IEntity) value;
                                         if (e.getKey().compareTo(v.getKey()) != 0) {
                                             if (!delete(e, e.getClass(), null, user, context)) {
@@ -585,7 +585,7 @@ public class EntityManager implements IConfigurable {
                             BaseSearchResult<? extends IEntity> result
                                     = getReferenceEntity(f, entity, entityType, (Class<? extends IEntity>) type, context, false);
                             if (result instanceof EntitySearchResult) {
-                                for (IEntity v : ((EntitySearchResult<? extends IEntity>) result).entities()) {
+                                for (IEntity v : ((EntitySearchResult<? extends IEntity>) result).getEntities()) {
                                     String sk = v.getKey().stringKey();
                                     if (!delete(v, v.getClass(), user, context, null)) {
                                         throw new DataStoreException(String.format("Error deleting reference. [type=%s][key=%s]",
@@ -599,8 +599,8 @@ public class EntityManager implements IConfigurable {
                             BaseSearchResult<? extends IEntity> result
                                     = getReferenceEntity(f, entity, entityType, (Class<? extends IEntity>) f.getType(), context, false);
                             if (result instanceof EntitySearchResult) {
-                                while (((EntitySearchResult<? extends IEntity>) result).entities().iterator().hasNext()) {
-                                    IEntity e = ((EntitySearchResult<? extends IEntity>) result).entities().iterator().next();
+                                while (((EntitySearchResult<? extends IEntity>) result).getEntities().iterator().hasNext()) {
+                                    IEntity e = ((EntitySearchResult<? extends IEntity>) result).getEntities().iterator().next();
                                     if (!delete(e, e.getClass(), user, context, null)) {
                                         throw new DataStoreException(String.format("Error deleting reference. [type=%s][key=%s]",
                                                 e.getClass().getCanonicalName(), e.getKey().stringKey()));
@@ -762,8 +762,8 @@ public class EntityManager implements IConfigurable {
                                                              Context context) throws DataStoreException {
         BaseSearchResult<E> values = dataStore.search(query, type, context);
         if (values instanceof EntitySearchResult) {
-            if (!((EntitySearchResult<E>) values).entities().isEmpty())
-                return findReferences(((EntitySearchResult<E>) values).entities(), type, context);
+            if (!((EntitySearchResult<E>) values).getEntities().isEmpty())
+                return findReferences(((EntitySearchResult<E>) values).getEntities(), type, context);
         }
         return null;
     }
@@ -784,8 +784,8 @@ public class EntityManager implements IConfigurable {
             }
             BaseSearchResult<E> values = dataStore.search(query, type, context);
             if (values instanceof EntitySearchResult) {
-                if (!((EntitySearchResult<E>) values).entities().isEmpty())
-                    return findReferences(((EntitySearchResult<E>) values).entities(), type, context);
+                if (!((EntitySearchResult<E>) values).getEntities().isEmpty())
+                    return findReferences(((EntitySearchResult<E>) values).getEntities(), type, context);
             }
         } else {
             List<AbstractDataStore<T>> dataStores = dataStoreManager.getShards(storeType, (Class<? extends IShardedEntity>) type);
@@ -827,8 +827,8 @@ public class EntityManager implements IConfigurable {
                                                              Context context) throws DataStoreException {
         BaseSearchResult<E> values = dataStore.search(query, offset, maxResults, type, context);
         if (values instanceof EntitySearchResult) {
-            if (!((EntitySearchResult<E>) values).entities().isEmpty())
-                return findReferences(((EntitySearchResult<E>) values).entities(), type, context);
+            if (!((EntitySearchResult<E>) values).getEntities().isEmpty())
+                return findReferences(((EntitySearchResult<E>) values).getEntities(), type, context);
         }
         return null;
     }
@@ -851,8 +851,8 @@ public class EntityManager implements IConfigurable {
             }
             BaseSearchResult<E> values = dataStore.search(query, offset, maxResults, type, context);
             if (values instanceof EntitySearchResult) {
-                if (!((EntitySearchResult<E>) values).entities().isEmpty())
-                    return findReferences(((EntitySearchResult<E>) values).entities(), type, context);
+                if (!((EntitySearchResult<E>) values).getEntities().isEmpty())
+                    return findReferences(((EntitySearchResult<E>) values).getEntities(), type, context);
             }
         } else {
             List<AbstractDataStore<T>> dataStores = dataStoreManager.getShards(storeType, (Class<? extends IShardedEntity>) type);
@@ -884,8 +884,8 @@ public class EntityManager implements IConfigurable {
         }
         BaseSearchResult<E> values = dataStore.search(query, params, type, context);
         if (values instanceof EntitySearchResult) {
-            if (!((EntitySearchResult<E>) values).entities().isEmpty())
-                return findReferences(((EntitySearchResult<E>) values).entities(), type, context);
+            if (!((EntitySearchResult<E>) values).getEntities().isEmpty())
+                return findReferences(((EntitySearchResult<E>) values).getEntities(), type, context);
         }
         return null;
     }
@@ -907,8 +907,8 @@ public class EntityManager implements IConfigurable {
             }
             BaseSearchResult<E> values = dataStore.search(query, params, type, context);
             if (values instanceof EntitySearchResult) {
-                if (!((EntitySearchResult<E>) values).entities().isEmpty())
-                    return findReferences(((EntitySearchResult<E>) values).entities(), type, context);
+                if (!((EntitySearchResult<E>) values).getEntities().isEmpty())
+                    return findReferences(((EntitySearchResult<E>) values).getEntities(), type, context);
             }
         } else {
             List<AbstractDataStore<T>> dataStores = dataStoreManager.getShards(storeType, (Class<? extends IShardedEntity>) type);
@@ -942,8 +942,8 @@ public class EntityManager implements IConfigurable {
         }
         BaseSearchResult<E> values = dataStore.search(query, offset, maxResults, params, type, context);
         if (values instanceof EntitySearchResult) {
-            if (!((EntitySearchResult<E>) values).entities().isEmpty())
-                return findReferences(((EntitySearchResult<E>) values).entities(), type, context);
+            if (!((EntitySearchResult<E>) values).getEntities().isEmpty())
+                return findReferences(((EntitySearchResult<E>) values).getEntities(), type, context);
         }
         return null;
     }
@@ -968,8 +968,8 @@ public class EntityManager implements IConfigurable {
             }
             BaseSearchResult<E> values = dataStore.search(query, offset, maxResults, params, type, context);
             if (values instanceof EntitySearchResult) {
-                if (!((EntitySearchResult<E>) values).entities().isEmpty())
-                    return findReferences(((EntitySearchResult<E>) values).entities(), type, context);
+                if (!((EntitySearchResult<E>) values).getEntities().isEmpty())
+                    return findReferences(((EntitySearchResult<E>) values).getEntities(), type, context);
             }
         } else {
             List<AbstractDataStore<T>> dataStores = dataStoreManager.getShards(storeType, (Class<? extends IShardedEntity>) type);
@@ -1010,19 +1010,19 @@ public class EntityManager implements IConfigurable {
                                 (Class<? extends IEntity>) f.getType(),
                                 null, context);
                         if (result instanceof EntitySearchResult) {
-                            if (((EntitySearchResult) result).entities() != null && !((EntitySearchResult) result).entities().isEmpty()) {
-                                joinResults(parentMap, ((EntitySearchResult) result).entities(), f, entityType, reference);
+                            if (((EntitySearchResult) result).getEntities() != null && !((EntitySearchResult) result).getEntities().isEmpty()) {
+                                joinResults(parentMap, ((EntitySearchResult) result).getEntities(), f, entityType, reference);
                             }
-                            if (((EntitySearchResult) result).entities() == null || ((EntitySearchResult) result).entities().size() < DEFAULT_BATCH_SIZE)
+                            if (((EntitySearchResult) result).getEntities() == null || ((EntitySearchResult) result).getEntities().size() < DEFAULT_BATCH_SIZE)
                                 break;
-                            offset += ((EntitySearchResult) result).entities().size();
+                            offset += ((EntitySearchResult) result).getEntities().size();
                         }
                     }
                 }
             }
-            EntitySearchResult<E> er = new EntitySearchResult<>();
-            er.count(entities.size());
-            er.entities(entities);
+            EntitySearchResult<E> er = new EntitySearchResult<>(entityType);
+            er.setCount(entities.size());
+            er.setEntities(entities);
 
             return er;
         } catch (Exception ex) {
@@ -1113,16 +1113,16 @@ public class EntityManager implements IConfigurable {
                             entityType, (Class<? extends IEntity>) itype,
                             context, true);
                     if (result instanceof EntitySearchResult) {
-                        if (((EntitySearchResult) result).entities() != null && !((EntitySearchResult) result).entities().isEmpty()) {
+                        if (((EntitySearchResult) result).getEntities() != null && !((EntitySearchResult) result).getEntities().isEmpty()) {
                             if (ReflectionUtils.implementsInterface(List.class, type)) {
-                                List values = new ArrayList(((EntitySearchResult) result).entities());
+                                List values = new ArrayList(((EntitySearchResult) result).getEntities());
                                 ReflectionUtils.setObjectValue(entity, f, values);
                             } else if (ReflectionUtils.implementsInterface(Set.class, type)) {
-                                Set values = new HashSet(((EntitySearchResult) result).entities());
+                                Set values = new HashSet(((EntitySearchResult) result).getEntities());
                                 ReflectionUtils.setObjectValue(entity, f, values);
                             } else {
-                                while (((EntitySearchResult) result).entities().iterator().hasNext()) {
-                                    Object o = ((EntitySearchResult) result).entities().iterator().next();
+                                while (((EntitySearchResult) result).getEntities().iterator().hasNext()) {
+                                    Object o = ((EntitySearchResult) result).getEntities().iterator().next();
                                     ReflectionUtils.setObjectValue(entity, f, o);
                                     break;
                                 }
@@ -1158,18 +1158,18 @@ public class EntityManager implements IConfigurable {
                     fieldType,
                     context, null);
             if (result instanceof EntitySearchResult) {
-                if (((EntitySearchResult) result).entities() != null
-                        && !((EntitySearchResult) result).entities().isEmpty()) {
-                    entities.addAll(((EntitySearchResult) result).entities());
+                if (((EntitySearchResult) result).getEntities() != null
+                        && !((EntitySearchResult) result).getEntities().isEmpty()) {
+                    entities.addAll(((EntitySearchResult) result).getEntities());
                 }
-                if (((EntitySearchResult) result).entities() == null
-                        || ((EntitySearchResult) result).entities().size() < DEFAULT_BATCH_SIZE) break;
-                offset += ((EntitySearchResult) result).entities().size();
+                if (((EntitySearchResult) result).getEntities() == null
+                        || ((EntitySearchResult) result).getEntities().size() < DEFAULT_BATCH_SIZE) break;
+                offset += ((EntitySearchResult) result).getEntities().size();
             }
         }
-        EntitySearchResult<E> er = new EntitySearchResult<>();
-        er.count(entities.size());
-        er.entities(entities);
+        EntitySearchResult<E> er = new EntitySearchResult<>(entityType);
+        er.setCount(entities.size());
+        er.setEntities(entities);
 
         return er;
     }

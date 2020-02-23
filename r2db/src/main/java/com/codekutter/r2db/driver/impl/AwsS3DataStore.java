@@ -294,11 +294,11 @@ public class AwsS3DataStore extends AbstractDirectoryStore<AmazonS3> {
                         count++;
                         if ((count - offset) > maxResults) break;
                     }
-                    EntitySearchResult<S3FileEntity> er = new EntitySearchResult<>();
-                    er.offset(offset);
-                    er.query(query);
-                    er.count(array.size());
-                    er.entities(array);
+                    EntitySearchResult<S3FileEntity> er = new EntitySearchResult<>(type);
+                    er.setOffset(offset);
+                    er.setQuery(query);
+                    er.setCount(array.size());
+                    er.setEntities(array);
 
                     return (BaseSearchResult<E>) er;
                 }
