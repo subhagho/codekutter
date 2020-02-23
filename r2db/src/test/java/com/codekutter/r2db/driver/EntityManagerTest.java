@@ -35,7 +35,6 @@ import com.google.common.base.Strings;
 import org.apache.lucene.search.Query;
 import org.elasticsearch.search.aggregations.AbstractAggregationBuilder;
 import org.elasticsearch.search.aggregations.bucket.histogram.DateHistogramInterval;
-import org.elasticsearch.search.aggregations.bucket.terms.TermsAggregationBuilder;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -286,7 +285,35 @@ class EntityManagerTest {
     }
 
     @Test
-    void testSearch3() {
+    void testSearchFacetedRange() {
+        try {
+            String prefix = UUID.randomUUID().toString();
+            List<Order> orders = createOrders(prefix, 100, 3);
+            assertNotNull(orders);
+            assertEquals(3, orders.size());
+
+
+            ElasticFacetedQueryBuilder<Order> builder = new ElasticFacetedQueryBuilder<>(Order.class);
+            List<Double[]> ranges = new ArrayList<>();
+            ranges.add(new Double[]{(double)10000, (double)20000});
+            ranges.add(new Double[]{(double)20000, (double)50000});
+            ranges.add(new Double[]{(double)50000, (double)100000});
+            ranges.add(new Double[]{(double)100000, (double)200000});
+            ranges.add(new Double[]{(double)200000, (double)500000});
+
+            AbstractAggregationBuilder tb = builder.range("Order Amount", "amount", ranges, true).build();
+            LogUtils.debug(getClass(), String.format("query=[%s]", tb.toString()));
+            BaseSearchResult<Order> result = entityManager.facetedSearch(tb, Order.class, SearchableRdbmsDataStore.class, null);
+            assertTrue(result instanceof FacetedSearchResult);
+            FacetedSearchResult<Order> fr = (FacetedSearchResult<Order>)result;
+            for(String key : fr.keys()) {
+                FacetedSearchResult.FacetResult f = fr.getFacets().get(key);
+                LogUtils.debug(getClass(), f);
+            }
+        } catch (Exception ex) {
+            LogUtils.error(getClass(), ex);
+            fail(ex);
+        }
     }
 
     @Test

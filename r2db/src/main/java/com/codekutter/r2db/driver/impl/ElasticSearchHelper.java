@@ -54,6 +54,8 @@ import org.elasticsearch.search.SearchHits;
 import org.elasticsearch.search.aggregations.*;
 import org.elasticsearch.search.aggregations.bucket.histogram.Histogram;
 import org.elasticsearch.search.aggregations.bucket.histogram.ParsedDateHistogram;
+import org.elasticsearch.search.aggregations.bucket.range.ParsedRange;
+import org.elasticsearch.search.aggregations.bucket.range.Range;
 import org.elasticsearch.search.aggregations.bucket.terms.ParsedStringTerms;
 import org.elasticsearch.search.aggregations.bucket.terms.ParsedTerms;
 import org.elasticsearch.search.aggregations.bucket.terms.Terms;
@@ -520,6 +522,25 @@ public class ElasticSearchHelper {
             String name = dateHistogram.getName();
             List<Histogram.Bucket> buckets = (List<Histogram.Bucket>) dateHistogram.getBuckets();
             for (Histogram.Bucket bucket : buckets) {
+                String key = bucket.getKeyAsString();
+                long count = bucket.getDocCount();
+                if (!results.containsKey(name)) {
+                    results.put(name, new FacetedSearchResult.FacetResult(name));
+                }
+                results.get(name).getResults().put(key, count);
+                if (bucket.getAggregations() != null) {
+                    for (Aggregation nested : bucket.getAggregations()) {
+                        FacetedSearchResult.FacetResult result = results.get(name);
+                        result.setNested(new HashMap<>());
+                        readAggregation(nested, result.getNested());
+                    }
+                }
+            }
+        } else if (aggregation instanceof ParsedRange) {
+            ParsedRange parsedRange = (ParsedRange)aggregation;
+            String name = parsedRange.getName();
+            List<Range.Bucket> buckets = (List<Range.Bucket>) parsedRange.getBuckets();
+            for (Range.Bucket bucket : buckets) {
                 String key = bucket.getKeyAsString();
                 long count = bucket.getDocCount();
                 if (!results.containsKey(name)) {
