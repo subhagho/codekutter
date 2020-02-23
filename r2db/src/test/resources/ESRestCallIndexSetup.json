@@ -1,0 +1,26 @@
+{
+  "settings": {
+    "analysis": {
+      "analyzer": {
+        "default_analyzer": {
+          "type": "custom",
+          "tokenizer": "whitespace"
+        }
+      }
+    }
+  },
+  "mappings": {
+    "properties": {
+      "items.id.productId": {
+        "type": "text",
+        "fielddata": true,
+        "analyzer": "default_analyzer"
+      },
+      "customer.id.key": {
+        "type": "text",
+        "fielddata": true,
+        "analyzer": "default_analyzer"
+      }
+    }
+  }
+}
