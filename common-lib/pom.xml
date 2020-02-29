@@ -183,6 +183,11 @@
             <artifactId>oauth2-client</artifactId>
             <version>2.26</version>
         </dependency>
+        <dependency>
+            <groupId>io.confluent</groupId>
+            <artifactId>kafka-jms-client</artifactId>
+            <version>5.4.0</version>
+        </dependency>
     </dependencies>
 
 

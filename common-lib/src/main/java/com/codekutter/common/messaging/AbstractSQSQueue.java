@@ -162,7 +162,7 @@ public abstract class AbstractSQSQueue<M extends IKeyed> extends AbstractQueue<S
                     if (producer == null) {
                         producer = session.createProducer(session.createQueue(queue));
                     }
-                    TextMessage m = message(message);
+                    Message m = message(message);
                     producer.send(m);
                     if (audited()) {
                         audit(message, EAuditType.Create, user);
@@ -251,7 +251,7 @@ public abstract class AbstractSQSQueue<M extends IKeyed> extends AbstractQueue<S
         return null;
     }
 
-    public abstract TextMessage message(M message) throws JMSException;
+    public abstract Message message(M message) throws JMSException;
 
-    public abstract M message(TextMessage message, Principal user) throws JMSException;
+    public abstract M message(Message message, Principal user) throws JMSException;
 }

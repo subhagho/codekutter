@@ -73,7 +73,6 @@ public abstract class AbstractSQSDbCachedQueue<M extends IKeyed> extends DbCache
     private Map<String, Message> messageCache = new ConcurrentHashMap<>();
 
 
-
     /**
      * Configure this type instance.
      *
@@ -133,7 +132,7 @@ public abstract class AbstractSQSDbCachedQueue<M extends IKeyed> extends DbCache
                     if (producer == null) {
                         producer = session.createProducer(session.createQueue(queue));
                     }
-                    TextMessage m = message(message);
+                    Message m = message(message);
                     producer.send(m);
 
                     Monitoring.increment(sendCounter.name(), (KeyValuePair<String, String>[]) null);
@@ -169,14 +168,10 @@ public abstract class AbstractSQSDbCachedQueue<M extends IKeyed> extends DbCache
             Message m = consumer.receive(timeout);
             if (m != null) {
                 Monitoring.increment(receiveCounter.name(), (KeyValuePair<String, String>[]) null);
-                if (m instanceof TextMessage) {
-                    if (!autoAck) {
-                        messageCache.put(m.getJMSMessageID(), m);
-                    }
-                    return message((TextMessage) m, user);
-                } else {
-                    throw new JMSException(String.format("Invalid message type. [type=%s]", m.getClass().getCanonicalName()));
+                if (!autoAck) {
+                    messageCache.put(m.getJMSMessageID(), m);
                 }
+                return message(m, user);
             }
             return null;
         } catch (Exception ex) {
@@ -216,7 +211,7 @@ public abstract class AbstractSQSDbCachedQueue<M extends IKeyed> extends DbCache
         return null;
     }
 
-    public abstract TextMessage message(M message) throws JMSException;
+    public abstract Message message(M message) throws JMSException;
 
-    public abstract M message(TextMessage message, Principal user) throws JMSException;
+    public abstract M message(Message message, Principal user) throws JMSException;
 }

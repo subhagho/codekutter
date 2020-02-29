@@ -288,6 +288,9 @@ public class AwsS3DataStore extends AbstractDirectoryStore<AmazonS3> {
                                                                Context context) throws DataStoreException {
         Preconditions.checkArgument(ReflectionUtils.isSuperType(S3FileEntity.class, type));
         try {
+            if (maxResults <= 0) {
+                maxResults = this.maxResults();
+            }
             S3StoreContext ctx = (S3StoreContext) context;
 
             AmazonS3 client = connection().connection();

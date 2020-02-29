@@ -22,12 +22,13 @@ import com.codekutter.common.utils.LogUtils;
 
 import javax.annotation.Nonnull;
 import javax.jms.JMSException;
+import javax.jms.Message;
 import javax.jms.TextMessage;
 import java.security.Principal;
 
 public class SQSJsonDbCachedQueue extends AbstractSQSDbCachedQueue<DefaultStringMessage> {
     @Override
-    public TextMessage message(DefaultStringMessage message) throws  JMSException {
+    public Message message(DefaultStringMessage message) throws  JMSException {
         try {
             return DefaultStringMessageUtils.message(session(), queue(), message);
         } catch (Exception ex) {
@@ -37,7 +38,7 @@ public class SQSJsonDbCachedQueue extends AbstractSQSDbCachedQueue<DefaultString
     }
 
     @Override
-    public DefaultStringMessage message(TextMessage message, Principal user) throws JMSException {
+    public DefaultStringMessage message(Message message, Principal user) throws JMSException {
         try {
             return DefaultStringMessageUtils.message(message);
         } catch (Exception ex) {

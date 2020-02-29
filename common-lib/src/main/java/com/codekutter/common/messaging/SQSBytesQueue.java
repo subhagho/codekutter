@@ -17,29 +17,19 @@
 
 package com.codekutter.common.messaging;
 
-import com.codekutter.common.GlobalConstants;
-import com.codekutter.common.model.DefaultStringMessage;
+import com.codekutter.common.model.DefaultBytesMessage;
 import com.codekutter.common.utils.LogUtils;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.Getter;
-import lombok.Setter;
-import lombok.experimental.Accessors;
 
-import javax.jms.*;
+import javax.jms.JMSException;
+import javax.jms.Message;
 import java.security.Principal;
 
-@Getter
-@Setter
-@Accessors(fluent = true)
-public class SQSJsonQueue extends AbstractSQSQueue<DefaultStringMessage> {
-
-    public SQSJsonQueue() {
-    }
+public class SQSBytesQueue extends AbstractSQSQueue<DefaultBytesMessage> {
 
     @Override
-    public Message message(DefaultStringMessage message) throws  JMSException {
+    public Message message(DefaultBytesMessage message) throws JMSException {
         try {
-            return DefaultStringMessageUtils.message(session(), queue(), message);
+            return DefaultBytesMessageUtils.message(session(), queue(), message);
         } catch (Exception ex) {
             LogUtils.error(getClass(), ex);
             throw new JMSException(ex.getLocalizedMessage());
@@ -47,9 +37,9 @@ public class SQSJsonQueue extends AbstractSQSQueue<DefaultStringMessage> {
     }
 
     @Override
-    public DefaultStringMessage message(Message message, Principal user) throws JMSException {
+    public DefaultBytesMessage message(Message message, Principal user) throws JMSException {
         try {
-            return DefaultStringMessageUtils.message(message);
+            return DefaultBytesMessageUtils.message(message);
         } catch (Exception ex) {
             LogUtils.error(getClass(), ex);
             throw new JMSException(ex.getLocalizedMessage());

@@ -26,6 +26,7 @@ import com.google.common.base.Strings;
 
 import javax.annotation.Nonnull;
 import javax.jms.JMSException;
+import javax.jms.Message;
 import javax.jms.Session;
 import javax.jms.TextMessage;
 import java.nio.charset.StandardCharsets;
@@ -33,7 +34,7 @@ import java.security.Principal;
 
 public class DefaultStringMessageUtils {
 
-    public static TextMessage message(@Nonnull Session session,
+    public static Message message(@Nonnull Session session,
                                @Nonnull String queue,
                                @Nonnull DefaultStringMessage message) throws Exception {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(queue));
@@ -45,14 +46,17 @@ public class DefaultStringMessageUtils {
         return session.createTextMessage(json);
     }
 
-    public static DefaultStringMessage message(@Nonnull TextMessage message) throws Exception {
+    public static DefaultStringMessage message(@Nonnull Message message) throws Exception {
+        if (!(message instanceof TextMessage)) {
+            throw new JMSException(String.format("Message type not supported. [type=%s]", message.getClass().getCanonicalName()));
+        }
         ObjectMapper mapper = GlobalConstants.getJsonMapper();
-        DefaultStringMessage m = mapper.readValue(message.getText(), DefaultStringMessage.class);
+        DefaultStringMessage m = mapper.readValue(((TextMessage) message).getText(), DefaultStringMessage.class);
         m.setMessageId(message.getJMSMessageID());
         return m;
     }
 
-    public static <M> M messageEntity(@Nonnull TextMessage message, @Nonnull Class<? extends M> type) throws Exception {
+    public static <M> M messageEntity(@Nonnull Message message, @Nonnull Class<? extends M> type) throws Exception {
         DefaultStringMessage m = message(message);
         String json = m.getBody();
         if (!Strings.isNullOrEmpty(json)) {
