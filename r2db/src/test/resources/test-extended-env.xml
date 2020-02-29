@@ -125,7 +125,7 @@
                 <audit-logger name="TEST-AUDIT-LOGGER" class="com.codekutter.common.auditing.DBAuditLogger"
                               default="true" useCache="true">
                     <serializer>com.codekutter.common.auditing.JsonAuditSerDe</serializer>
-                    <dataStore name="TestDataStore" class="com.codekutter.common.stores.impl.RdbmsDataStore"/>
+                    <dataStore name="TestAuditDataStore" class="com.codekutter.common.stores.impl.RdbmsDataStore"/>
                 </audit-logger>
             </audit-manager>
         </audit>
@@ -149,6 +149,7 @@
                         </password>
                         <classes>
                             <class>com.codekutter.common.scheduling.impl.JobAuditLog</class>
+                            <class>com.codekutter.common.model.AuditRecord</class>
                         </classes>
                         <hibernate>
                             <parameters>
@@ -169,7 +170,6 @@
                             <class>com.codekutter.common.stores.model.Product</class>
                             <class>com.codekutter.common.stores.model.Item</class>
                             <class>com.codekutter.common.stores.model.Order</class>
-                            <class>com.codekutter.common.model.AuditRecord</class>
                             <class>com.codekutter.common.scheduling.impl.JobAuditLog</class>
                         </classes>
                         <hibernate>
@@ -198,6 +198,11 @@
                 </connections>
                 <dataStoreManager>
                     <dataStores>
+                        <dataStore name="TestAuditDataStore" class="com.codekutter.common.stores.impl.RdbmsConfig"
+                                   dataStoreClass="com.codekutter.common.stores.impl.RdbmsDataStore"
+                                   connection="TestAuditConnection" connectionType="org.hibernate.Session"
+                                   auditContextProvider="com.codekutter.common.stores.DataSourceContextGenerator">
+                        </dataStore>
                         <dataStore name="TestDataStore" class="com.codekutter.common.stores.impl.RdbmsConfig"
                                    dataStoreClass="com.codekutter.common.stores.impl.RdbmsDataStore"
                                    connection="TestDbConnection" connectionType="org.hibernate.Session"

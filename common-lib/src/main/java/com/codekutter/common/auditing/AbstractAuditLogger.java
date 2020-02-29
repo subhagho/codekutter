@@ -284,7 +284,7 @@ public abstract class AbstractAuditLogger<C> implements IConfigurable, Closeable
             }
             if (dataStore.connection().hasTransactionSupport()) {
                 TransactionDataStore ts = (TransactionDataStore) dataStore;
-                if (!ts.isInTransaction()) {
+                if (ts.isInTransaction()) {
                     ts.commit();
                 }
             }

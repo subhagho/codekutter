@@ -138,6 +138,18 @@ public class AuditManager implements IConfigurable, Closeable {
         return null;
     }
 
+    public void flush() throws AuditException {
+        try {
+            if (!loggers.isEmpty()) {
+                for (String key : loggers.keySet()) {
+                    loggers.get(key).flush();
+                }
+            }
+        } catch (Exception ex) {
+            throw new AuditException(ex);
+        }
+    }
+
     public AbstractAuditLogger getLogger(String name) {
         if (!Strings.isNullOrEmpty(name) && loggers.containsKey(name)) {
             return loggers.get(name);

@@ -47,7 +47,7 @@ public class MapThreadCache<K, V> {
     public Map<K, V> get() {
         long threadId = Thread.currentThread().getId();
         if (cache.containsKey(threadId)) {
-            return cache.get(threadId);
+            return new HashMap<>(cache.get(threadId));
         }
         return null;
     }

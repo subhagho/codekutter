@@ -20,6 +20,7 @@ package com.codekutter.r2db.driver;
 import com.codekutter.common.ConfigTestConstants;
 import com.codekutter.common.GlobalConstants;
 import com.codekutter.common.TestDataHelper;
+import com.codekutter.common.auditing.AuditManager;
 import com.codekutter.common.stores.BaseSearchResult;
 import com.codekutter.common.stores.impl.EntitySearchResult;
 import com.codekutter.common.stores.model.*;
@@ -83,6 +84,7 @@ class EntityManagerTest {
     static void shutdown() {
         try {
             Thread.sleep(10000);
+            AuditManager.get().flush();
             R2dbEnv.shutdown();
         } catch (Throwable t) {
             LogUtils.error(EntityManagerTest.class, t);
