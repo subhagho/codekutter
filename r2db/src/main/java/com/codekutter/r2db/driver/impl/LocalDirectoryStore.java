@@ -53,6 +53,35 @@ public class LocalDirectoryStore extends AbstractDirectoryStore<File> {
     private File directory;
 
     @Override
+    public <S, T> void copy(S source, T target, Context context) throws DataStoreException {
+        if (source instanceof File) {
+            File td = null;
+            if (target instanceof File) {
+                td = (File) target;
+            } else if (target instanceof String) {
+                td = new File((String) target);
+            }
+            if (td != null) {
+                if (!td.exists()) {
+                    throw new DataStoreException(String.format("Target directory not found. [path=%s]", td.getAbsolutePath()));
+                }
+                String fname = FilenameUtils.getName(((File) source).getAbsolutePath());
+                File tf = new File(Paths.get(td.getAbsolutePath(), fname).toString());
+                File sf = (File) source;
+                try {
+                    FileUtils.copyFile(sf, tf);
+                } catch (IOException ex) {
+                    throw new DataStoreException(ex);
+                }
+            } else {
+                throw new DataStoreException(String.format("Target type not supported. [type=%s]", target.getClass().getCanonicalName()));
+            }
+        } else {
+            throw new DataStoreException(String.format("Source type not supported. [type=%s]", source.getClass().getCanonicalName()));
+        }
+    }
+
+    @Override
     public <S, T> void move(S source, T target, Context context) throws DataStoreException {
         if (source instanceof File) {
             File td = null;
@@ -164,10 +193,10 @@ public class LocalDirectoryStore extends AbstractDirectoryStore<File> {
     @Override
     @SuppressWarnings("unchecked")
     public <E extends IEntity> BaseSearchResult<E> doSearch(@Nonnull String query,
-                                                      int offset,
-                                                      int maxResults,
-                                                      @Nonnull Class<? extends E> type,
-                                                      Context context) throws DataStoreException {
+                                                            int offset,
+                                                            int maxResults,
+                                                            @Nonnull Class<? extends E> type,
+                                                            Context context) throws DataStoreException {
         if (!ReflectionUtils.isSuperType(FileEntity.class, type)) {
             throw new DataStoreException(String.format("Unsupported entity type. [type=%s]", type.getCanonicalName()));
         }

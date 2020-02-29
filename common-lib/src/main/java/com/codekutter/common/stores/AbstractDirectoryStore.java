@@ -20,5 +20,7 @@ package com.codekutter.common.stores;
 import com.codekutter.common.Context;
 
 public abstract class AbstractDirectoryStore<C> extends AbstractDataStore<C> {
+    public abstract  <S, T> void copy(S source, T target, Context context) throws DataStoreException;
+
     public abstract <S, T> void move(S source, T target, Context context) throws DataStoreException;
 }
