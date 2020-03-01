@@ -33,6 +33,7 @@ import com.codekutter.common.utils.ReflectionUtils;
 import com.codekutter.zconfig.common.ConfigurationAnnotationProcessor;
 import com.codekutter.zconfig.common.ConfigurationException;
 import com.codekutter.zconfig.common.model.annotations.ConfigAttribute;
+import com.codekutter.zconfig.common.model.annotations.ConfigValue;
 import com.codekutter.zconfig.common.model.nodes.AbstractConfigNode;
 import com.codekutter.zconfig.common.model.nodes.ConfigParametersNode;
 import com.codekutter.zconfig.common.model.nodes.ConfigPathNode;
@@ -44,6 +45,7 @@ import lombok.Setter;
 import lombok.experimental.Accessors;
 
 import javax.annotation.Nonnull;
+import javax.jms.Session;
 import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -51,12 +53,13 @@ import java.util.concurrent.ConcurrentHashMap;
 @Getter
 @Setter
 @Accessors(fluent = true)
-public class AwsSQSConnection extends AbstractConnection<SQSConnection> {
+public class AwsSQSConnection extends AbstractJmsConnection {
     public static final String DEFAULT_PROFILE = "default";
     @ConfigAttribute(required = true)
     private String region;
     @ConfigAttribute
     private String profile = DEFAULT_PROFILE;
+
     @Setter(AccessLevel.NONE)
     @Getter(AccessLevel.NONE)
     private SQSConnectionFactory connectionFactory = null;
@@ -65,10 +68,13 @@ public class AwsSQSConnection extends AbstractConnection<SQSConnection> {
     private SQSConnection connection;
 
     @Override
-    public SQSConnection connection() throws ConnectionException {
+    public Session connection() throws ConnectionException {
         try {
             state().checkOpened();
-            return connection;
+            if (autoAck())
+                return connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
+            else
+                return connection.createSession(false, Session.CLIENT_ACKNOWLEDGE);
         } catch (Throwable t) {
             throw new ConnectionException(t, getClass());
         }

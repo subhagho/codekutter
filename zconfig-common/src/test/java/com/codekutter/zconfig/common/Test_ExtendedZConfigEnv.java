@@ -17,10 +17,8 @@
 
 package com.codekutter.zconfig.common;
 
-import com.amazon.sqs.javamessaging.SQSConnection;
 import com.codekutter.common.locking.DistributedLock;
 import com.codekutter.common.locking.DistributedLockFactory;
-import com.codekutter.common.messaging.AbstractQueue;
 import com.codekutter.common.messaging.QueueManager;
 import com.codekutter.common.messaging.SQSJsonQueue;
 import com.codekutter.common.model.DefaultStringMessage;
@@ -31,6 +29,7 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
+import javax.jms.Session;
 import java.io.FileInputStream;
 import java.util.List;
 import java.util.Properties;
@@ -117,7 +116,7 @@ class Test_ExtendedZConfigEnv {
     void testSqsQueueSend() {
         try {
             SQSJsonQueue queue = (SQSJsonQueue) QueueManager.get().getQueue(sqsQueueName,
-                    SQSConnection.class,
+                    Session.class,
                     DefaultStringMessage.class);
             assertNotNull(queue);
             DefaultStringMessage message = new DefaultStringMessage();
@@ -136,7 +135,7 @@ class Test_ExtendedZConfigEnv {
     void testSqsQueueReceive() {
         try {
             SQSJsonQueue queue = (SQSJsonQueue) QueueManager.get().getQueue(sqsQueueName,
-                    SQSConnection.class,
+                    Session.class,
                     DefaultStringMessage.class);
             assertNotNull(queue);
             for (int ii = 0; ii < 5; ii++) {

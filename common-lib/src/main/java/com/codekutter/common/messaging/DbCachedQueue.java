@@ -305,6 +305,10 @@ public abstract class DbCachedQueue<C, M extends IKeyed> extends CachedQueue<C, 
 
     @Override
     public void close() throws IOException {
+        if (dbConnection != null) {
+            dbConnection.close();
+            dbConnection = null;
+        }
     }
 
     public abstract byte[] getBytes(@Nonnull M message) throws JMSException;

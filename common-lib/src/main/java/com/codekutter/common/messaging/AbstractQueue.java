@@ -81,7 +81,7 @@ public abstract class AbstractQueue<C, M> implements IConfigurable, Closeable {
     /**
      * Queue connection handle.
      */
-    @Setter(AccessLevel.NONE)
+    @Setter(AccessLevel.MODULE)
     private AbstractConnection<C> connection;
 
     /**
