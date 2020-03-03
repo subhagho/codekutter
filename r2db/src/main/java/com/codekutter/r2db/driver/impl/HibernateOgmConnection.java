@@ -48,6 +48,11 @@ public class HibernateOgmConnection extends AbstractConnection<OgmSession> {
         return true;
     }
 
+    @Override
+    public void close(@Nonnull OgmSession connection) throws ConnectionException {
+        connection.close();
+    }
+
     /**
      * Configure this type instance.
      *

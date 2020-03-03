@@ -18,6 +18,7 @@
 package com.codekutter.common.stores.impl;
 
 import com.codekutter.common.stores.AbstractConnection;
+import com.codekutter.common.stores.ConnectionException;
 import com.codekutter.common.stores.EConnectionState;
 import com.codekutter.common.utils.LogUtils;
 import com.codekutter.zconfig.common.ConfigurationAnnotationProcessor;
@@ -77,6 +78,11 @@ public class ZookeeperConnection extends AbstractConnection<CuratorFramework> {
     @Override
     public boolean hasTransactionSupport() {
         return false;
+    }
+
+    @Override
+    public void close(@Nonnull CuratorFramework connection) throws ConnectionException {
+        connection.close();
     }
 
     /**

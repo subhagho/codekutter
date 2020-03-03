@@ -21,6 +21,7 @@ import com.codekutter.common.model.EObjectState;
 import com.codekutter.common.model.ObjectState;
 import com.codekutter.common.utils.ConfigUtils;
 import com.codekutter.common.utils.LogUtils;
+import com.codekutter.common.utils.MapThreadCache;
 import com.codekutter.zconfig.common.ConfigurationException;
 import com.codekutter.zconfig.common.IConfigurable;
 import com.codekutter.zconfig.common.model.annotations.ConfigPath;
@@ -76,7 +77,7 @@ public class ConnectionManager implements IConfigurable, Closeable {
         } else if (node instanceof ConfigListElementNode) {
             List<ConfigElementNode> nodes = ((ConfigListElementNode) node).getValues();
             if (nodes != null && !nodes.isEmpty()) {
-                for(ConfigElementNode n : nodes) {
+                for (ConfigElementNode n : nodes) {
                     AbstractConnection<?> connection = readConnection((ConfigPathNode) n);
                     if (connection != null) {
                         connections.put(connection.name(), connection);

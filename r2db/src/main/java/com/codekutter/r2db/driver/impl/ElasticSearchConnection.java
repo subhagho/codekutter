@@ -17,8 +17,7 @@
 
 package com.codekutter.r2db.driver.impl;
 
-import com.codekutter.common.model.IEntity;
-import com.codekutter.common.stores.AbstractConnection;
+import com.codekutter.common.stores.ConnectionException;
 import com.codekutter.common.stores.EConnectionState;
 import com.codekutter.zconfig.common.ConfigurationAnnotationProcessor;
 import com.codekutter.zconfig.common.ConfigurationException;
@@ -38,7 +37,6 @@ import org.elasticsearch.client.RestHighLevelClient;
 import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.util.List;
-import java.util.Map;
 
 @Getter
 @Setter
@@ -64,6 +62,15 @@ public class ElasticSearchConnection extends SearchableConnection<RestHighLevelC
     @Override
     public boolean hasTransactionSupport() {
         return false;
+    }
+
+    @Override
+    public void close(@Nonnull RestHighLevelClient connection) throws ConnectionException {
+        try {
+            connection.close();
+        } catch (IOException e) {
+            throw new ConnectionException(e, getClass());
+        }
     }
 
     /**

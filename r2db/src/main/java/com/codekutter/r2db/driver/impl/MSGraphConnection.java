@@ -85,6 +85,10 @@ public class MSGraphConnection extends AbstractConnection<IGraphServiceClient> {
         return false;
     }
 
+    @Override
+    public void close(@Nonnull IGraphServiceClient connection) throws ConnectionException {
+    }
+
     /**
      * Configure this type instance.
      *

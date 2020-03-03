@@ -103,6 +103,13 @@ public class HibernateConnection extends AbstractConnection<Session> {
     }
 
     @Override
+    public void close(@Nonnull Session connection) throws ConnectionException {
+        if (connection.isOpen()) {
+            connection.close();
+        }
+    }
+
+    @Override
     public Session connection() throws ConnectionException {
         try {
             state().checkOpened();

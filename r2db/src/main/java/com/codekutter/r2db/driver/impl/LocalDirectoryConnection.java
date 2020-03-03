@@ -18,6 +18,7 @@
 package com.codekutter.r2db.driver.impl;
 
 import com.codekutter.common.stores.AbstractConnection;
+import com.codekutter.common.stores.ConnectionException;
 import com.codekutter.common.stores.EConnectionState;
 import com.codekutter.zconfig.common.ConfigurationAnnotationProcessor;
 import com.codekutter.zconfig.common.ConfigurationException;
@@ -51,6 +52,11 @@ public class LocalDirectoryConnection extends AbstractConnection<File> {
     @Override
     public boolean hasTransactionSupport() {
         return false;
+    }
+
+    @Override
+    public void close(@Nonnull File connection) throws ConnectionException {
+
     }
 
     /**

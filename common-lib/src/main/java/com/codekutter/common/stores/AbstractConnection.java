@@ -19,6 +19,7 @@ package com.codekutter.common.stores;
 
 import com.codekutter.common.model.IEntity;
 import com.codekutter.common.utils.ConfigUtils;
+import com.codekutter.common.utils.MapThreadCache;
 import com.codekutter.zconfig.common.ConfigurationException;
 import com.codekutter.zconfig.common.IConfigurable;
 import com.codekutter.zconfig.common.model.annotations.ConfigAttribute;
@@ -51,8 +52,8 @@ public abstract class AbstractConnection<T> implements IConfigurable, Closeable 
     @ConfigAttribute(name = "source")
     private EConfigSource configSource = EConfigSource.File;
     @Setter(AccessLevel.NONE)
-    private ConnectionState state = new ConnectionState();
-    @ConfigValue(name="classes", parser = ClassListParser.class)
+    private final ConnectionState state = new ConnectionState();
+    @ConfigValue(name = "classes", parser = ClassListParser.class)
     private List<Class<?>> supportedTypes = new ArrayList<>();
 
     public AbstractConnection() {
@@ -66,4 +67,6 @@ public abstract class AbstractConnection<T> implements IConfigurable, Closeable 
     public abstract T connection() throws ConnectionException;
 
     public abstract boolean hasTransactionSupport();
+
+    public abstract void close(@Nonnull T connection) throws ConnectionException;
 }

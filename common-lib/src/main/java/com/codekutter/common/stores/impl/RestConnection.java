@@ -68,6 +68,11 @@ public class RestConnection extends AbstractConnection<Client> {
         return false;
     }
 
+    @Override
+    public void close(@Nonnull Client connection) throws ConnectionException {
+        connection.close();
+    }
+
     /**
      * Configure this type instance.
      *

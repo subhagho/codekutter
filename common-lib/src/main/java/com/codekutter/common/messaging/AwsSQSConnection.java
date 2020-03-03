@@ -85,6 +85,15 @@ public class AwsSQSConnection extends AbstractJmsConnection {
         return false;
     }
 
+    @Override
+    public void close(@Nonnull Session connection) throws ConnectionException {
+        try {
+            connection.close();
+        } catch (Exception ex) {
+            throw new ConnectionException(ex, getClass());
+        }
+    }
+
     /**
      * Configure this type instance.
      *

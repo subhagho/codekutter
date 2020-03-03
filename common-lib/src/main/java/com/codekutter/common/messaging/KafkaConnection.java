@@ -63,6 +63,15 @@ public class KafkaConnection extends AbstractConnection<Session> {
         return false;
     }
 
+    @Override
+    public void close(@Nonnull Session connection) throws ConnectionException {
+        try {
+            connection.close();
+        } catch (Exception ex) {
+            throw new ConnectionException(ex, getClass());
+        }
+    }
+
     /**
      * Configure this type instance.
      *

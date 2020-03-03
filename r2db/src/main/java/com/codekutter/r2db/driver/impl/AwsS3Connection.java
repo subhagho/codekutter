@@ -74,6 +74,10 @@ public class AwsS3Connection extends AbstractConnection<AmazonS3> {
         return false;
     }
 
+    @Override
+    public void close(@Nonnull AmazonS3 connection) throws ConnectionException {
+    }
+
     /**
      * Configure this type instance.
      *
