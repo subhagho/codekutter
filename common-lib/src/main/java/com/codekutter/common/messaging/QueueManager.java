@@ -69,7 +69,7 @@ public class QueueManager implements IConfigurable, Closeable {
     public void configure(@Nonnull AbstractConfigNode node) throws ConfigurationException {
         Preconditions.checkArgument(node instanceof ConfigPathNode);
         LogUtils.info(getClass(), "Initializing Queue Manager...");
-        AbstractConfigNode cnode = ConfigUtils.getPathNode(getClass(), (ConfigPathNode) node);
+        AbstractConfigNode cnode = ConfigUtils.getPathNode(AbstractQueue.class, (ConfigPathNode) node);
         if (cnode instanceof ConfigPathNode) {
             cnode = ConfigUtils.getPathNode(AbstractQueue.class, (ConfigPathNode) cnode);
             if (cnode instanceof ConfigPathNode) {
@@ -84,6 +84,8 @@ public class QueueManager implements IConfigurable, Closeable {
                     queues.put(queue.name(), queue);
                 }
             }
+        } else {
+            throw new ConfigurationException(String.format("No queue definitions found. [node=%s]", node.getAbsolutePath()));
         }
     }
 

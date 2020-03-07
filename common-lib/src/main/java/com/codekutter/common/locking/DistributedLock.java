@@ -29,6 +29,7 @@ import org.apache.curator.framework.recipes.locks.InterProcessMutex;
 
 import javax.annotation.Nonnull;
 import java.io.Closeable;
+import java.io.IOException;
 import java.util.UUID;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -65,10 +66,8 @@ public abstract class DistributedLock extends ReentrantLock implements Closeable
      */
     private long lockExpiryTimeout = -1;
 
-    /**
-     * ZooKeeper Inter-process Mutex instance.
-     */
-    private InterProcessMutex mutex = null;
+    private AbstractLockAllocator allocator;
+
     /**
      * Timer to measure Lock latency.
      */
@@ -92,13 +91,17 @@ public abstract class DistributedLock extends ReentrantLock implements Closeable
      * @param namespace - Lock namespace.
      * @param name      - Lock name,
      */
-    DistributedLock(@Nonnull String namespace, @Nonnull String name) {
+    DistributedLock(@Nonnull String namespace,
+                    @Nonnull String name,
+                    @Nonnull AbstractLockAllocator allocator) {
         id = new LockId();
         id.setNamespace(namespace);
         id.setName(name);
 
         instanceId = UUID.randomUUID().toString();
         threadId = Thread.currentThread().getId();
+
+        this.allocator = allocator;
     }
 
     /**
@@ -106,11 +109,13 @@ public abstract class DistributedLock extends ReentrantLock implements Closeable
      *
      * @param id - Unique Lock ID
      */
-    DistributedLock(@Nonnull LockId id) {
+    DistributedLock(@Nonnull LockId id, @Nonnull AbstractLockAllocator allocator) {
         this.id = id;
 
         instanceId = UUID.randomUUID().toString();
         threadId = Thread.currentThread().getId();
+
+        this.allocator = allocator;
     }
 
     /**
@@ -146,6 +151,11 @@ public abstract class DistributedLock extends ReentrantLock implements Closeable
         if (lockExpiryTimeout > 0)
             this.lockExpiryTimeout = lockExpiryTimeout;
         return this;
+    }
+
+    @Override
+    public void close() throws IOException {
+        allocator.release(this.id);
     }
 
     /**

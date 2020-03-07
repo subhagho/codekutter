@@ -132,13 +132,13 @@
         <r2db>
             <entity-manager>
                 <connections>
-                    <!--connection name="TestOneDriveConnection" class="com.codekutter.r2db.driver.impl.MSGraphConnection">
+                    <connection name="TestOneDriveConnection" class="com.codekutter.r2db.driver.impl.MSGraphConnection">
                         <clientId>3a1bcfe7-d2e4-42d2-a304-e98f9f14dd4b</clientId>
-                        <username>subho.ghosh@outlook.com</username>
+                        <username>851000113@devO365.com</username>
                         <password encrypted="true">
-                            <value>VbbX5Nmm3TO/ELnM7Zssrw==</value>
+                            <value>XfBK34nbUkp3kV81dmPPwQ==</value>
                         </password>
-                    </connection -->
+                    </connection>
                     <connection name="TestAuditConnection" class="com.codekutter.common.stores.impl.HibernateConnection"
                                 driver="org.mariadb.jdbc.Driver" dialect="org.hibernate.dialect.MariaDBDialect">
                         <url>jdbc:mariadb://127.0.0.1:3306/test</url>

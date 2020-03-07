@@ -85,7 +85,7 @@ public class ZkLockAllocator extends AbstractLockAllocator<CuratorFramework> {
                 locks.put(id, mutex);
             }
 
-            return new DistributedZkLock(id).withMutex(mutex).
+            return new DistributedZkLock(id, this).withMutex(mutex).
                     withLockExpiryTimeout(lockExpiryTimeout()).withLockGetTimeout(lockTimeout());
         } catch (Exception ex) {
             throw new LockException(ex);

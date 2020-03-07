@@ -51,16 +51,18 @@ public class DistributedZkLock extends DistributedLock {
      */
     private InterProcessMutex mutex = null;
 
-    public DistributedZkLock(@Nonnull String namespace, @Nonnull String name) {
-        super(namespace, name);
+    public DistributedZkLock(@Nonnull String namespace,
+                             @Nonnull String name,
+                             @Nonnull AbstractLockAllocator allocator) {
+        super(namespace, name, allocator);
         setupMetrics(Metrics.METRIC_LATENCY_LOCK,
                 Metrics.METRIC_LATENCY_UNLOCK,
                 Metrics.METRIC_COUNTER_CALLS,
                 Metrics.METRIC_COUNTER_ERROR);
     }
 
-    public DistributedZkLock(@Nonnull LockId id) {
-        super(id);
+    public DistributedZkLock(@Nonnull LockId id, @Nonnull AbstractLockAllocator allocator) {
+        super(id, allocator);
         setupMetrics(Metrics.METRIC_LATENCY_LOCK,
                 Metrics.METRIC_LATENCY_UNLOCK,
                 Metrics.METRIC_COUNTER_CALLS,
@@ -168,10 +170,5 @@ public class DistributedZkLock extends DistributedLock {
             return mutex.isAcquiredInThisProcess();
         }
         return false;
-    }
-
-    @Override
-    public void close() throws IOException {
-        // Do nothing...
     }
 }

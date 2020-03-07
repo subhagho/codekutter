@@ -67,8 +67,10 @@ public class DistributedDbLock extends DistributedLock {
      * @param namespace - Lock namespace.
      * @param name      - Lock name
      */
-    public DistributedDbLock(@Nonnull String namespace, @Nonnull String name) {
-        super(namespace, name);
+    public DistributedDbLock(@Nonnull String namespace,
+                             @Nonnull String name,
+                             @Nonnull AbstractLockAllocator allocator) {
+        super(namespace, name, allocator);
         setupMetrics(Metrics.METRIC_LATENCY_LOCK,
                 Metrics.METRIC_LATENCY_UNLOCK,
                 Metrics.METRIC_COUNTER_CALLS,
@@ -80,8 +82,8 @@ public class DistributedDbLock extends DistributedLock {
      *
      * @param id - Lock Instance ID
      */
-    public DistributedDbLock(@Nonnull LockId id) {
-        super(id);
+    public DistributedDbLock(@Nonnull LockId id, @Nonnull AbstractLockAllocator allocator) {
+        super(id, allocator);
         setupMetrics(Metrics.METRIC_LATENCY_LOCK,
                 Metrics.METRIC_LATENCY_UNLOCK,
                 Metrics.METRIC_COUNTER_CALLS,
@@ -249,22 +251,6 @@ public class DistributedDbLock extends DistributedLock {
     }
 
     /**
-     * Close this lock handle.
-     *
-     * @throws IOException - Throws exception if error.
-     */
-    @Override
-    public void close() throws IOException {
-        try {
-            if (session != null) {
-                session.close();
-            }
-        } catch (Throwable t) {
-            throw new IOException(t);
-        }
-    }
-
-    /**
      * Check if this lock has been acquired, either by the
      * caller thread or some other process.
      *
@@ -277,6 +263,15 @@ public class DistributedDbLock extends DistributedLock {
             DbLockRecord record = fetch(session, false, false);
             return record.isLocked();
         }
+    }
+
+    @Override
+    public void close() throws IOException {
+        if (session != null && session.isOpen()) {
+            session.close();
+        }
+        session = null;
+        super.close();
     }
 
     private DbLockRecord checkExpiry(DbLockRecord record) {

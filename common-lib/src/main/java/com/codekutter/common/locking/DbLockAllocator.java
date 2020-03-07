@@ -46,12 +46,6 @@ import java.util.concurrent.locks.ReentrantLock;
 @Getter
 @Setter
 public class DbLockAllocator extends AbstractLockAllocator<Session> {
-    @Getter(AccessLevel.NONE)
-    @Setter(AccessLevel.NONE)
-    private Map<Long, Session> threadSessions = new HashMap<>();
-    @Getter(AccessLevel.NONE)
-    @Setter(AccessLevel.NONE)
-    private ReentrantLock lock = new ReentrantLock();
 
     /**
      * Create/Get a new instance of this type of Distributed Lock.
@@ -63,29 +57,15 @@ public class DbLockAllocator extends AbstractLockAllocator<Session> {
      */
     @Override
     protected DistributedLock createInstance(@Nonnull LockId id) throws LockException {
-        lock.lock();
         try {
-            Session session = null;
-            long threadId = Thread.currentThread().getId();
-            if (threadSessions.containsKey(threadId)) {
-                session = threadSessions.get(threadId);
-                if (!session.isOpen()) {
-                    session = null;
-                }
-            }
+            Session session = connection.connection();
             if (session == null) {
-                session = connection.connection();
-                if (session == null) {
-                    throw new LockException("Error getting DB session.");
-                }
-                threadSessions.put(threadId, session);
+                throw new LockException("Error getting DB session.");
             }
-            return new DistributedDbLock(id).withSession(session).
+            return new DistributedDbLock(id, this).withSession(session).
                     withLockExpiryTimeout(lockExpiryTimeout()).withLockGetTimeout(lockTimeout());
         } catch (Exception ex) {
             throw new LockException(ex);
-        } finally {
-            lock.unlock();
         }
     }
 

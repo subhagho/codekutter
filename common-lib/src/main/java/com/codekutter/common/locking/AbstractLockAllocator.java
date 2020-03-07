@@ -21,6 +21,7 @@ import com.codekutter.common.model.EObjectState;
 import com.codekutter.common.model.LockId;
 import com.codekutter.common.model.ObjectState;
 import com.codekutter.common.stores.AbstractConnection;
+import com.codekutter.common.utils.MapThreadCache;
 import com.codekutter.zconfig.common.IConfigurable;
 import com.codekutter.zconfig.common.model.annotations.ConfigAttribute;
 import com.codekutter.zconfig.common.model.annotations.ConfigPath;
@@ -76,7 +77,8 @@ public abstract class AbstractLockAllocator<T> implements IConfigurable, Closeab
      */
     @Setter(AccessLevel.NONE)
     @Getter(AccessLevel.NONE)
-    private Map<Long, Map<LockId, DistributedLock>> threadLocks = new ConcurrentHashMap<>();
+    private MapThreadCache<LockId, DistributedLock> threadLocks = new MapThreadCache<>();
+
     /**
      * State of this lock instance.
      */
@@ -103,13 +105,10 @@ public abstract class AbstractLockAllocator<T> implements IConfigurable, Closeab
             DistributedLock lock = checkThreadCache(id);
             if (lock == null) {
                 lock = createInstance(id);
-
-                Map<LockId, DistributedLock> locks = threadLocks.get(lock.threadId());
-                if (locks == null) {
-                    locks = new HashMap<>();
-                    threadLocks.put(lock.threadId(), locks);
+                if (lock == null) {
+                    throw new LockException(String.format("Error creating lock instance. [id=%s]", id.stringKey()));
                 }
-                locks.put(lock.id(), lock);
+                threadLocks.put(id, lock);
             }
             return lock;
         } catch (Throwable t) {
@@ -121,7 +120,6 @@ public abstract class AbstractLockAllocator<T> implements IConfigurable, Closeab
      * Release a specific instance of a lock.
      *
      * @param id - Unique Lock instance ID
-     *
      * @return - Lock is released?
      * @throws LockException
      */
@@ -131,21 +129,10 @@ public abstract class AbstractLockAllocator<T> implements IConfigurable, Closeab
             state.check(EObjectState.Available, getClass());
             DistributedLock lock = checkThreadCache(id);
             if (lock != null) {
-                Map<LockId, DistributedLock> locks = threadLocks.get(lock.threadId());
-                if (locks != null) {
-                    long threadId = lock.threadId();
-                    lock = locks.remove(id);
-                    if (lock != null) {
-                        if (lock.isLocked()) {
-                            lock.unlock();
-                        }
-                        lock.close();
-                        ret = true;
-                    }
-                    if (locks.isEmpty()) {
-                        threadLocks.remove(threadId);
-                    }
+                if (lock.isLocked()) {
+                    lock.unlock();
                 }
+
             }
             return ret;
         } catch (Throwable t) {
@@ -154,12 +141,8 @@ public abstract class AbstractLockAllocator<T> implements IConfigurable, Closeab
     }
 
     private DistributedLock checkThreadCache(@Nonnull LockId id) {
-        long threadId = Thread.currentThread().getId();
-        if (threadLocks.containsKey(threadId)) {
-            Map<LockId, DistributedLock> locks = threadLocks.get(threadId);
-            if (locks.containsKey(id)) {
-                return locks.get(id);
-            }
+        if (threadLocks.containsThread()) {
+            return threadLocks.get(id);
         }
         return null;
     }
@@ -173,26 +156,13 @@ public abstract class AbstractLockAllocator<T> implements IConfigurable, Closeab
     @Override
     public void close() throws IOException {
         state.setState(EObjectState.Disposed);
-        if (!threadLocks.isEmpty()) {
-            for (long tid : threadLocks.keySet()) {
-                Map<LockId, DistributedLock> locks = threadLocks.get(tid);
-                if (!locks.isEmpty()) {
-                    for (LockId id : locks.keySet()) {
-                        DistributedLock lock = locks.get(id);
-                        lock.close();
-                    }
-                }
-                locks.clear();
-            }
-            threadLocks.clear();
-        }
+        threadLocks.dispose();
     }
 
     /**
      * Create/Get a new instance of this type of Distributed Lock.
      *
      * @param id - Unique Lock ID to Create/Get instance.
-     *
      * @return - Lock instance.
      * @throws LockException
      */

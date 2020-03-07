@@ -53,7 +53,7 @@ public class MapThreadCache<K, V> {
     }
 
     public V get(K key) {
-        Map<K, V>  values = get();
+        Map<K, V> values = get();
         if (values != null && !values.isEmpty()) {
             return values.get(key);
         }
@@ -88,6 +88,14 @@ public class MapThreadCache<K, V> {
         Map<K, V> values = get();
         if (values != null) return values.size();
         return 0;
+    }
+
+    public void dispose() {
+        for (long id : cache.keySet()) {
+            Map<K, V> map = cache.get(id);
+            map.clear();
+        }
+        cache.clear();
     }
 
     public boolean containsThread() {
