@@ -35,12 +35,10 @@ import org.apache.lucene.search.Query;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.search.aggregations.AbstractAggregationBuilder;
-import org.elasticsearch.search.aggregations.bucket.terms.TermsAggregationBuilder;
 import org.hibernate.Session;
 
 import javax.annotation.Nonnull;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 @Getter

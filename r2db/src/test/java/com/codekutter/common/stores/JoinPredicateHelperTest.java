@@ -20,7 +20,7 @@ package com.codekutter.common.stores;
 import com.codekutter.common.ConfigTestConstants;
 import com.codekutter.common.TestDataHelper;
 import com.codekutter.common.stores.annotations.Reference;
-import com.codekutter.common.stores.model.*;
+import com.codekutter.common.stores.model.Order;
 import com.codekutter.common.utils.LogUtils;
 import com.codekutter.common.utils.ReflectionUtils;
 import com.codekutter.zconfig.common.ConfigProviderFactory;
@@ -32,7 +32,8 @@ import org.junit.jupiter.api.Test;
 
 import java.io.FileInputStream;
 import java.lang.reflect.Field;
-import java.util.*;
+import java.util.List;
+import java.util.Properties;
 
 import static org.junit.jupiter.api.Assertions.*;
 

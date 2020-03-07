@@ -41,7 +41,7 @@ import org.junit.jupiter.api.Test;
 import java.io.FileInputStream;
 import java.util.Properties;
 
-import static com.codekutter.common.utils.LogUtils.*;
+import static com.codekutter.common.utils.LogUtils.error;
 import static org.junit.jupiter.api.Assertions.*;
 
 class Test_JSONEncryptedConfiguration {

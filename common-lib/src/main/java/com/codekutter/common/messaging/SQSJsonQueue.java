@@ -17,15 +17,14 @@
 
 package com.codekutter.common.messaging;
 
-import com.codekutter.common.GlobalConstants;
 import com.codekutter.common.model.DefaultStringMessage;
 import com.codekutter.common.utils.LogUtils;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 
-import javax.jms.*;
+import javax.jms.JMSException;
+import javax.jms.Message;
 import java.security.Principal;
 
 @Getter

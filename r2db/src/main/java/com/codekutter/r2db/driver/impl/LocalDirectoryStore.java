@@ -18,13 +18,13 @@
 package com.codekutter.r2db.driver.impl;
 
 import com.codekutter.common.Context;
+import com.codekutter.common.model.IEntity;
+import com.codekutter.common.model.StringEntity;
 import com.codekutter.common.stores.*;
 import com.codekutter.common.stores.impl.DataStoreAuditContext;
 import com.codekutter.common.stores.impl.EntitySearchResult;
-import com.codekutter.r2db.driver.model.FileEntity;
-import com.codekutter.common.model.IEntity;
-import com.codekutter.common.model.StringEntity;
 import com.codekutter.common.utils.ReflectionUtils;
+import com.codekutter.r2db.driver.model.FileEntity;
 import com.codekutter.zconfig.common.ConfigurationException;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
@@ -41,7 +41,6 @@ import java.io.FileFilter;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 

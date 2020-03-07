@@ -29,7 +29,6 @@ import com.codekutter.common.model.CopyException;
 import com.codekutter.common.model.IEntity;
 import com.codekutter.common.model.StringKey;
 import com.codekutter.common.model.ValidationExceptions;
-import com.codekutter.common.utils.IUniqueIDGenerator;
 import com.codekutter.zconfig.core.utils.EntityUtils;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;

@@ -18,7 +18,6 @@
 package com.codekutter.r2db.driver.impl;
 
 import com.codekutter.common.ConfigTestConstants;
-import com.codekutter.common.stores.model.DemoUser;
 import com.codekutter.common.stores.model.User;
 import com.codekutter.common.utils.LogUtils;
 import com.codekutter.r2db.driver.EntityManager;
@@ -34,7 +33,8 @@ import java.io.FileInputStream;
 import java.util.Properties;
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 class AwsS3DataStoreTest {
 

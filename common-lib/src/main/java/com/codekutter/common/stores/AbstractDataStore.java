@@ -19,7 +19,6 @@ package com.codekutter.common.stores;
 
 import com.codekutter.common.Context;
 import com.codekutter.common.auditing.AbstractAuditLogger;
-import com.codekutter.common.messaging.AbstractQueue;
 import com.codekutter.common.model.IEntity;
 import com.codekutter.common.stores.impl.DataStoreAuditContext;
 import com.codekutter.common.utils.KeyValuePair;
@@ -37,7 +36,6 @@ import lombok.experimental.Accessors;
 import javax.annotation.Nonnull;
 import java.io.Closeable;
 import java.io.IOException;
-import java.util.Collection;
 import java.util.Map;
 
 @Getter

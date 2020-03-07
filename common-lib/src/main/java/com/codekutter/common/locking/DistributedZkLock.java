@@ -21,12 +21,9 @@ import com.codekutter.common.model.LockId;
 import com.codekutter.common.utils.KeyValuePair;
 import com.codekutter.common.utils.Monitoring;
 import com.google.common.base.Preconditions;
-import com.netflix.spectator.api.Id;
-import com.netflix.spectator.api.Timer;
 import org.apache.curator.framework.recipes.locks.InterProcessMutex;
 
 import javax.annotation.Nonnull;
-import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
 /**

@@ -28,11 +28,10 @@ import org.apache.lucene.search.Query;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.search.aggregations.AbstractAggregationBuilder;
-import org.elasticsearch.search.aggregations.bucket.terms.TermsAggregationBuilder;
 
 import javax.annotation.Nonnull;
 import java.io.IOException;
-import java.util.*;
+import java.util.Map;
 
 @SuppressWarnings("rawtypes")
 public class ElasticSearchDataStore extends AbstractDataStore<RestHighLevelClient> implements ISearchable {

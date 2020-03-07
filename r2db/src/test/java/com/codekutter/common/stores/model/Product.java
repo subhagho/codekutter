@@ -25,7 +25,10 @@ import com.codekutter.r2db.driver.impl.annotations.Indexed;
 import lombok.Getter;
 import lombok.Setter;
 
-import javax.persistence.*;
+import javax.persistence.Column;
+import javax.persistence.EmbeddedId;
+import javax.persistence.Entity;
+import javax.persistence.Table;
 
 @Getter
 @Setter

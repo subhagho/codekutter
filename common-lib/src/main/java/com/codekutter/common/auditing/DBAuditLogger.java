@@ -23,8 +23,6 @@ import com.codekutter.common.model.IKey;
 import com.codekutter.common.model.IKeyed;
 import com.codekutter.common.stores.AbstractDataStore;
 import com.codekutter.common.stores.BaseSearchResult;
-import com.codekutter.common.stores.DataStoreException;
-import com.codekutter.common.stores.TransactionDataStore;
 import com.codekutter.common.stores.impl.EntitySearchResult;
 import com.codekutter.common.utils.LogUtils;
 import com.google.common.base.Preconditions;

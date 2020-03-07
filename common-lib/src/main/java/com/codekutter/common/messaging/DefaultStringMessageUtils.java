@@ -30,7 +30,6 @@ import javax.jms.Message;
 import javax.jms.Session;
 import javax.jms.TextMessage;
 import java.nio.charset.StandardCharsets;
-import java.security.Principal;
 
 public class DefaultStringMessageUtils {
 

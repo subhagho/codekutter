@@ -22,10 +22,9 @@ import com.codekutter.common.model.*;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import lombok.Data;
-import lombok.experimental.Accessors;
 
-import javax.persistence.*;
 import javax.persistence.Version;
+import javax.persistence.*;
 import java.util.UUID;
 
 @Data

@@ -36,8 +36,8 @@ import lombok.experimental.Accessors;
 import org.elasticsearch.common.Strings;
 
 import javax.annotation.Nonnull;
-import java.io.*;
 import java.io.File;
+import java.io.*;
 import java.net.URI;
 import java.nio.channels.Channels;
 import java.nio.channels.ReadableByteChannel;

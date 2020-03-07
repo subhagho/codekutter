@@ -20,12 +20,10 @@ package com.codekutter.common.locking;
 import com.codekutter.common.model.LockId;
 import com.codekutter.common.utils.Monitoring;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.google.common.base.Preconditions;
 import com.netflix.spectator.api.Id;
 import com.netflix.spectator.api.Timer;
 import lombok.Getter;
 import lombok.experimental.Accessors;
-import org.apache.curator.framework.recipes.locks.InterProcessMutex;
 
 import javax.annotation.Nonnull;
 import java.io.Closeable;

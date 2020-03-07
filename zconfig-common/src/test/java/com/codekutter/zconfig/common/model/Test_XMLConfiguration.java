@@ -24,9 +24,9 @@
 
 package com.codekutter.zconfig.common.model;
 
+import com.codekutter.common.utils.LogUtils;
 import com.codekutter.zconfig.common.ConfigProviderFactory;
 import com.codekutter.zconfig.common.ConfigTestConstants;
-import com.codekutter.common.utils.LogUtils;
 import com.codekutter.zconfig.common.model.nodes.*;
 import com.codekutter.zconfig.common.parsers.XMLConfigParser;
 import com.codekutter.zconfig.common.readers.ConfigFileReader;
@@ -38,7 +38,8 @@ import java.io.FileInputStream;
 import java.util.Map;
 import java.util.Properties;
 
-import static com.codekutter.common.utils.LogUtils.*;
+import static com.codekutter.common.utils.LogUtils.debug;
+import static com.codekutter.common.utils.LogUtils.error;
 import static org.junit.jupiter.api.Assertions.*;
 
 class Test_XMLConfiguration {

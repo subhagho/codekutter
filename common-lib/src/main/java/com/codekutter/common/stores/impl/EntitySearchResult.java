@@ -21,7 +21,6 @@ import com.codekutter.common.model.IEntity;
 import com.codekutter.common.stores.BaseSearchResult;
 import lombok.Getter;
 import lombok.Setter;
-import lombok.experimental.Accessors;
 
 import javax.annotation.Nonnull;
 import java.util.ArrayList;

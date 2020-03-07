@@ -20,8 +20,8 @@ package com.codekutter.zconfig.common.model;
 import com.codekutter.zconfig.common.model.nodes.EValueType;
 import lombok.Data;
 
-import javax.persistence.*;
 import javax.persistence.Version;
+import javax.persistence.*;
 
 @Data
 @Entity

@@ -24,9 +24,9 @@
 
 package com.codekutter.zconfig.common.model.nodes;
 
+import com.codekutter.zconfig.common.model.Configuration;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
-import com.codekutter.zconfig.common.model.Configuration;
 
 import java.util.HashMap;
 import java.util.List;

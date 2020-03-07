@@ -21,7 +21,6 @@ import com.codekutter.common.scheduling.AbstractJob;
 import com.codekutter.common.scheduling.JobConfig;
 import com.codekutter.common.stores.ConnectionManager;
 import com.codekutter.common.stores.impl.RestConnection;
-import com.codekutter.common.utils.LogUtils;
 import com.google.common.base.Preconditions;
 import org.apache.http.HttpStatus;
 import org.quartz.JobExecutionContext;

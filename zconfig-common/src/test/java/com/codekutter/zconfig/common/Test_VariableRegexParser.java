@@ -30,7 +30,8 @@ import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
-import static com.codekutter.common.utils.LogUtils.*;
+import static com.codekutter.common.utils.LogUtils.error;
+import static com.codekutter.common.utils.LogUtils.info;
 import static org.junit.jupiter.api.Assertions.*;
 
 class Test_VariableRegexParser {

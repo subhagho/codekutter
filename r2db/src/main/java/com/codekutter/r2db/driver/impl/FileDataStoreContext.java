@@ -18,7 +18,6 @@
 package com.codekutter.r2db.driver.impl;
 
 import com.codekutter.common.GlobalConstants;
-import com.codekutter.common.auditing.AbstractAuditContext;
 import com.codekutter.common.stores.impl.DataStoreAuditContext;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.core.JsonGenerationException;

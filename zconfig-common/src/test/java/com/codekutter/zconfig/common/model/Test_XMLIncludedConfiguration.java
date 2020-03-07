@@ -29,7 +29,6 @@ import com.codekutter.zconfig.common.ConfigProviderFactory;
 import com.codekutter.zconfig.common.ConfigTestConstants;
 import com.codekutter.zconfig.common.model.nodes.AbstractConfigNode;
 import com.codekutter.zconfig.common.model.nodes.ConfigPropertiesNode;
-import com.codekutter.zconfig.common.parsers.JSONConfigParser;
 import com.codekutter.zconfig.common.parsers.XMLConfigParser;
 import com.codekutter.zconfig.common.readers.ConfigFileReader;
 import com.google.common.base.Strings;

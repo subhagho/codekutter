@@ -20,7 +20,6 @@ package com.codekutter.common.stores;
 import com.codekutter.common.model.IEntity;
 import lombok.Getter;
 import lombok.Setter;
-import lombok.experimental.Accessors;
 
 import javax.annotation.Nonnull;
 

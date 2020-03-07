@@ -40,7 +40,6 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
-import org.hibernate.Session;
 
 import javax.annotation.Nonnull;
 import java.io.Closeable;

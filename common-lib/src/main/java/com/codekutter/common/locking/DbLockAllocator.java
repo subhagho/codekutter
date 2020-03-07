@@ -21,7 +21,6 @@ import com.codekutter.common.model.EObjectState;
 import com.codekutter.common.model.LockId;
 import com.codekutter.common.stores.AbstractConnection;
 import com.codekutter.common.stores.ConnectionManager;
-import com.codekutter.common.stores.impl.HibernateConnection;
 import com.codekutter.common.utils.ConfigUtils;
 import com.codekutter.common.utils.LogUtils;
 import com.codekutter.zconfig.common.ConfigurationAnnotationProcessor;
@@ -29,15 +28,11 @@ import com.codekutter.zconfig.common.ConfigurationException;
 import com.codekutter.zconfig.common.model.nodes.AbstractConfigNode;
 import com.codekutter.zconfig.common.model.nodes.ConfigPathNode;
 import com.google.common.base.Preconditions;
-import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.Session;
 
 import javax.annotation.Nonnull;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Distributed Lock allocator implementation that uses a JDBC data base backend

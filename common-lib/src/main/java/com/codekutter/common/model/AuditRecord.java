@@ -18,7 +18,6 @@
 package com.codekutter.common.model;
 
 import com.codekutter.common.Context;
-import com.codekutter.common.stores.AbstractDataStore;
 import com.google.common.base.Strings;
 import lombok.Getter;
 import lombok.Setter;

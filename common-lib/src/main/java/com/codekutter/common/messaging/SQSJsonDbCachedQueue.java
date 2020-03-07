@@ -23,7 +23,6 @@ import com.codekutter.common.utils.LogUtils;
 import javax.annotation.Nonnull;
 import javax.jms.JMSException;
 import javax.jms.Message;
-import javax.jms.TextMessage;
 import java.security.Principal;
 
 public class SQSJsonDbCachedQueue extends AbstractSQSDbCachedQueue<DefaultStringMessage> {

@@ -20,11 +20,11 @@ package com.codekutter.r2db.driver.model;
 import com.amazonaws.AmazonServiceException;
 import com.amazonaws.SdkClientException;
 import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.model.*;
+import com.amazonaws.services.s3.model.PutObjectRequest;
+import com.amazonaws.services.s3.model.S3Object;
 import com.codekutter.common.Context;
 import com.codekutter.common.model.CopyException;
 import com.codekutter.common.model.IEntity;
-import com.codekutter.common.model.StringKey;
 import com.codekutter.common.model.ValidationExceptions;
 import com.google.common.base.Preconditions;
 

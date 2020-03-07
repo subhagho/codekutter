@@ -24,7 +24,6 @@
 
 package com.codekutter.zconfig.common;
 
-import com.codekutter.zconfig.common.ZConfigInstance;
 import com.codekutter.zconfig.common.model.annotations.ConfigPath;
 import com.codekutter.zconfig.common.model.annotations.ConfigValue;
 

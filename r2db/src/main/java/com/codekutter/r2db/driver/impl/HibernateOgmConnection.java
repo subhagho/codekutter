@@ -26,8 +26,6 @@ import org.hibernate.ogm.OgmSession;
 import org.hibernate.ogm.OgmSessionFactory;
 
 import javax.annotation.Nonnull;
-import javax.persistence.EntityManager;
-import javax.persistence.EntityManagerFactory;
 import java.io.IOException;
 
 public class HibernateOgmConnection extends AbstractConnection<OgmSession> {

@@ -21,12 +21,10 @@ import com.codekutter.common.Context;
 import com.codekutter.common.auditing.Audited;
 import com.codekutter.common.model.CopyException;
 import com.codekutter.common.model.IEntity;
-import com.codekutter.common.model.StringKey;
 import com.codekutter.common.model.ValidationExceptions;
 import com.codekutter.common.stores.annotations.EJoinType;
 import com.codekutter.common.stores.annotations.Reference;
 import com.codekutter.r2db.driver.impl.annotations.Indexed;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import lombok.Setter;
 
