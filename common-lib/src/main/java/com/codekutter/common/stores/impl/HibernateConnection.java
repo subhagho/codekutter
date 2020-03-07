@@ -17,7 +17,6 @@
 
 package com.codekutter.common.stores.impl;
 
-import com.codekutter.common.model.IEntity;
 import com.codekutter.common.stores.AbstractConnection;
 import com.codekutter.common.stores.ConnectionException;
 import com.codekutter.common.stores.EConnectionState;
@@ -32,7 +31,6 @@ import com.codekutter.zconfig.common.model.annotations.ConfigValue;
 import com.codekutter.zconfig.common.model.nodes.AbstractConfigNode;
 import com.codekutter.zconfig.common.model.nodes.ConfigPathNode;
 import com.codekutter.zconfig.common.model.nodes.ConfigValueNode;
-import com.codekutter.zconfig.common.transformers.StringListParser;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import lombok.AccessLevel;
@@ -49,7 +47,6 @@ import org.hibernate.service.ServiceRegistry;
 import javax.annotation.Nonnull;
 import java.io.File;
 import java.io.IOException;
-import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 

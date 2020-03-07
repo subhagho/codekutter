@@ -20,11 +20,8 @@ package com.codekutter.common.model;
 import lombok.Getter;
 import lombok.Setter;
 
-import javax.persistence.Column;
-import javax.persistence.EmbeddedId;
-import javax.persistence.Entity;
-import javax.persistence.Table;
 import javax.persistence.Version;
+import javax.persistence.*;
 
 @Entity
 @Table(name = "tb_db_locks")

@@ -34,9 +34,6 @@ import lombok.experimental.Accessors;
 import javax.annotation.Nonnull;
 import java.io.Closeable;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Abstract base class to define Lock Allocators. Allocators create instances of

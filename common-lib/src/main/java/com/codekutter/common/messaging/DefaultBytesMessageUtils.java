@@ -17,21 +17,19 @@
 
 package com.codekutter.common.messaging;
 
-import com.codekutter.common.GlobalConstants;
 import com.codekutter.common.model.DefaultBytesMessage;
-import com.codekutter.common.model.DefaultStringMessage;
-import com.codekutter.common.utils.LogUtils;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 
 import javax.annotation.Nonnull;
-import javax.jms.*;
+import javax.jms.BytesMessage;
+import javax.jms.JMSException;
+import javax.jms.Message;
+import javax.jms.Session;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.nio.charset.StandardCharsets;
 
 public class DefaultBytesMessageUtils {
 

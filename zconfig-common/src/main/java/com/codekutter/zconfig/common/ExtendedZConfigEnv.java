@@ -64,7 +64,7 @@ public class ExtendedZConfigEnv extends ZConfigEnv {
             }
 
             cnode = ConfigUtils.getPathNode(QueueManager.class, envNode);
-            if (cnode instanceof ConfigPathNode) {
+            if (cnode instanceof ConfigPathNode || cnode instanceof ConfigListElementNode) {
                 QueueManager.setup(cnode);
             }
 

@@ -19,7 +19,6 @@ package com.codekutter.common.stores.impl;
 
 import com.codekutter.common.stores.DataStoreConfig;
 import com.codekutter.zconfig.common.model.annotations.ConfigAttribute;
-import com.codekutter.zconfig.common.model.annotations.ConfigValue;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;

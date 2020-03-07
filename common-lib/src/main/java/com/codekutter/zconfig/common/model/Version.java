@@ -24,9 +24,9 @@
 
 package com.codekutter.zconfig.common.model;
 
+import com.codekutter.zconfig.common.ValueParseException;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
-import com.codekutter.zconfig.common.ValueParseException;
 
 import javax.annotation.Nonnull;
 

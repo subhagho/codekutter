@@ -19,16 +19,13 @@ package com.codekutter.common.messaging;
 
 import com.codekutter.common.utils.ConfigUtils;
 import com.codekutter.common.utils.LogUtils;
-import com.codekutter.zconfig.common.ConfigurationAnnotationProcessor;
 import com.codekutter.zconfig.common.ConfigurationException;
 import com.codekutter.zconfig.common.IConfigurable;
 import com.codekutter.zconfig.common.model.annotations.ConfigPath;
-import com.codekutter.zconfig.common.model.annotations.ConfigValue;
 import com.codekutter.zconfig.common.model.nodes.AbstractConfigNode;
 import com.codekutter.zconfig.common.model.nodes.ConfigElementNode;
 import com.codekutter.zconfig.common.model.nodes.ConfigListElementNode;
 import com.codekutter.zconfig.common.model.nodes.ConfigPathNode;
-import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -67,17 +64,15 @@ public class QueueManager implements IConfigurable, Closeable {
     @Override
     @SuppressWarnings("rawtypes")
     public void configure(@Nonnull AbstractConfigNode node) throws ConfigurationException {
-        Preconditions.checkArgument(node instanceof ConfigPathNode);
         LogUtils.info(getClass(), "Initializing Queue Manager...");
-        AbstractConfigNode cnode = ConfigUtils.getPathNode(AbstractQueue.class, (ConfigPathNode) node);
-        if (cnode instanceof ConfigPathNode) {
-            cnode = ConfigUtils.getPathNode(AbstractQueue.class, (ConfigPathNode) cnode);
-            if (cnode instanceof ConfigPathNode) {
-                AbstractQueue queue = readQueue((ConfigPathNode) cnode);
+        if (node instanceof ConfigPathNode) {
+            node = ConfigUtils.getPathNode(AbstractQueue.class, (ConfigPathNode) node);
+            if (node instanceof ConfigPathNode) {
+                AbstractQueue queue = readQueue((ConfigPathNode) node);
                 queues.put(queue.name(), queue);
             }
-        } else if (cnode instanceof ConfigListElementNode) {
-            List<ConfigElementNode> nodes = ((ConfigListElementNode) cnode).getValues();
+        } else if (node instanceof ConfigListElementNode) {
+            List<ConfigElementNode> nodes = ((ConfigListElementNode) node).getValues();
             if (nodes != null && !nodes.isEmpty()) {
                 for (ConfigElementNode n : nodes) {
                     AbstractQueue queue = readQueue((ConfigPathNode) n);

@@ -24,8 +24,6 @@ import com.codekutter.common.utils.KeyValuePair;
 import com.codekutter.common.utils.LogUtils;
 import com.codekutter.common.utils.Monitoring;
 import com.google.common.base.Preconditions;
-import com.netflix.spectator.api.Id;
-import com.netflix.spectator.api.Timer;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
 
