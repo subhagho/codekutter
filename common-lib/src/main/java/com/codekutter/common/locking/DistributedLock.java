@@ -153,7 +153,10 @@ public abstract class DistributedLock extends ReentrantLock implements Closeable
 
     @Override
     public void close() throws IOException {
-        allocator.release(this.id);
+        if (isLocked()) {
+            unlock();
+        }
+        allocator.remove(this.id);
     }
 
     /**
@@ -189,4 +192,10 @@ public abstract class DistributedLock extends ReentrantLock implements Closeable
         errorCounter = Monitoring.addCounter(String.format(counterError, id().getNamespace(), id().getName()));
     }
 
+    /**
+     * Release this lock handle.
+     *
+     * @throws IOException
+     */
+    public abstract void remove() throws IOException;
 }

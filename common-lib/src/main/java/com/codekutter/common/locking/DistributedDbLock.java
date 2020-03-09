@@ -263,13 +263,17 @@ public class DistributedDbLock extends DistributedLock {
         }
     }
 
+    /**
+     * Release this lock handle.
+     *
+     * @throws IOException
+     */
     @Override
-    public void close() throws IOException {
+    public void remove() throws IOException {
         if (session != null && session.isOpen()) {
             session.close();
         }
         session = null;
-        super.close();
     }
 
     private DbLockRecord checkExpiry(DbLockRecord record) {

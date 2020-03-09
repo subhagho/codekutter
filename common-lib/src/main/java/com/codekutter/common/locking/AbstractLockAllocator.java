@@ -74,7 +74,7 @@ public abstract class AbstractLockAllocator<T> implements IConfigurable, Closeab
      */
     @Setter(AccessLevel.NONE)
     @Getter(AccessLevel.NONE)
-    private MapThreadCache<LockId, DistributedLock> threadLocks = new MapThreadCache<>();
+    private final MapThreadCache<LockId, DistributedLock> threadLocks = new MapThreadCache<>();
 
     /**
      * State of this lock instance.
@@ -99,15 +99,34 @@ public abstract class AbstractLockAllocator<T> implements IConfigurable, Closeab
             id.setNamespace(namespace);
             id.setName(name);
 
-            DistributedLock lock = checkThreadCache(id);
-            if (lock == null) {
-                lock = createInstance(id);
+            synchronized (threadLocks) {
+                DistributedLock lock = checkThreadCache(id);
                 if (lock == null) {
-                    throw new LockException(String.format("Error creating lock instance. [id=%s]", id.stringKey()));
+                    lock = createInstance(id);
+                    if (lock == null) {
+                        throw new LockException(String.format("Error creating lock instance. [id=%s]", id.stringKey()));
+                    }
+                    threadLocks.put(id, lock);
                 }
-                threadLocks.put(id, lock);
+                return lock;
             }
-            return lock;
+        } catch (Throwable t) {
+            throw new LockException(t);
+        }
+    }
+
+    public void remove(@Nonnull LockId id) {
+        try {
+            state.check(EObjectState.Available, getClass());
+            if (threadLocks.containsThread()) {
+                synchronized (threadLocks) {
+                    DistributedLock lock = checkThreadCache(id);
+                    if (lock != null) {
+                        threadLocks.remove(id);
+                        lock.remove();
+                    }
+                }
+            }
         } catch (Throwable t) {
             throw new LockException(t);
         }
@@ -129,7 +148,6 @@ public abstract class AbstractLockAllocator<T> implements IConfigurable, Closeab
                 if (lock.isLocked()) {
                     lock.unlock();
                 }
-
             }
             return ret;
         } catch (Throwable t) {

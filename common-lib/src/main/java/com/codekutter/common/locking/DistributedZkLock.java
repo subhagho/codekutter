@@ -24,6 +24,7 @@ import com.google.common.base.Preconditions;
 import org.apache.curator.framework.recipes.locks.InterProcessMutex;
 
 import javax.annotation.Nonnull;
+import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -64,6 +65,16 @@ public class DistributedZkLock extends DistributedLock {
                 Metrics.METRIC_LATENCY_UNLOCK,
                 Metrics.METRIC_COUNTER_CALLS,
                 Metrics.METRIC_COUNTER_ERROR);
+    }
+
+    /**
+     * Release this lock handle.
+     *
+     * @throws IOException
+     */
+    @Override
+    public void remove() throws IOException {
+
     }
 
     public DistributedZkLock withMutex(@Nonnull InterProcessMutex mutex) {

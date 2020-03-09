@@ -25,6 +25,8 @@ import com.codekutter.zconfig.common.ConfigurationAnnotationProcessor;
 import com.codekutter.zconfig.common.ConfigurationException;
 import com.codekutter.zconfig.common.IConfigurable;
 import com.codekutter.zconfig.common.model.annotations.ConfigAttribute;
+import com.codekutter.zconfig.common.model.annotations.ConfigPath;
+import com.codekutter.zconfig.common.model.annotations.ConfigValue;
 import com.codekutter.zconfig.common.model.nodes.AbstractConfigNode;
 import com.codekutter.zconfig.common.model.nodes.ConfigPathNode;
 import com.google.common.base.Preconditions;
@@ -45,22 +47,17 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Collections;
 import java.util.Set;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 @Getter
 @Setter
 @Accessors(fluent = true)
+@ConfigPath(path = "azure-auth")
 public class AzureAuthManager implements IConfigurable, Closeable {
-    private static final int DEFAULT_EXEC_POOL_SIZE = 5;
-
     @ConfigAttribute(name = "id", required = true)
     private String applicationId;
-    @ConfigAttribute(name = "authority", required = true)
+    @ConfigValue(name = "authority", required = true)
     private String authorityUrl;
-    @ConfigAttribute(name = "execPoolSize")
-    private int execPoolSize = DEFAULT_EXEC_POOL_SIZE;
 
     @Setter(AccessLevel.NONE)
     private ObjectState state = new ObjectState();

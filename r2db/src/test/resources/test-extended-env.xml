@@ -130,6 +130,10 @@
             </audit-manager>
         </audit>
         <r2db>
+            <azure-auth id="e99810ce-bfe3-4002-ba4c-22bb170b72e6">
+                <authority>https://login.microsoftonline.com/organizations</authority>
+                <username></username>
+            </azure-auth>
             <entity-manager>
                 <connections>
                     <connection name="TestOneDriveConnection" class="com.codekutter.r2db.driver.impl.MSGraphConnection">
