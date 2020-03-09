@@ -133,10 +133,11 @@
             <entity-manager>
                 <connections>
                     <connection name="TestOneDriveConnection" class="com.codekutter.r2db.driver.impl.MSGraphConnection">
-                        <clientId>3a1bcfe7-d2e4-42d2-a304-e98f9f14dd4b</clientId>
-                        <username>851000113@devO365.com</username>
+                        <tenantId>fb96c922-d113-4a72-94e1-cfb4c90523bd</tenantId>
+                        <clientId>e99810ce-bfe3-4002-ba4c-22bb170b72e6</clientId>
+                        <username>testoned@subhoghoshoutlook.onmicrosoft.com</username>
                         <password encrypted="true">
-                            <value>XfBK34nbUkp3kV81dmPPwQ==</value>
+                            <value>iyGiHwGIT2JDgk01E/xjUw==</value>
                         </password>
                     </connection>
                     <connection name="TestAuditConnection" class="com.codekutter.common.stores.impl.HibernateConnection"

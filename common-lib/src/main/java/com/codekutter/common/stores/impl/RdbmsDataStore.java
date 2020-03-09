@@ -71,10 +71,10 @@ public class RdbmsDataStore extends TransactionDataStore<Session, Transaction> {
     @Override
     public void rollback() throws DataStoreException {
         Preconditions.checkState(session != null);
-        Preconditions.checkState(isInTransaction());
         checkThread();
 
-        transaction().rollback();
+        if (session.isJoinedToTransaction() && transaction().isActive())
+            transaction().rollback();
         transaction(null);
     }
 
@@ -145,9 +145,9 @@ public class RdbmsDataStore extends TransactionDataStore<Session, Transaction> {
     @Override
     @SuppressWarnings({"unchecked", "rawtypes"})
     public <E extends IEntity> BaseSearchResult<E> doSearch(@Nonnull String query,
-                                                      int offset, int maxResults,
-                                                      @Nonnull Class<? extends E> type,
-                                                      Context context)
+                                                            int offset, int maxResults,
+                                                            @Nonnull Class<? extends E> type,
+                                                            Context context)
             throws DataStoreException {
         Preconditions.checkState(readSession != null);
         checkThread();
@@ -168,10 +168,10 @@ public class RdbmsDataStore extends TransactionDataStore<Session, Transaction> {
     @Override
     @SuppressWarnings({"unchecked", "rawtypes"})
     public <E extends IEntity> BaseSearchResult<E> doSearch(@Nonnull String query,
-                                                      int offset, int maxResults,
-                                                      Map<String, Object> parameters,
-                                                      @Nonnull Class<? extends E> type,
-                                                      Context context)
+                                                            int offset, int maxResults,
+                                                            Map<String, Object> parameters,
+                                                            @Nonnull Class<? extends E> type,
+                                                            Context context)
             throws DataStoreException {
         Preconditions.checkState(readSession != null);
         checkThread();
@@ -240,7 +240,8 @@ public class RdbmsDataStore extends TransactionDataStore<Session, Transaction> {
 
     @Override
     public void close() throws IOException {
-        session.close();
+        if (session != null)
+            session.close();
         if (readConnection != null) {
             readSession.close();
             readConnection = null;
