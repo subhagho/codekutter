@@ -241,6 +241,8 @@ public class DistributedDbLock extends DistributedLock {
                 } catch (Throwable t) {
                     tnx.rollback();
                     throw new LockException(t);
+                } finally {
+                    super.unlock();
                 }
             } else {
                 throw new LockException(String.format("[%s][%s] Lock not held by current thread. [thread=%d]", id().getNamespace(), id().getName(), threadId()));
@@ -256,11 +258,11 @@ public class DistributedDbLock extends DistributedLock {
      */
     @Override
     public boolean isLocked() {
-        if (super.isLocked()) return true;
-        else {
+        if (super.isLocked()) {
             DbLockRecord record = fetch(session, false, false);
             return record.isLocked();
         }
+        return false;
     }
 
     /**

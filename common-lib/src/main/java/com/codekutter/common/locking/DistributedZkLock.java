@@ -162,11 +162,11 @@ public class DistributedZkLock extends DistributedLock {
                 } else {
                     throw new LockException(String.format("[%s][%s] Lock not held by current thread. [thread=%d]", id().getNamespace(), id().getName(), threadId()));
                 }
-                super.unlock();
             } catch (Throwable t) {
-                super.unlock();
                 Monitoring.increment(errorCounter.name(), (KeyValuePair<String, String>[]) null);
                 throw new LockException(t);
+            } finally {
+                super.unlock();
             }
         });
     }
