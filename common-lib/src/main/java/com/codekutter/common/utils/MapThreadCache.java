@@ -61,7 +61,8 @@ public class MapThreadCache<K, V> {
     }
 
     public boolean remove(K key) {
-        Map<K, V> values = get();
+        long threadId = Thread.currentThread().getId();
+        Map<K, V> values = cache.get(threadId);
         if (values != null && !values.isEmpty()) {
             if (values.containsKey(key)) {
                 values.remove(key);

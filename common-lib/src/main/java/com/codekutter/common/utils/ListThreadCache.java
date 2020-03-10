@@ -49,7 +49,7 @@ public class ListThreadCache<T> {
     public List<T> get() {
         long threadId = Thread.currentThread().getId();
         if (cache.containsKey(threadId)) {
-            return cache.get(threadId);
+            return new ArrayList<>(cache.get(threadId));
         }
         return null;
     }
@@ -63,7 +63,8 @@ public class ListThreadCache<T> {
     }
 
     public boolean remove(T value) {
-        List<T> values = get();
+        long threadId = Thread.currentThread().getId();
+        List<T> values = cache.get(threadId);
         if (values != null && !values.isEmpty()) {
             return values.remove(value);
         }
@@ -71,7 +72,8 @@ public class ListThreadCache<T> {
     }
 
     public boolean remove(int index) {
-        List<T> values = get();
+        long threadId = Thread.currentThread().getId();
+        List<T> values = cache.get(threadId);
         if (values != null && !values.isEmpty()) {
             if (index < values.size()) {
                 values.remove(index);
