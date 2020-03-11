@@ -77,6 +77,16 @@ public class DistributedZkLock extends DistributedLock {
 
     }
 
+    /**
+     * Check the lock state is valid.
+     *
+     * @return - Is valid?
+     */
+    @Override
+    public boolean isValid() {
+        return true;
+    }
+
     public DistributedZkLock withMutex(@Nonnull InterProcessMutex mutex) {
         this.mutex = mutex;
         return this;

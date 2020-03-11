@@ -198,4 +198,11 @@ public abstract class DistributedLock extends ReentrantLock implements Closeable
      * @throws IOException
      */
     public abstract void remove() throws IOException;
+
+    /**
+     * Check the lock state is valid.
+     *
+     * @return - Is valid?
+     */
+    public abstract boolean isValid();
 }

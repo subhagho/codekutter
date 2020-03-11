@@ -108,6 +108,11 @@ public abstract class AbstractLockAllocator<T> implements IConfigurable, Closeab
                     }
                     threadLocks.put(id, lock);
                 }
+                if (!lock.isValid()) {
+                    throw new LockException(
+                            String.format("Invalid lock instance. [thread=%d][lock id=%s]",
+                                    Thread.currentThread().getId(), lock.id().stringKey()));
+                }
                 return lock;
             }
         } catch (Throwable t) {

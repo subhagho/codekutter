@@ -278,6 +278,16 @@ public class DistributedDbLock extends DistributedLock {
         session = null;
     }
 
+    /**
+     * Check the lock state is valid.
+     *
+     * @return - Is valid?
+     */
+    @Override
+    public boolean isValid() {
+        return (session != null && session.isOpen());
+    }
+
     private DbLockRecord checkExpiry(DbLockRecord record) {
         if (lockExpiryTimeout() > 0) {
             if (record.isLocked()) {
