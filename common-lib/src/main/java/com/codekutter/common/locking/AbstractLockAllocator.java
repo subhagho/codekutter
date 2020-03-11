@@ -122,7 +122,9 @@ public abstract class AbstractLockAllocator<T> implements IConfigurable, Closeab
                 synchronized (threadLocks) {
                     DistributedLock lock = checkThreadCache(id);
                     if (lock != null) {
-                        threadLocks.remove(id);
+                        if (!threadLocks.remove(id)) {
+                            throw new LockException(String.format("Error removing lock from cache. [lock id=%s]", id.stringKey()));
+                        }
                         lock.remove();
                     }
                 }

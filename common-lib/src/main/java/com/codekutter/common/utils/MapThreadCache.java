@@ -17,6 +17,8 @@
 
 package com.codekutter.common.utils;
 
+import com.google.common.base.Preconditions;
+
 import javax.annotation.Nonnull;
 import java.util.HashMap;
 import java.util.Map;
@@ -65,9 +67,10 @@ public class MapThreadCache<K, V> {
         Map<K, V> values = cache.get(threadId);
         if (values != null && !values.isEmpty()) {
             if (values.containsKey(key)) {
-                values.remove(key);
-                return true;
+                V value = values.remove(key);
+                return value != null;
             }
+            Preconditions.checkState(get(key) == null);
         }
         return false;
     }

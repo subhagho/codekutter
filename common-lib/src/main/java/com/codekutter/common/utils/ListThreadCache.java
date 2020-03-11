@@ -76,8 +76,8 @@ public class ListThreadCache<T> {
         List<T> values = cache.get(threadId);
         if (values != null && !values.isEmpty()) {
             if (index < values.size()) {
-                values.remove(index);
-                return true;
+                T value = values.remove(index);
+                return value != null;
             }
         }
         return false;
