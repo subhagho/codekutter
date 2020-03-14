@@ -38,7 +38,7 @@ import javax.annotation.Nonnull;
  * @param <T> - Entity Type.
  */
 @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, include = JsonTypeInfo.As.PROPERTY,
-              property = "@class")
+        property = "@class")
 public abstract class BaseEntity<K extends IKey, T> extends PersistedEntity<K, T> {
     /**
      * Owner of this application group.

@@ -39,7 +39,7 @@ import java.util.Map;
  * Key/Value map node for configuration maps.
  */
 @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, include = JsonTypeInfo.As.PROPERTY,
-              property = "@class")
+        property = "@class")
 public class PersistedConfigMapNode extends PersistedConfigPathNode {
     /**
      * Map of configuration key/value pairs.

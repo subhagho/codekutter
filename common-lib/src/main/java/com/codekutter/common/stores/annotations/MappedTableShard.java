@@ -27,5 +27,6 @@ import java.lang.annotation.*;
 @SuppressWarnings("rawtypes")
 public @interface MappedTableShard {
     int shard();
+
     Class<? extends IEntity> parent();
 }

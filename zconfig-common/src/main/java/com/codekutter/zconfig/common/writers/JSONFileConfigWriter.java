@@ -66,7 +66,7 @@ public class JSONFileConfigWriter extends AbstractConfigWriter {
      */
     @Override
     public String write(Configuration configuration, String path)
-    throws ConfigurationException {
+            throws ConfigurationException {
         Preconditions.checkArgument(configuration != null);
         Preconditions.checkArgument(!Strings.isNullOrEmpty(path));
 
@@ -76,13 +76,13 @@ public class JSONFileConfigWriter extends AbstractConfigWriter {
         }
         File outfile = new File(
                 String.format("%s/%s_%s.json", outdir.getAbsolutePath(),
-                              configuration.getName(),
-                              configuration.getInstanceId()));
+                        configuration.getName(),
+                        configuration.getInstanceId()));
         if (outfile.exists()) {
             if (!outfile.delete()) {
                 throw new ConfigurationException(
                         String.format("Error removing existing file. [file=%s]",
-                                      outfile.getAbsolutePath()));
+                                outfile.getAbsolutePath()));
             }
         }
         mapper.enable(SerializationFeature.INDENT_OUTPUT);
@@ -101,7 +101,7 @@ public class JSONFileConfigWriter extends AbstractConfigWriter {
      * @throws ConfigurationException
      */
     private void serializeToJson(Configuration configuration, File outfile)
-    throws ConfigurationException {
+            throws ConfigurationException {
         JsonNode rootNode = mapper.createObjectNode();
         addConfigHeader(configuration, (ObjectNode) rootNode);
         addConfigBody(configuration, (ObjectNode) rootNode);
@@ -118,7 +118,7 @@ public class JSONFileConfigWriter extends AbstractConfigWriter {
      * @throws ConfigurationException
      */
     private void writeJSON(JsonNode rootNode, File outfile)
-    throws ConfigurationException {
+            throws ConfigurationException {
         try {
             String json = mapper.writeValueAsString(rootNode);
             try (FileOutputStream fos = new FileOutputStream(outfile)) {
@@ -138,7 +138,7 @@ public class JSONFileConfigWriter extends AbstractConfigWriter {
      * @throws ConfigurationException
      */
     private void addConfigBody(Configuration configuration, ObjectNode parent)
-    throws ConfigurationException {
+            throws ConfigurationException {
         ConfigPathNode rootNode = configuration.getRootConfigNode();
         addConfigPathNode(rootNode, parent);
     }
@@ -152,14 +152,14 @@ public class JSONFileConfigWriter extends AbstractConfigWriter {
      */
     private void addConfigNode(AbstractConfigNode node,
                                JsonNode parentJsonNode)
-    throws ConfigurationException {
+            throws ConfigurationException {
         if (node instanceof ConfigPathNode) {
             if (parentJsonNode instanceof ObjectNode) {
                 addConfigPathNode((ConfigPathNode) node,
-                                  (ObjectNode) parentJsonNode);
+                        (ObjectNode) parentJsonNode);
             } else if (parentJsonNode instanceof ArrayNode) {
                 addConfigPathNode((ConfigPathNode) node,
-                                  (ArrayNode) parentJsonNode);
+                        (ArrayNode) parentJsonNode);
             }
         } else if (node instanceof ConfigListElementNode &&
                 (parentJsonNode instanceof ObjectNode)) {
@@ -190,7 +190,7 @@ public class JSONFileConfigWriter extends AbstractConfigWriter {
      * @throws ConfigurationException
      */
     private void addKeyValueNode(ConfigKeyValueNode node, ObjectNode parent)
-    throws ConfigurationException {
+            throws ConfigurationException {
         if (Strings.isNullOrEmpty(node.getName())) {
             throw ConfigurationException.propertyNotFoundException(
                     JSONConfigConstants.CONFIG_HEADER_NAME);
@@ -212,7 +212,7 @@ public class JSONFileConfigWriter extends AbstractConfigWriter {
      * @throws ConfigurationException
      */
     private void addConfigPathNode(ConfigPathNode node, ObjectNode parent)
-    throws ConfigurationException {
+            throws ConfigurationException {
         if (Strings.isNullOrEmpty(node.getName())) {
             throw ConfigurationException.propertyNotFoundException(
                     JSONConfigConstants.CONFIG_HEADER_NAME);
@@ -230,7 +230,7 @@ public class JSONFileConfigWriter extends AbstractConfigWriter {
     }
 
     private void addConfigPathNode(ConfigPathNode node, ArrayNode parent)
-    throws ConfigurationException {
+            throws ConfigurationException {
         if (Strings.isNullOrEmpty(node.getName())) {
             throw ConfigurationException.propertyNotFoundException(
                     JSONConfigConstants.CONFIG_HEADER_NAME);
@@ -276,7 +276,7 @@ public class JSONFileConfigWriter extends AbstractConfigWriter {
      * @throws ConfigurationException
      */
     private void addConfigValue(ConfigValueNode value, JsonNode node)
-    throws ConfigurationException {
+            throws ConfigurationException {
         if (node.getNodeType() == JsonNodeType.ARRAY) {
             ArrayNode array = (ArrayNode) node;
             array.add(value.getValue());
@@ -299,7 +299,7 @@ public class JSONFileConfigWriter extends AbstractConfigWriter {
      * @throws ConfigurationException
      */
     private void addConfigHeader(Configuration configuration, ObjectNode node)
-    throws ConfigurationException {
+            throws ConfigurationException {
         ObjectNode header = node.putObject(JSONConfigConstants.CONFIG_HEADER_NODE);
         if (Strings.isNullOrEmpty(configuration.getName())) {
             throw ConfigurationException.propertyNotFoundException(
@@ -311,14 +311,14 @@ public class JSONFileConfigWriter extends AbstractConfigWriter {
                     JSONConfigConstants.CONFIG_HEADER_VERSION);
         }
         header.put(JSONConfigConstants.CONFIG_HEADER_VERSION,
-                   configuration.getVersion().toString());
+                configuration.getVersion().toString());
         addUpdateInfo(configuration.getCreatedBy(),
-                      JSONConfigConstants.CONFIG_CREATED_BY, header);
+                JSONConfigConstants.CONFIG_CREATED_BY, header);
         addUpdateInfo(configuration.getUpdatedBy(),
-                      JSONConfigConstants.CONFIG_UPDATED_BY, header);
+                JSONConfigConstants.CONFIG_UPDATED_BY, header);
         if (!Strings.isNullOrEmpty(configuration.getDescription())) {
             header.put(JSONConfigConstants.CONFIG_HEADER_DESC,
-                       configuration.getDescription());
+                    configuration.getDescription());
         }
     }
 
@@ -341,9 +341,9 @@ public class JSONFileConfigWriter extends AbstractConfigWriter {
                     JSONConfigConstants.CONFIG_UPDATE_OWNER);
         }
         node.put(JSONConfigConstants.CONFIG_UPDATE_OWNER,
-                 updateInfo.getModifiedBy());
+                updateInfo.getModifiedBy());
 
         node.put(JSONConfigConstants.CONFIG_UPDATE_TIMESTAMP,
-                 DateTimeUtils.toString(updateInfo.getTimestamp()));
+                DateTimeUtils.toString(updateInfo.getTimestamp()));
     }
 }

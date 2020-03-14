@@ -1,210 +1,210 @@
 {
-    "header": {
-        "id": "UNIQUE-99918239012",
-        "passwordHash": "2ff9irI7zQgaWmitmRK1Yg==",
-        "group": "TEST-APP-GROUP",
-        "application": "TEST-APPLICATION",
-        "name": "test-config",
-        "description": "This is a test JSON configuration file.",
-        "version": "0.2",
-        "createdBy": {
-            "user": "subho",
-            "timestamp": "1552835141000"
-        },
-        "updatedBy": {
-            "user": "subho",
-            "timestamp": "1552835141000"
-        }
+  "header": {
+    "id": "UNIQUE-99918239012",
+    "passwordHash": "2ff9irI7zQgaWmitmRK1Yg==",
+    "group": "TEST-APP-GROUP",
+    "application": "TEST-APPLICATION",
+    "name": "test-config",
+    "description": "This is a test JSON configuration file.",
+    "version": "0.2",
+    "createdBy": {
+      "user": "subho",
+      "timestamp": "1552835141000"
     },
-    "configuration": {
-        "nodeVersion": 2,
-        "createdBy": {
+    "updatedBy": {
+      "user": "subho",
+      "timestamp": "1552835141000"
+    }
+  },
+  "configuration": {
+    "nodeVersion": 2,
+    "createdBy": {
+      "user": "subho",
+      "timestamp": "12.31.2018 12:32:19"
+    },
+    "updatedBy": {
+      "user": "subho",
+      "timestamp": "01.02.2019 12:32:19"
+    },
+    "properties": {
+      "PROP_1": "TEST_PROP_1",
+      "PROP_2": "TEST_PROP_2",
+      "PROP_3": "TEST_PROP_3"
+    },
+    "node_1": {
+      "nodeVersion": 1,
+      "createdBy": {
+        "user": "subho",
+        "timestamp": "12.31.2018 12:32:19"
+      },
+      "updatedBy": {
+        "user": "subho",
+        "timestamp": "01.02.2019 12:32:19"
+      },
+      "parameters": {
+        "PARAM_1": "This is a replacement test. ${PROP_1}",
+        "PARAM_2": "TEST_PARAM_2",
+        "PARAM_3": "TEST_PARAM_3",
+        "PARAM_4": "TEST_PARAM_4"
+      },
+      "TEST_ELEMENT_LIST": [
+        {
+          "nodeVersion": 1,
+          "createdBy": {
             "user": "subho",
             "timestamp": "12.31.2018 12:32:19"
-        },
-        "updatedBy": {
+          },
+          "updatedBy": {
             "user": "subho",
             "timestamp": "01.02.2019 12:32:19"
+          },
+          "string_1": "STRING_1",
+          "string_2": "STRING_2"
         },
-        "properties": {
-            "PROP_1": "TEST_PROP_1",
-            "PROP_2": "TEST_PROP_2",
-            "PROP_3": "TEST_PROP_3"
+        {
+          "description": "This is a test description",
+          "nodeVersion": 1,
+          "createdBy": {
+            "user": "subho",
+            "timestamp": "12.31.2018 12:32:19"
+          },
+          "updatedBy": {
+            "user": "subho",
+            "timestamp": "01.02.2019 12:32:19"
+          }
         },
-        "node_1": {
+        {
+          "nodeVersion": 1,
+          "createdBy": {
+            "user": "subho",
+            "timestamp": "12.31.2018 12:32:19"
+          },
+          "updatedBy": {
+            "user": "subho",
+            "timestamp": "01.02.2019 12:32:19"
+          },
+          "string_1": "STRING_1",
+          "string_2": "STRING_2"
+        },
+        {
+          "nodeVersion": 1,
+          "createdBy": {
+            "user": "subho",
+            "timestamp": "12.31.2018 12:32:19"
+          },
+          "updatedBy": {
+            "user": "subho",
+            "timestamp": "01.02.2019 12:32:19"
+          },
+          "string_1": "STRING_1",
+          "string_2": "STRING_2"
+        }
+      ],
+      "node_2": {
+        "@": {
+          "ATTRIBUTE_1": "Attr One",
+          "ATTRIBUTE_2": "Attr Two",
+          "ATTRIBUTE_3": "Attr Three",
+          "ATTRIBUTE_4": "Attr Four",
+          "ATTRIBUTE_5": "Attr Five"
+        },
+        "description": "This is a test description",
+        "nodeVersion": 1,
+        "createdBy": {
+          "user": "subho",
+          "timestamp": "12.31.2018 12:32:19"
+        },
+        "updatedBy": {
+          "user": "subho",
+          "timestamp": "01.02.2019 12:32:19"
+        },
+        "nodeName": "Test Node",
+        "values": {
+          "longValue": "998739",
+          "doubleValue": "99834.93948"
+        },
+        "parameters": {
+          "PARAM_1": "This is a replacement test. ${PROP_1}${PROP_2}",
+          "PARAM_2": "TEST_PARAM_2",
+          "PARAM_3": {
+            "@encrypted": "true",
+            "value": "qWNMxa+1WxLC0BjvxzeA4g=="
+          },
+          "PARAM_4": "TEST_PARAM_4",
+          "PARAM_5": "18473498",
+          "PARAM_6": "EValue3"
+        },
+        "remoteResource": {
+          "type": "BLOB",
+          "url": "https://github.com/subhagho/openriver-maven/blob/wookler-repo/com/wookler/common/1.0-SNAPSHOT/common-1.0-20171127.050926-1-javadoc.jar?raw=true",
+          "resourceName": "common-1.0-20171127.050926-1-javadoc.jar"
+        },
+        "node_3": {
+          "nodeVersion": 1,
+          "createdBy": {
+            "user": "subho",
+            "timestamp": "12.31.2018 12:32:19"
+          },
+          "updatedBy": {
+            "user": "subho",
+            "timestamp": "01.02.2019 12:32:19"
+          },
+          "password": {
+            "@encrypted": "true",
+            "value": "iyGiHwGIT2JDgk01E/xjUw=="
+          },
+          "@": {
+            "ATTR_1": "TEST_ATTR_1",
+            "ATTR_2": {
+              "@encrypted": "true",
+              "value": "jXrnCW8om6MyDfxyKx9XlQ=="
+            },
+            "ATTR_3": "TEST_ATTR_3",
+            "ATTR_4": "TEST_ATTR_4"
+          },
+          "node_4": {
             "nodeVersion": 1,
+            "properties": {
+              "PROP_1": "OVERRIDE_PROP_1",
+              "PROP_2": "TEST_PROP_2",
+              "PROP_3": "TEST_PROP_3"
+            },
             "createdBy": {
-                "user": "subho",
-                "timestamp": "12.31.2018 12:32:19"
+              "user": "subho",
+              "timestamp": "12.31.2018 12:32:19"
             },
             "updatedBy": {
-                "user": "subho",
-                "timestamp": "01.02.2019 12:32:19"
+              "user": "subho",
+              "timestamp": "01.02.2019 12:32:19"
             },
-            "parameters": {
-                "PARAM_1": "This is a replacement test. ${PROP_1}",
-                "PARAM_2": "TEST_PARAM_2",
-                "PARAM_3": "TEST_PARAM_3",
-                "PARAM_4": "TEST_PARAM_4"
-            },
-            "TEST_ELEMENT_LIST": [
-                {
-                    "nodeVersion": 1,
-                    "createdBy": {
-                        "user": "subho",
-                        "timestamp": "12.31.2018 12:32:19"
-                    },
-                    "updatedBy": {
-                        "user": "subho",
-                        "timestamp": "01.02.2019 12:32:19"
-                    },
-                    "string_1": "STRING_1",
-                    "string_2": "STRING_2"
-                },
-                {
-                    "description": "This is a test description",
-                    "nodeVersion": 1,
-                    "createdBy": {
-                        "user": "subho",
-                        "timestamp": "12.31.2018 12:32:19"
-                    },
-                    "updatedBy": {
-                        "user": "subho",
-                        "timestamp": "01.02.2019 12:32:19"
-                    }
-                },
-                {
-                    "nodeVersion": 1,
-                    "createdBy": {
-                        "user": "subho",
-                        "timestamp": "12.31.2018 12:32:19"
-                    },
-                    "updatedBy": {
-                        "user": "subho",
-                        "timestamp": "01.02.2019 12:32:19"
-                    },
-                    "string_1": "STRING_1",
-                    "string_2": "STRING_2"
-                },
-                {
-                    "nodeVersion": 1,
-                    "createdBy": {
-                        "user": "subho",
-                        "timestamp": "12.31.2018 12:32:19"
-                    },
-                    "updatedBy": {
-                        "user": "subho",
-                        "timestamp": "01.02.2019 12:32:19"
-                    },
-                    "string_1": "STRING_1",
-                    "string_2": "STRING_2"
-                }
+            "TEST_VALUE_LIST": [
+              "TEST_STRING_1",
+              "TEST_STRING_2",
+              "TEST_STRING_3",
+              "TEST_STRING_4",
+              "Test override property. ${PROP_1}",
+              "TEST_STRING_6",
+              "TEST_STRING_7",
+              "TEST_STRING_8"
             ],
-            "node_2": {
-                "@": {
-                    "ATTRIBUTE_1": "Attr One",
-                    "ATTRIBUTE_2": "Attr Two",
-                    "ATTRIBUTE_3": "Attr Three",
-                    "ATTRIBUTE_4": "Attr Four",
-                    "ATTRIBUTE_5": "Attr Five"
-                },
-                "description": "This is a test description",
-                "nodeVersion": 1,
-                "createdBy": {
-                    "user": "subho",
-                    "timestamp": "12.31.2018 12:32:19"
-                },
-                "updatedBy": {
-                    "user": "subho",
-                    "timestamp": "01.02.2019 12:32:19"
-                },
-                "nodeName": "Test Node",
-                "values": {
-                    "longValue": "998739",
-                    "doubleValue": "99834.93948"
-                },
-                "parameters": {
-                    "PARAM_1": "This is a replacement test. ${PROP_1}${PROP_2}",
-                    "PARAM_2": "TEST_PARAM_2",
-                    "PARAM_3": {
-                        "@encrypted": "true",
-                        "value": "qWNMxa+1WxLC0BjvxzeA4g=="
-                    },
-                    "PARAM_4": "TEST_PARAM_4",
-                    "PARAM_5": "18473498",
-                    "PARAM_6": "EValue3"
-                },
-                "remoteResource": {
-                    "type": "BLOB",
-                    "url": "https://github.com/subhagho/openriver-maven/blob/wookler-repo/com/wookler/common/1.0-SNAPSHOT/common-1.0-20171127.050926-1-javadoc.jar?raw=true",
-                    "resourceName": "common-1.0-20171127.050926-1-javadoc.jar"
-                },
-                "node_3": {
-                    "nodeVersion": 1,
-                    "createdBy": {
-                        "user": "subho",
-                        "timestamp": "12.31.2018 12:32:19"
-                    },
-                    "updatedBy": {
-                        "user": "subho",
-                        "timestamp": "01.02.2019 12:32:19"
-                    },
-                    "password" : {
-                        "@encrypted": "true",
-                        "value": "iyGiHwGIT2JDgk01E/xjUw=="
-                    },
-                    "@": {
-                        "ATTR_1": "TEST_ATTR_1",
-                        "ATTR_2": {
-                            "@encrypted": "true",
-                            "value": "jXrnCW8om6MyDfxyKx9XlQ=="
-                        },
-                        "ATTR_3": "TEST_ATTR_3",
-                        "ATTR_4": "TEST_ATTR_4"
-                    },
-                    "node_4": {
-                        "nodeVersion": 1,
-                        "properties": {
-                            "PROP_1": "OVERRIDE_PROP_1",
-                            "PROP_2": "TEST_PROP_2",
-                            "PROP_3": "TEST_PROP_3"
-                        },
-                        "createdBy": {
-                            "user": "subho",
-                            "timestamp": "12.31.2018 12:32:19"
-                        },
-                        "updatedBy": {
-                            "user": "subho",
-                            "timestamp": "01.02.2019 12:32:19"
-                        },
-                        "TEST_VALUE_LIST": [
-                            "TEST_STRING_1",
-                            "TEST_STRING_2",
-                            "TEST_STRING_3",
-                            "TEST_STRING_4",
-                            "Test override property. ${PROP_1}",
-                            "TEST_STRING_6",
-                            "TEST_STRING_7",
-                            "TEST_STRING_8"
-                        ],
-                        "TEST_LONG_LIST": [
-                            "1298901409",
-                            "9435804955",
-                            "9285923590",
-                            "239423932509",
-                            "12918419348",
-                            "92085925857",
-                            "-129814901",
-                            "-134981490134"
-                        ]
-                    },
-                    "remoteResource": {
-                        "type": "FILE",
-                        "url": "https://raw.githubusercontent.com/subhagho/zconfig/master/LICENSE",
-                        "resourceName": "data/LICENSE.txt"
-                    }
-                }
-            }
+            "TEST_LONG_LIST": [
+              "1298901409",
+              "9435804955",
+              "9285923590",
+              "239423932509",
+              "12918419348",
+              "92085925857",
+              "-129814901",
+              "-134981490134"
+            ]
+          },
+          "remoteResource": {
+            "type": "FILE",
+            "url": "https://raw.githubusercontent.com/subhagho/zconfig/master/LICENSE",
+            "resourceName": "data/LICENSE.txt"
+          }
         }
+      }
     }
+  }
 }

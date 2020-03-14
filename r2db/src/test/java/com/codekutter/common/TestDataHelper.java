@@ -96,7 +96,7 @@ public class TestDataHelper {
         return customer;
     }
 
-    public static Product createProduct(int index , String prefix) {
+    public static Product createProduct(int index, String prefix) {
         if (Strings.isNullOrEmpty(prefix)) {
             prefix = "PRODUCT_";
         }

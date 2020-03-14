@@ -30,7 +30,8 @@ public class KeyValuePair<K, V> {
     private K key;
     private V value;
 
-    public KeyValuePair() {}
+    public KeyValuePair() {
+    }
 
     public KeyValuePair(@Nonnull K key, V value) {
         this.key = key;

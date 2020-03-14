@@ -33,35 +33,6 @@ import java.util.Enumeration;
  * @author Subho Ghosh (subho dot ghosh at outlook.com)
  */
 public class NetUtils {
-    public static enum EAddressType {
-        /**
-         * v4 IP address required.
-         */
-        V4,
-        /**
-         * v6 IP address required.
-         */
-        V6;
-
-        /**
-         * Check to see if the specified Inet address is of the desired type.
-         *
-         * @param type - Desired type.
-         * @param addr - Inet Address.
-         * @return - Is match?
-         */
-        public static boolean matches(EAddressType type, InetAddress addr) {
-            if (type == V4) {
-                if (addr instanceof Inet4Address)
-                    return true;
-            } else if (type == V6) {
-                if (addr instanceof Inet6Address)
-                    return true;
-            }
-            return false;
-        }
-    }
-
     /**
      * Get the non-loopback IP of the host. By default a v4 inet address will be
      * returned.
@@ -113,9 +84,38 @@ public class NetUtils {
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < mac.length; i++) {
             sb.append(String.format("%02X%s", mac[i],
-                                    (i < mac.length - 1) ? "-" : ""));
+                    (i < mac.length - 1) ? "-" : ""));
         }
 
         return sb.toString();
+    }
+
+    public static enum EAddressType {
+        /**
+         * v4 IP address required.
+         */
+        V4,
+        /**
+         * v6 IP address required.
+         */
+        V6;
+
+        /**
+         * Check to see if the specified Inet address is of the desired type.
+         *
+         * @param type - Desired type.
+         * @param addr - Inet Address.
+         * @return - Is match?
+         */
+        public static boolean matches(EAddressType type, InetAddress addr) {
+            if (type == V4) {
+                if (addr instanceof Inet4Address)
+                    return true;
+            } else if (type == V6) {
+                if (addr instanceof Inet6Address)
+                    return true;
+            }
+            return false;
+        }
     }
 }

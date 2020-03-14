@@ -34,7 +34,8 @@ public class S3FileKey implements IKey, Comparable<S3FileKey> {
     private String bucket;
     private String key;
 
-    public S3FileKey() {}
+    public S3FileKey() {
+    }
 
     public S3FileKey(@Nonnull String bucket, @Nonnull String key) {
         this.bucket = bucket;
@@ -69,7 +70,7 @@ public class S3FileKey implements IKey, Comparable<S3FileKey> {
     @Override
     public int compareTo(IKey key) {
         if (key instanceof S3FileKey) {
-            S3FileKey fk = (S3FileKey)key;
+            S3FileKey fk = (S3FileKey) key;
             int ret = bucket.compareTo(fk.bucket);
             if (ret == 0) {
                 ret = this.key.compareTo(fk.key);

@@ -42,11 +42,6 @@ public abstract class AbstractJob implements Job {
     private final String METRIC_LATENCY_CALL = String.format("%s.%s.CALL", "%s", "%s");
     private final String METRIC_COUNTER_CALL = String.format("%s.%s.COUNT.CALL", "%s", "%s");
     private final String METRIC_COUNTER_ERROR_CALL = String.format("%s.%s.COUNT.ERRORS.CALL", "%s", "%s");
-
-    public AbstractJob() {
-        setupMonitoring();
-    }
-
     /**
      * Metrics - Call Latency
      */
@@ -62,6 +57,9 @@ public abstract class AbstractJob implements Job {
      */
     @Setter(AccessLevel.NONE)
     protected Id callErrorCounter = null;
+    public AbstractJob() {
+        setupMonitoring();
+    }
 
     public void setupMonitoring() {
         String name = UUID.randomUUID().toString();

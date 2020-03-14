@@ -23,6 +23,7 @@ import lombok.Setter;
 /**
  * Class represents a asset modification update.
  * Includes the modified by and modification timestamp.
+ *
  * @param <T> - User entity type.
  */
 @Getter

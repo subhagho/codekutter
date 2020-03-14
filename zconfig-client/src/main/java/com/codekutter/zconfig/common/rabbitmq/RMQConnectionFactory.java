@@ -88,7 +88,7 @@ public class RMQConnectionFactory implements IConfigurable, Closeable {
     @Override
     @MethodInvoke
     public void configure(@Nonnull AbstractConfigNode node)
-    throws ConfigurationException {
+            throws ConfigurationException {
         Preconditions.checkArgument(node != null);
         Preconditions.checkArgument(node instanceof ConfigPathNode);
         try {
@@ -115,7 +115,7 @@ public class RMQConnectionFactory implements IConfigurable, Closeable {
         if (Strings.isNullOrEmpty(hostname)) {
             throw new ConfigurationException(
                     String.format("Missing configuration parameter : [%s]",
-                                  "hostname"));
+                            "hostname"));
         }
         if (port <= 0) {
             port = DEFAULT_PORT;
@@ -131,7 +131,7 @@ public class RMQConnectionFactory implements IConfigurable, Closeable {
      * @throws RMQException
      */
     public void open(@Nonnull String username, @Nonnull String password)
-    throws RMQException {
+            throws RMQException {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(username));
         Preconditions.checkArgument(!Strings.isNullOrEmpty(password));
         try {
@@ -145,7 +145,7 @@ public class RMQConnectionFactory implements IConfigurable, Closeable {
             try (Connection connection = connectionFactory.newConnection()) {
 
                 LogUtils.info(getClass(),
-                              "RabbitMQ Connection successfully initialized...");
+                        "RabbitMQ Connection successfully initialized...");
             }
             state.setState(EClientState.Available);
         } catch (Exception e) {

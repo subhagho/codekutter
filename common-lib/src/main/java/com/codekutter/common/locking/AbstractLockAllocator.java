@@ -47,7 +47,17 @@ import java.io.IOException;
 @ConfigPath(path = "lock-allocator")
 public abstract class AbstractLockAllocator<T> implements IConfigurable, Closeable {
     private static final long DEFAULT_LOCK_TIMEOUT = 60 * 60 * 1000; // 1 Hr.
-
+    /**
+     * Map containing the thread instances of this lock.
+     */
+    @Setter(AccessLevel.NONE)
+    @Getter(AccessLevel.NONE)
+    private final MapThreadCache<LockId, DistributedLock> threadLocks = new MapThreadCache<>();
+    /**
+     * Connection instance used to persist the lock.
+     */
+    @Setter(AccessLevel.NONE)
+    protected AbstractConnection<T> connection;
     /**
      * Timeout for expiring locks - used to prevent lock starvation
      * due to lock instances that haven't been released.
@@ -64,18 +74,6 @@ public abstract class AbstractLockAllocator<T> implements IConfigurable, Closeab
      */
     @ConfigAttribute(name = "lockType", required = true)
     private Class<? extends DistributedLock> lockType;
-    /**
-     * Connection instance used to persist the lock.
-     */
-    @Setter(AccessLevel.NONE)
-    protected AbstractConnection<T> connection;
-    /**
-     * Map containing the thread instances of this lock.
-     */
-    @Setter(AccessLevel.NONE)
-    @Getter(AccessLevel.NONE)
-    private final MapThreadCache<LockId, DistributedLock> threadLocks = new MapThreadCache<>();
-
     /**
      * State of this lock instance.
      */

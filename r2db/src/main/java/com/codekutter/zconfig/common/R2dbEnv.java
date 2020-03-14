@@ -32,12 +32,28 @@ public class R2dbEnv extends ExtendedZConfigEnv {
 
     private EntityManager entityManager = new EntityManager();
 
-    public EntityManager getEntityManager() {
-        return entityManager;
-    }
-
     protected R2dbEnv(@Nonnull String configName) {
         super(configName);
+    }
+
+    /**
+     * Get the instance of the client environment handle.
+     *
+     * @return - Client environment handle.
+     * @throws EnvException
+     */
+    public static R2dbEnv env() throws EnvException {
+        ZConfigEnv env = ZConfigEnv.env();
+        if (env instanceof R2dbEnv) {
+            return (R2dbEnv) env;
+        }
+        throw new EnvException(
+                String.format("Env handle is not of client type. [type=%s]",
+                        env.getClass().getCanonicalName()));
+    }
+
+    public EntityManager getEntityManager() {
+        return entityManager;
     }
 
     /**
@@ -74,21 +90,5 @@ public class R2dbEnv extends ExtendedZConfigEnv {
         } catch (Exception ex) {
             LogUtils.error(getClass(), ex);
         }
-    }
-
-    /**
-     * Get the instance of the client environment handle.
-     *
-     * @return - Client environment handle.
-     * @throws EnvException
-     */
-    public static R2dbEnv env() throws EnvException {
-        ZConfigEnv env = ZConfigEnv.env();
-        if (env instanceof R2dbEnv) {
-            return (R2dbEnv) env;
-        }
-        throw new EnvException(
-                String.format("Env handle is not of client type. [type=%s]",
-                        env.getClass().getCanonicalName()));
     }
 }

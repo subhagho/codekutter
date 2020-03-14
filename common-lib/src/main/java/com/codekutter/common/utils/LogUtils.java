@@ -36,32 +36,6 @@ import javax.annotation.Nonnull;
  * Utility functions for Logging.
  */
 public class LogUtils {
-    /**
-     * Enum defining the logging levels.
-     */
-    public static enum ELOGLELVEL {
-        /**
-         * Information log
-         */
-        INFO,
-        /**
-         * Warning Log
-         */
-        WARN,
-        /**
-         * Error Log
-         */
-        ERROR,
-        /**
-         * Debug Log
-         */
-        DEBUG,
-        /**
-         * Trace Log
-         */
-        TRACE
-    }
-
     private static final Logger LOGGER = LoggerFactory.getLogger("DEFAULT");
 
     public static boolean isDebugEnabled() {
@@ -352,5 +326,31 @@ public class LogUtils {
      */
     public static void debug(Class<?> caller, Object source, Logger LOG) {
         WRITE(caller, source, LOG, ELOGLELVEL.DEBUG);
+    }
+
+    /**
+     * Enum defining the logging levels.
+     */
+    public static enum ELOGLELVEL {
+        /**
+         * Information log
+         */
+        INFO,
+        /**
+         * Warning Log
+         */
+        WARN,
+        /**
+         * Error Log
+         */
+        ERROR,
+        /**
+         * Debug Log
+         */
+        DEBUG,
+        /**
+         * Trace Log
+         */
+        TRACE
     }
 }

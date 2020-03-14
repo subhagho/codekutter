@@ -28,10 +28,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ConfigSetupUtils {
-    public enum EOperation {
-        IV, encrypt, decrypt, hash
-    }
-
     @Option(name = "-o", usage = "Operation to perform", aliases = {"--op"})
     private String op;
     @Option(name = "-i", usage = "Configuration ID", aliases = {"--id"})
@@ -50,9 +46,16 @@ public class ConfigSetupUtils {
     private String iv;
     @Argument
     private List<String> otherArgs = new ArrayList<>();
-
     private String input;
     private EOperation operation;
+
+    public static void main(String[] args) {
+        try {
+            new ConfigSetupUtils().execute(args);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
 
     private void execute(String[] args) throws Exception {
         ParserProperties props = ParserProperties.defaults().withUsageWidth(256);
@@ -182,11 +185,7 @@ public class ConfigSetupUtils {
                                 OptionHandlerFilter.ALL));
     }
 
-    public static void main(String[] args) {
-        try {
-            new ConfigSetupUtils().execute(args);
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
+    public enum EOperation {
+        IV, encrypt, decrypt, hash
     }
 }

@@ -45,7 +45,7 @@ public class DataSourceContextGenerator implements IAuditContextGenerator {
                                                              Principal user) throws DataStoreException {
         Preconditions.checkArgument(source instanceof AbstractDataStore);
         try {
-            AbstractDataStore store = (AbstractDataStore)source;
+            AbstractDataStore store = (AbstractDataStore) source;
             return store.context();
         } catch (Exception ex) {
             throw new DataStoreException(ex);

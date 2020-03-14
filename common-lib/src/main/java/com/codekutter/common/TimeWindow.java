@@ -45,105 +45,11 @@ public class TimeWindow {
     private long div = -1;
 
     /**
-     * Get the time window the specified timestamp falls into.
-     *
-     * @param timestamp
-     *            - Input timestamp.
-     * @return - Time window represented as the milliseconds value.
-     * @throws TimeWindowException
-     */
-    public long windowStart(long timestamp) throws TimeWindowException {
-        return ((timestamp / div()) * div());
-    }
-
-    /**
-     * Get the create and end timestamps for the window the specified timestamp
-     * falls in.
-     *
-     * @param timestamp
-     *            - Input timestamp.
-     * @return - Long array[2] : array[1]=create time, array[2]=end time.
-     * @throws TimeWindowException
-     */
-    public long[] window(long timestamp) throws TimeWindowException {
-        long[] w = new long[2];
-
-        w[0] = windowStart(timestamp);
-        w[1] = w[0] + div();
-
-        return w;
-    }
-
-    /**
-     * Get the interval between the specified timestamp and the window end
-     * timestamp.
-     *
-     * @param timestamp
-     *            - Input timestamp.
-     * @return - Long delta.
-     * @throws TimeWindowException
-     */
-    public long interval(long timestamp) throws TimeWindowException {
-        long[] w = window(timestamp);
-
-        return w[1] - timestamp;
-    }
-
-    /**
-     * Get the window period in milliseconds.
-     *
-     * @return - The window period.
-     * @throws TimeWindowException
-     */
-    public long period() throws TimeWindowException {
-        return div();
-    }
-
-    /**
-     * Default to string representation of this instance.
-     *
-     * @return - String representation.
-     */
-    @Override
-    public String toString() {
-        return String.format("TIME WINDOW: [GRANULARITY:%s][RESOLUTION:%d]", granularity.name(),
-                resolution);
-    }
-
-    private long div() throws TimeWindowException {
-        if (div < 0) {
-            switch (granularity) {
-            case MILLISECONDS:
-                div = 1;
-                break;
-            case SECONDS:
-                div = 1000;
-                break;
-            case MINUTES:
-                div = 1000 * 60;
-                break;
-            case HOURS:
-                div = 1000 * 60 * 60;
-                break;
-            case DAYS:
-                div = 1000 * 60 * 60 * 24;
-                break;
-            default:
-                throw new TimeWindowException("Granularity not supported. [granularity = "
-                        + granularity.name() + "]");
-            }
-            div *= resolution;
-        }
-        return div;
-    }
-
-    /**
      * Parse the passed string as Time window. Time Window formats:
      * [VALUE][UNIT] UNITS: - ms : milliseconds - ss : seconds - mm : minutes -
      * hh : hours - dd : days
      *
-     * @param unit
-     *            - Time Window string
+     * @param unit - Time Window string
      * @return - Parsed time window.
      * @throws TimeWindowException
      */
@@ -179,11 +85,9 @@ public class TimeWindow {
     /**
      * Get {@link TimeUnit} corresponding to the specified string
      *
-     * @param s
-     *            the string for which TimeUnit needs to be returned
+     * @param s the string for which TimeUnit needs to be returned
      * @return the {@link TimeUnit} instance
-     * @throws TimeWindowException
-     *             the time window exception
+     * @throws TimeWindowException the time window exception
      */
     private static TimeUnit timeunit(String s) throws TimeWindowException {
         if (s.compareToIgnoreCase(TW_MILLISECONDS) == 0) {
@@ -198,5 +102,95 @@ public class TimeWindow {
             return TimeUnit.DAYS;
         }
         throw new TimeWindowException("Invalid TimeUnit value. [string=" + s + "]");
+    }
+
+    /**
+     * Get the time window the specified timestamp falls into.
+     *
+     * @param timestamp - Input timestamp.
+     * @return - Time window represented as the milliseconds value.
+     * @throws TimeWindowException
+     */
+    public long windowStart(long timestamp) throws TimeWindowException {
+        return ((timestamp / div()) * div());
+    }
+
+    /**
+     * Get the create and end timestamps for the window the specified timestamp
+     * falls in.
+     *
+     * @param timestamp - Input timestamp.
+     * @return - Long array[2] : array[1]=create time, array[2]=end time.
+     * @throws TimeWindowException
+     */
+    public long[] window(long timestamp) throws TimeWindowException {
+        long[] w = new long[2];
+
+        w[0] = windowStart(timestamp);
+        w[1] = w[0] + div();
+
+        return w;
+    }
+
+    /**
+     * Get the interval between the specified timestamp and the window end
+     * timestamp.
+     *
+     * @param timestamp - Input timestamp.
+     * @return - Long delta.
+     * @throws TimeWindowException
+     */
+    public long interval(long timestamp) throws TimeWindowException {
+        long[] w = window(timestamp);
+
+        return w[1] - timestamp;
+    }
+
+    /**
+     * Get the window period in milliseconds.
+     *
+     * @return - The window period.
+     * @throws TimeWindowException
+     */
+    public long period() throws TimeWindowException {
+        return div();
+    }
+
+    /**
+     * Default to string representation of this instance.
+     *
+     * @return - String representation.
+     */
+    @Override
+    public String toString() {
+        return String.format("TIME WINDOW: [GRANULARITY:%s][RESOLUTION:%d]", granularity.name(),
+                resolution);
+    }
+
+    private long div() throws TimeWindowException {
+        if (div < 0) {
+            switch (granularity) {
+                case MILLISECONDS:
+                    div = 1;
+                    break;
+                case SECONDS:
+                    div = 1000;
+                    break;
+                case MINUTES:
+                    div = 1000 * 60;
+                    break;
+                case HOURS:
+                    div = 1000 * 60 * 60;
+                    break;
+                case DAYS:
+                    div = 1000 * 60 * 60 * 24;
+                    break;
+                default:
+                    throw new TimeWindowException("Granularity not supported. [granularity = "
+                            + granularity.name() + "]");
+            }
+            div *= resolution;
+        }
+        return div;
     }
 }

@@ -105,6 +105,16 @@ public class ConfigValueNode extends AbstractConfigNode
     }
 
     /**
+     * Set this config node value to the specified value string.
+     *
+     * @param value - Value String.
+     */
+    public void setValue(String value) {
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(value));
+        this.value = value;
+    }
+
+    /**
      * Get the decrypted value of this node.
      *
      * @return - Decrypted value.
@@ -131,16 +141,6 @@ public class ConfigValueNode extends AbstractConfigNode
     }
 
     /**
-     * Set this config node value to the specified value string.
-     *
-     * @param value - Value String.
-     */
-    public void setValue(String value) {
-        Preconditions.checkArgument(!Strings.isNullOrEmpty(value));
-        this.value = value;
-    }
-
-    /**
      * Is the node value encrypted?
      *
      * @return - Is encrypted?
@@ -158,20 +158,20 @@ public class ConfigValueNode extends AbstractConfigNode
         this.encrypted = encrypted;
     }
 
-    public void setValueType(@Nonnull EValueType type) {
-        this.valueType = type;
-    }
-
     public EValueType getValueType() {
         return valueType;
     }
 
-    public void setEnumType(Class<? extends Enum> enumType) {
-        this.enumType = enumType;
+    public void setValueType(@Nonnull EValueType type) {
+        this.valueType = type;
     }
 
     public Class<? extends Enum> getEnumType() {
         return enumType;
+    }
+
+    public void setEnumType(Class<? extends Enum> enumType) {
+        this.enumType = enumType;
     }
 
     /**

@@ -39,14 +39,14 @@ import java.util.List;
 @ConfigPath(path = "connection")
 @SuppressWarnings("rawtypes")
 public abstract class AbstractConnection<T> implements IConfigurable, Closeable {
+    @Setter(AccessLevel.NONE)
+    private final ConnectionState state = new ConnectionState();
     @ConfigAttribute(name = "name")
     private String name;
     @ConfigAttribute(name = "class")
     private Class<? extends AbstractConnection> type;
     @ConfigAttribute(name = "source")
     private EConfigSource configSource = EConfigSource.File;
-    @Setter(AccessLevel.NONE)
-    private final ConnectionState state = new ConnectionState();
     @ConfigValue(name = "classes", parser = ClassListParser.class)
     private List<Class<?>> supportedTypes = new ArrayList<>();
 

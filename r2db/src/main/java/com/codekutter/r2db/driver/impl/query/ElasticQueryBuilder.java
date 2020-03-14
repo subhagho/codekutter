@@ -36,6 +36,10 @@ public class ElasticQueryBuilder<T extends IEntity> {
         this.type = type;
     }
 
+    public static <E extends IEntity> ElasticQueryBuilder<E> builder(Class<? extends E> type) {
+        return new ElasticQueryBuilder<>(type);
+    }
+
     private void addQuery(QueryBuilder query, boolean not) {
         if (queryBuilder == null) {
             if (not) {
@@ -185,9 +189,5 @@ public class ElasticQueryBuilder<T extends IEntity> {
 
     public QueryBuilder build() {
         return queryBuilder;
-    }
-
-    public static <E extends IEntity> ElasticQueryBuilder<E> builder(Class<? extends E> type) {
-        return new ElasticQueryBuilder<>(type);
     }
 }

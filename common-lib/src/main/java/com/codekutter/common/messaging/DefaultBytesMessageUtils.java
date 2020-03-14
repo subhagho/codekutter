@@ -34,8 +34,8 @@ import java.io.ObjectOutputStream;
 public class DefaultBytesMessageUtils {
 
     public static Message message(@Nonnull Session session,
-                               @Nonnull String queue,
-                               @Nonnull DefaultBytesMessage message) throws Exception {
+                                  @Nonnull String queue,
+                                  @Nonnull DefaultBytesMessage message) throws Exception {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(queue));
         message.setQueue(queue);
         message.setTimestamp(System.currentTimeMillis());
@@ -57,7 +57,7 @@ public class DefaultBytesMessageUtils {
         if (m.getBody() != null) {
             ByteArrayInputStream in = new ByteArrayInputStream(m.getBody());
             ObjectInputStream is = new ObjectInputStream(in);
-            return  (M) is.readObject();
+            return (M) is.readObject();
         }
         return null;
     }

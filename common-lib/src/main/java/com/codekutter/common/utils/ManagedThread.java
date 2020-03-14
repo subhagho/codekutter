@@ -11,7 +11,7 @@ import java.util.Set;
 @Getter
 @Setter
 @Accessors(fluent = true)
-public abstract class ManagedThread extends Thread {
+public class ManagedThread extends Thread {
     private Set<IThreadListener> fIThreadListeners = new HashSet<>();
 
     public ManagedThread register(@Nonnull IThreadListener pIThreadListener) {
@@ -22,7 +22,7 @@ public abstract class ManagedThread extends Thread {
     @Override
     public synchronized void start() {
         if (!fIThreadListeners.isEmpty()) {
-            for(IThreadListener listener : fIThreadListeners) {
+            for (IThreadListener listener : fIThreadListeners) {
                 listener.event(EThreadEvent.Start, this);
             }
         }
@@ -32,13 +32,13 @@ public abstract class ManagedThread extends Thread {
     @Override
     public void run() {
         if (!fIThreadListeners.isEmpty()) {
-            for(IThreadListener listener : fIThreadListeners) {
+            for (IThreadListener listener : fIThreadListeners) {
                 listener.event(EThreadEvent.Run, this);
             }
         }
         super.run();
         if (!fIThreadListeners.isEmpty()) {
-            for(IThreadListener listener : fIThreadListeners) {
+            for (IThreadListener listener : fIThreadListeners) {
                 listener.event(EThreadEvent.Stop, this);
             }
         }
@@ -47,7 +47,7 @@ public abstract class ManagedThread extends Thread {
     @Override
     public void interrupt() {
         if (!fIThreadListeners.isEmpty()) {
-            for(IThreadListener listener : fIThreadListeners) {
+            for (IThreadListener listener : fIThreadListeners) {
                 listener.event(EThreadEvent.Interrupted, this);
             }
         }
@@ -56,7 +56,7 @@ public abstract class ManagedThread extends Thread {
 
     public void errorEvent(Class<?> type, Throwable error) {
         if (!fIThreadListeners.isEmpty()) {
-            for(IThreadListener listener : fIThreadListeners) {
+            for (IThreadListener listener : fIThreadListeners) {
                 listener.event(EThreadEvent.Error, this, type, error);
             }
         }

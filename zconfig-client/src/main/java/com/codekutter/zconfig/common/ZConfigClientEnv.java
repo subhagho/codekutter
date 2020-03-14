@@ -110,6 +110,85 @@ public class ZConfigClientEnv extends ZConfigEnv {
     }
 
     /**
+     * Setup the client environment using the passed configuration file.
+     *
+     * @param configfile - Configuration file (path) to read from.
+     * @param version    - Configuration version (expected)
+     * @throws ConfigurationException
+     */
+    public static void setup(@Nonnull String configName, @Nonnull String configfile, @Nonnull String version,
+                             String password)
+            throws ConfigurationException {
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(configfile));
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(version));
+
+        try {
+            ZConfigEnv.getEnvLock();
+            try {
+                ZConfigEnv env = ZConfigEnv.initialize(ZConfigClientEnv.class, configName);
+                if (env.getState() != EEnvState.Initialized) {
+                    env.init(configfile, Version.parse(version), password);
+                }
+            } finally {
+                ZConfigEnv.releaseEnvLock();
+            }
+        } catch (Exception e) {
+            throw new ConfigurationException(e);
+        }
+    }
+
+    /**
+     * Setup the client environment using the passed configuration file.
+     * Method to be used in-case the configuration type cannot be deciphered using
+     * the file extension.
+     *
+     * @param configfile - Configuration file (path) to read from.
+     * @param type       - Configuration type.
+     * @param version    - Configuration version (expected)
+     * @throws ConfigurationException
+     */
+    public static void setup(@Nonnull String configName,
+                             @Nonnull String configfile,
+                             @Nonnull ConfigProviderFactory.EConfigType type,
+                             @Nonnull String version, String password)
+            throws ConfigurationException {
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(configfile));
+        Preconditions.checkArgument(type != null);
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(version));
+
+
+        try {
+            ZConfigEnv.getEnvLock();
+            try {
+                ZConfigEnv env = ZConfigEnv.initialize(ZConfigClientEnv.class, configName);
+                if (env.getState() != EEnvState.Initialized) {
+                    env.init(configfile, type, Version.parse(version), password);
+                }
+            } finally {
+                ZConfigEnv.releaseEnvLock();
+            }
+        } catch (Exception e) {
+            throw new ConfigurationException(e);
+        }
+    }
+
+    /**
+     * Get the instance of the client environment handle.
+     *
+     * @return - Client environment handle.
+     * @throws EnvException
+     */
+    public static ZConfigClientEnv clientEnv() throws EnvException {
+        ZConfigEnv env = ZConfigEnv.env();
+        if (env instanceof ZConfigClientEnv) {
+            return (ZConfigClientEnv) env;
+        }
+        throw new EnvException(
+                String.format("Env handle is not of client type. [type=%s]",
+                        env.getClass().getCanonicalName()));
+    }
+
+    /**
      * Perform post-initialisation tasks if any.
      *
      * @throws ConfigurationException
@@ -343,84 +422,5 @@ public class ZConfigClientEnv extends ZConfigEnv {
      */
     public ZConfigClientInstance getInstance() {
         return instance;
-    }
-
-    /**
-     * Setup the client environment using the passed configuration file.
-     *
-     * @param configfile - Configuration file (path) to read from.
-     * @param version    - Configuration version (expected)
-     * @throws ConfigurationException
-     */
-    public static void setup(@Nonnull String configName, @Nonnull String configfile, @Nonnull String version,
-                             String password)
-            throws ConfigurationException {
-        Preconditions.checkArgument(!Strings.isNullOrEmpty(configfile));
-        Preconditions.checkArgument(!Strings.isNullOrEmpty(version));
-
-        try {
-            ZConfigEnv.getEnvLock();
-            try {
-                ZConfigEnv env = ZConfigEnv.initialize(ZConfigClientEnv.class, configName);
-                if (env.getState() != EEnvState.Initialized) {
-                    env.init(configfile, Version.parse(version), password);
-                }
-            } finally {
-                ZConfigEnv.releaseEnvLock();
-            }
-        } catch (Exception e) {
-            throw new ConfigurationException(e);
-        }
-    }
-
-    /**
-     * Setup the client environment using the passed configuration file.
-     * Method to be used in-case the configuration type cannot be deciphered using
-     * the file extension.
-     *
-     * @param configfile - Configuration file (path) to read from.
-     * @param type       - Configuration type.
-     * @param version    - Configuration version (expected)
-     * @throws ConfigurationException
-     */
-    public static void setup(@Nonnull String configName,
-                             @Nonnull String configfile,
-                             @Nonnull ConfigProviderFactory.EConfigType type,
-                             @Nonnull String version, String password)
-            throws ConfigurationException {
-        Preconditions.checkArgument(!Strings.isNullOrEmpty(configfile));
-        Preconditions.checkArgument(type != null);
-        Preconditions.checkArgument(!Strings.isNullOrEmpty(version));
-
-
-        try {
-            ZConfigEnv.getEnvLock();
-            try {
-                ZConfigEnv env = ZConfigEnv.initialize(ZConfigClientEnv.class, configName);
-                if (env.getState() != EEnvState.Initialized) {
-                    env.init(configfile, type, Version.parse(version), password);
-                }
-            } finally {
-                ZConfigEnv.releaseEnvLock();
-            }
-        } catch (Exception e) {
-            throw new ConfigurationException(e);
-        }
-    }
-
-    /**
-     * Get the instance of the client environment handle.
-     *
-     * @return - Client environment handle.
-     * @throws EnvException
-     */
-    public static ZConfigClientEnv clientEnv() throws EnvException {
-        ZConfigEnv env = ZConfigEnv.env();
-        if (env instanceof ZConfigClientEnv) {
-            return (ZConfigClientEnv) env;
-        }
-        throw new EnvException(
-                String.format("Env handle is not of client type. [type=%s]",
-                        env.getClass().getCanonicalName()));
     }
 }

@@ -46,7 +46,6 @@ public class DbLockAllocator extends AbstractLockAllocator<Session> {
      * Create/Get a new instance of this type of Distributed Lock.
      *
      * @param id - Unique Lock ID to Create/Get instance.
-     *
      * @return - Lock instance.
      * @throws LockException
      */

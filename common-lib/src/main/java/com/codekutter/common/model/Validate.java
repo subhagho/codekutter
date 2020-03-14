@@ -28,7 +28,7 @@ import java.lang.annotation.*;
 public @interface Validate {
     /**
      * Constraint definition to validate using.
-     *
+     * <p>
      * Default is Null/Empty check.
      *
      * @return - Get the validation constraint.

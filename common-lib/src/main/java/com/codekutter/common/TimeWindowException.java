@@ -31,8 +31,7 @@ public class TimeWindowException extends Exception {
     /**
      * Instantiates a new time window exception with the exception message
      *
-     * @param mesg
-     *            the exception mesg
+     * @param mesg the exception mesg
      */
     public TimeWindowException(String mesg) {
         super(_PREFIX_ + mesg);
@@ -42,10 +41,8 @@ public class TimeWindowException extends Exception {
      * Instantiates a new time window exception with the exception message and
      * exception cause
      *
-     * @param mesg
-     *            the exception mesg
-     * @param inner
-     *            the throwable cause
+     * @param mesg  the exception mesg
+     * @param inner the throwable cause
      */
     public TimeWindowException(String mesg, Throwable inner) {
         super(_PREFIX_ + mesg, inner);

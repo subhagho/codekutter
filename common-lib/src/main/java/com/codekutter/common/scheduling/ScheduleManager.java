@@ -58,7 +58,7 @@ import static org.quartz.DateBuilder.futureDate;
 public class ScheduleManager implements IConfigurable, Closeable {
     public static final String CONFIG_PATH_JOBS = "jobs";
     public static final int DEFAULT_STARTUP_DELAY = 30;
-
+    private static final ScheduleManager __instance = new ScheduleManager();
     @Setter(AccessLevel.NONE)
     private Map<String, JobConfig> jobs = new HashMap<>();
     @Setter(AccessLevel.NONE)
@@ -71,19 +71,29 @@ public class ScheduleManager implements IConfigurable, Closeable {
     private boolean audited = false;
     @ConfigAttribute(name = "auditLogger")
     private Class<? extends IJobAuditLogger> auditLoggerClass;
-
     @Setter(AccessLevel.NONE)
     private IJobAuditLogger auditLogger;
-
     @Setter(AccessLevel.NONE)
     private ObjectState state = new ObjectState();
-
     @Getter(AccessLevel.NONE)
     @Setter(AccessLevel.NONE)
     private SchedulerFactory schedulerFactory = null;
     @Getter(AccessLevel.NONE)
     @Setter(AccessLevel.NONE)
     private Scheduler scheduler = null;
+
+    public static void setup(@Nonnull AbstractConfigNode node) throws ConfigurationException {
+        __instance.configure(node);
+    }
+
+    public static ScheduleManager get(Class<?> caller) throws StateException {
+        __instance.state.check(EObjectState.Available, caller);
+        return __instance;
+    }
+
+    public static void dispose() throws IOException {
+        __instance.close();
+    }
 
     public JobConfig getJobConfig(@Nonnull String namespace, @Nonnull String name) {
         String key = JobConfig.key(namespace, name);
@@ -190,20 +200,5 @@ public class ScheduleManager implements IConfigurable, Closeable {
             LogUtils.error(getClass(), ex);
             throw new IOException(ex);
         }
-    }
-
-    private static final ScheduleManager __instance = new ScheduleManager();
-
-    public static void setup(@Nonnull AbstractConfigNode node) throws ConfigurationException {
-        __instance.configure(node);
-    }
-
-    public static ScheduleManager get(Class<?> caller) throws StateException {
-        __instance.state.check(EObjectState.Available, caller);
-        return __instance;
-    }
-
-    public static void dispose() throws IOException {
-        __instance.close();
     }
 }

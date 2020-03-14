@@ -69,7 +69,7 @@ public class EnvState extends AbstractState<EEnvState> {
         if (getState() != expected) {
             throw new StateException(
                     String.format("Invalid State Error : [expected=%s][current=%s]",
-                                  expected.name(), getState().name()));
+                            expected.name(), getState().name()));
         }
     }
 }

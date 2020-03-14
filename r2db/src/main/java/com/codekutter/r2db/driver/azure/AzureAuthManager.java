@@ -54,13 +54,22 @@ import java.util.concurrent.Future;
 @Accessors(fluent = true)
 @ConfigPath(path = "azure-auth")
 public class AzureAuthManager implements IConfigurable, Closeable {
+    private static final AzureAuthManager __instance = new AzureAuthManager();
     @ConfigAttribute(name = "id", required = true)
     private String applicationId;
     @ConfigValue(name = "authority", required = true)
     private String authorityUrl;
-
     @Setter(AccessLevel.NONE)
     private ObjectState state = new ObjectState();
+
+    private static AzureAuthManager get() throws StateException {
+        __instance.state.check(EObjectState.Available, AzureAuthManager.class);
+        return __instance;
+    }
+
+    public static void setup(@Nonnull AbstractConfigNode node) throws ConfigurationException {
+        __instance.configure(node);
+    }
 
     /**
      * Configure this type instance.
@@ -100,7 +109,7 @@ public class AzureAuthManager implements IConfigurable, Closeable {
         return result.get();
     }
 
-    public String getUserInfoFromGraph(String accessToken) throws IOException{
+    public String getUserInfoFromGraph(String accessToken) throws IOException {
         URL url = new URL("https://graph.microsoft.com/v1.0/me");
         HttpURLConnection conn = (HttpURLConnection) url.openConnection();
 
@@ -109,10 +118,10 @@ public class AzureAuthManager implements IConfigurable, Closeable {
         conn.setRequestProperty("Accept", "application/json");
 
         int httpResponseCode = conn.getResponseCode();
-        if(httpResponseCode == 200) {
+        if (httpResponseCode == 200) {
 
             StringBuilder response;
-            try(BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream()))){
+            try (BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream()))) {
                 String inputLine;
                 response = new StringBuilder();
 
@@ -125,17 +134,6 @@ public class AzureAuthManager implements IConfigurable, Closeable {
             return String.format("Connection returned HTTP code: %s with message: %s",
                     httpResponseCode, conn.getResponseMessage());
         }
-    }
-
-    private static final AzureAuthManager __instance = new AzureAuthManager();
-
-    private static AzureAuthManager get() throws StateException {
-        __instance.state.check(EObjectState.Available, AzureAuthManager.class);
-        return __instance;
-    }
-
-    public static void setup(@Nonnull AbstractConfigNode node) throws ConfigurationException {
-        __instance.configure(node);
     }
 
     @Override

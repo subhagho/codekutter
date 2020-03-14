@@ -18,7 +18,6 @@
 package com.codekutter.r2db.tools;
 
 import com.codekutter.common.model.IEntity;
-import com.codekutter.common.stores.ConnectionException;
 import com.codekutter.common.stores.ConnectionManager;
 import com.codekutter.common.stores.DataStoreException;
 import com.codekutter.common.utils.LogUtils;
@@ -36,7 +35,6 @@ import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
 import org.elasticsearch.action.admin.indices.open.OpenIndexRequest;
 import org.elasticsearch.action.admin.indices.settings.get.GetSettingsRequest;
 import org.elasticsearch.action.admin.indices.settings.get.GetSettingsResponse;
-import org.elasticsearch.action.admin.indices.settings.put.UpdateSettingsRequest;
 import org.elasticsearch.action.support.master.AcknowledgedResponse;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
@@ -249,7 +247,7 @@ public class IndexBuilder {
         Map<String, MappingMetaData> allMappings = response.mappings();
         MappingMetaData indexMapping = allMappings.get(index);
         Map<String, Object> mapping = indexMapping.sourceAsMap();
-        for(String key : mapping.keySet()) {
+        for (String key : mapping.keySet()) {
             System.out.println(String.format("%s ==> [%s]", key, mapping.get(key)));
         }
     }

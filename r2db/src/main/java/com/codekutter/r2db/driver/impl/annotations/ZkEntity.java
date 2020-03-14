@@ -20,9 +20,10 @@ package com.codekutter.r2db.driver.impl.annotations;
 import java.lang.annotation.*;
 
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.TYPE })
+@Target({ElementType.TYPE})
 @Inherited
 public @interface ZkEntity {
     String name() default "";
+
     String path() default "";
 }

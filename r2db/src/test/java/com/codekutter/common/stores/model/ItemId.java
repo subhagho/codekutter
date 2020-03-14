@@ -66,7 +66,7 @@ public class ItemId implements IKey, Serializable {
     @Override
     public int compareTo(IKey key) {
         if (key instanceof ItemId) {
-            ItemId i = (ItemId)key;
+            ItemId i = (ItemId) key;
             int ret = orderId.compareTo(i.orderId);
             if (ret == 0) {
                 ret = productId.compareTo(i.productId);

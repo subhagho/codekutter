@@ -37,23 +37,6 @@ import java.util.concurrent.ArrayBlockingQueue;
 import static org.junit.jupiter.api.Assertions.*;
 
 class Test_ReflectionUtils {
-    static class TestList {
-        private List<String> strings;
-        private ArrayList<Integer> ints;
-
-        public List<String> getStrings() {
-            return strings;
-        }
-
-        public void setStrings(List<String> strings) {
-            this.strings = strings;
-        }
-
-        public ArrayList<Integer> getInts() {
-            return ints;
-        }
-    }
-
     @Test
     void isSuperType() {
         boolean ret = ReflectionUtils
@@ -77,16 +60,33 @@ class Test_ReflectionUtils {
             Class<?> t = ReflectionUtils.getGenericListType(f);
             assertNotNull(t);
             LogUtils.info(getClass(),
-                          String.format("Field=%s", t.getCanonicalName()));
+                    String.format("Field=%s", t.getCanonicalName()));
             f = cls.getDeclaredField("ints");
             assertNotNull(f);
             t = ReflectionUtils.getGenericListType(f);
             assertNotNull(t);
             LogUtils.info(getClass(),
-                          String.format("Field=%s", t.getCanonicalName()));
+                    String.format("Field=%s", t.getCanonicalName()));
         } catch (Exception e) {
             LogUtils.error(getClass(), e);
             fail(e.getLocalizedMessage());
+        }
+    }
+
+    static class TestList {
+        private List<String> strings;
+        private ArrayList<Integer> ints;
+
+        public List<String> getStrings() {
+            return strings;
+        }
+
+        public void setStrings(List<String> strings) {
+            this.strings = strings;
+        }
+
+        public ArrayList<Integer> getInts() {
+            return ints;
         }
     }
 }

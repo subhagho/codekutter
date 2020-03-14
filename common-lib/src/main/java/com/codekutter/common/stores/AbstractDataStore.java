@@ -43,114 +43,9 @@ import java.util.Map;
 @Accessors(fluent = true)
 public abstract class AbstractDataStore<T> implements Closeable {
 
-    private static final class Metrics {
-        public static final String TAG_OPERATION = "operation";
-        public static final String TAG_ENTITY = "entity";
-
-        public static final String METRIC_TAG_READ = "READ";
-        public static final String METRIC_TAG_SEARCH = "SEARCH";
-        public static final String METRIC_TAG_CREATE = "CREATE";
-        public static final String METRIC_TAG_UPDATE = "UPDATE";
-        public static final String METRIC_TAG_DELETE = "DELETE";
-
-        public KeyValuePair<String, String>[] TAGS = new KeyValuePair[2];
-
-        private final String METRIC_LATENCY_CREATE = String.format("%s.%s.CREATE", "%s", "%s");
-        private final String METRIC_LATENCY_UPDATE = String.format("%s.%s.UPDATE", "%s", "%s");
-        private final String METRIC_LATENCY_DELETE = String.format("%s.%s.DELETE", "%s", "%s");
-        private final String METRIC_LATENCY_READ = String.format("%s.%s.READ", "%s", "%s");
-        private final String METRIC_LATENCY_SEARCH = String.format("%s.%s.SEARCH", "%s", "%s");
-        private final String METRIC_COUNTER_CREATE = String.format("%s.%s.COUNT.CREATE", "%s", "%s");
-        private final String METRIC_COUNTER_UPDATE = String.format("%s.%s.COUNT.UPDATE", "%s", "%s");
-        private final String METRIC_COUNTER_DELETE = String.format("%s.%s.COUNT.DELETE", "%s", "%s");
-        private final String METRIC_COUNTER_READ = String.format("%s.%s.COUNT.READ", "%s", "%s");
-        private final String METRIC_COUNTER_SEARCH = String.format("%s.%s.COUNT.SEARCH", "%s", "%s");
-        private final String METRIC_COUNTER_ERROR_CREATE = String.format("%s.%s.COUNT.ERRORS.CREATE", "%s", "%s");
-        private final String METRIC_COUNTER_ERROR_UPDATE = String.format("%s.%s.COUNT.ERRORS.UPDATE", "%s", "%s");
-        private final String METRIC_COUNTER_ERROR_DELETE = String.format("%s.%s.COUNT.ERRORS.DELETE", "%s", "%s");
-        private final String METRIC_COUNTER_READ_ERROR = String.format("%s.%s.COUNT.ERRORS.READ", "%s", "%s");
-        private final String METRIC_COUNTER_SEARCH_ERROR = String.format("%s.%s.COUNT.ERRORS.SEARCH", "%s", "%s");
-
-
-        /**
-         * Metrics - CRUD Latency
-         */
-        @Setter(AccessLevel.NONE)
-        protected Timer createLatency = null;
-        /**
-         * Metrics - CRUD Latency
-         */
-        @Setter(AccessLevel.NONE)
-        protected Timer updateLatency = null;
-        /**
-         * Metrics - CRUD Latency
-         */
-        @Setter(AccessLevel.NONE)
-        protected Timer deleteLatency = null;
-        /**
-         * Metrics - Read Latency
-         */
-        @Setter(AccessLevel.NONE)
-        protected Timer readLatency = null;
-        /**
-         * Metrics - Read Latency
-         */
-        @Setter(AccessLevel.NONE)
-        protected Timer searchLatency = null;
-        /**
-         * Counter - CRUD events
-         */
-        @Setter(AccessLevel.NONE)
-        protected Id createCounter = null;
-        /**
-         * Counter - CRUD events
-         */
-        @Setter(AccessLevel.NONE)
-        protected Id updateCounter = null;
-        /**
-         * Counter - CRUD events
-         */
-        @Setter(AccessLevel.NONE)
-        protected Id deleteCounter = null;
-        /**
-         * Counter - Read events
-         */
-        @Setter(AccessLevel.NONE)
-        protected Id readCounter = null;
-        /**
-         * Counter - Search events
-         */
-        @Setter(AccessLevel.NONE)
-        protected Id searchCounter = null;
-        /**
-         * Counter - CRUD Error events
-         */
-        @Setter(AccessLevel.NONE)
-        protected Id createCounterErrors = null;
-        /**
-         * Counter - CRUD Error events
-         */
-        @Setter(AccessLevel.NONE)
-        protected Id updateCounterErrors = null;
-        /**
-         * Counter - CRUD Error events
-         */
-        @Setter(AccessLevel.NONE)
-        protected Id deleteCounterErrors = null;
-        /**
-         * Counter - Read Error events
-         */
-        @Setter(AccessLevel.NONE)
-        protected Id readCounterErrors = null;
-        /**
-         * Counter - Search Error events
-         */
-        @Setter(AccessLevel.NONE)
-        protected Id searchCounterErrors = null;
-    }
-
     private static final int DEFAULT_MAX_RESULTS = 500;
-
+    @Setter(AccessLevel.NONE)
+    protected Metrics metrics = new Metrics();
     @ConfigAttribute(name = "name", required = true)
     private String name;
     @ConfigValue(name = "maxResults")
@@ -161,13 +56,10 @@ public abstract class AbstractDataStore<T> implements Closeable {
     private long threadId;
     @Setter(AccessLevel.NONE)
     private DataStoreConfig config;
-    @Setter(AccessLevel.NONE)
-    protected Metrics metrics = new Metrics();
     @SuppressWarnings("rawtypes")
     private AbstractAuditLogger auditLogger;
     @Setter(AccessLevel.NONE)
     private DataStoreManager dataStoreManager;
-
     public AbstractDataStore() {
         threadId = Thread.currentThread().getId();
     }
@@ -304,9 +196,9 @@ public abstract class AbstractDataStore<T> implements Closeable {
 
     @SuppressWarnings("rawtypes")
     public <E extends IEntity> BaseSearchResult<E> search(@Nonnull String query,
-                                                    int offset,
-                                                    int maxResults,
-                                                    @Nonnull Class<? extends E> type, Context context) throws
+                                                          int offset,
+                                                          int maxResults,
+                                                          @Nonnull Class<? extends E> type, Context context) throws
             DataStoreException {
         setTag(Metrics.METRIC_TAG_SEARCH, type);
         try {
@@ -320,17 +212,17 @@ public abstract class AbstractDataStore<T> implements Closeable {
 
     @SuppressWarnings("rawtypes")
     public abstract <E extends IEntity> BaseSearchResult<E> doSearch(@Nonnull String query,
-                                                               int offset,
-                                                               int maxResults,
-                                                               @Nonnull Class<? extends E> type, Context context) throws
+                                                                     int offset,
+                                                                     int maxResults,
+                                                                     @Nonnull Class<? extends E> type, Context context) throws
             DataStoreException;
 
     @SuppressWarnings("rawtypes")
     public <E extends IEntity> BaseSearchResult<E> search(@Nonnull String query,
-                                                    int offset,
-                                                    int maxResults,
-                                                    Map<String, Object> parameters,
-                                                    @Nonnull Class<? extends E> type, Context context) throws
+                                                          int offset,
+                                                          int maxResults,
+                                                          Map<String, Object> parameters,
+                                                          @Nonnull Class<? extends E> type, Context context) throws
             DataStoreException {
         setTag(Metrics.METRIC_TAG_SEARCH, type);
         try {
@@ -344,10 +236,10 @@ public abstract class AbstractDataStore<T> implements Closeable {
 
     @SuppressWarnings("rawtypes")
     public abstract <E extends IEntity> BaseSearchResult<E> doSearch(@Nonnull String query,
-                                                               int offset,
-                                                               int maxResults,
-                                                               Map<String, Object> parameters,
-                                                               @Nonnull Class<? extends E> type, Context context) throws
+                                                                     int offset,
+                                                                     int maxResults,
+                                                                     Map<String, Object> parameters,
+                                                                     @Nonnull Class<? extends E> type, Context context) throws
             DataStoreException;
 
     @SuppressWarnings("rawtypes")
@@ -358,8 +250,8 @@ public abstract class AbstractDataStore<T> implements Closeable {
 
     @SuppressWarnings("rawtypes")
     public <E extends IEntity> BaseSearchResult<E> search(@Nonnull String query,
-                                                    Map<String, Object> parameters,
-                                                    @Nonnull Class<? extends E> type, Context context) throws
+                                                          Map<String, Object> parameters,
+                                                          @Nonnull Class<? extends E> type, Context context) throws
             DataStoreException {
         return search(query, 0, maxResults, parameters, type, context);
     }
@@ -376,4 +268,106 @@ public abstract class AbstractDataStore<T> implements Closeable {
     }
 
     public abstract DataStoreAuditContext context();
+
+    private static final class Metrics {
+        public static final String TAG_OPERATION = "operation";
+        public static final String TAG_ENTITY = "entity";
+
+        public static final String METRIC_TAG_READ = "READ";
+        public static final String METRIC_TAG_SEARCH = "SEARCH";
+        public static final String METRIC_TAG_CREATE = "CREATE";
+        public static final String METRIC_TAG_UPDATE = "UPDATE";
+        public static final String METRIC_TAG_DELETE = "DELETE";
+        private final String METRIC_LATENCY_CREATE = String.format("%s.%s.CREATE", "%s", "%s");
+        private final String METRIC_LATENCY_UPDATE = String.format("%s.%s.UPDATE", "%s", "%s");
+        private final String METRIC_LATENCY_DELETE = String.format("%s.%s.DELETE", "%s", "%s");
+        private final String METRIC_LATENCY_READ = String.format("%s.%s.READ", "%s", "%s");
+        private final String METRIC_LATENCY_SEARCH = String.format("%s.%s.SEARCH", "%s", "%s");
+        private final String METRIC_COUNTER_CREATE = String.format("%s.%s.COUNT.CREATE", "%s", "%s");
+        private final String METRIC_COUNTER_UPDATE = String.format("%s.%s.COUNT.UPDATE", "%s", "%s");
+        private final String METRIC_COUNTER_DELETE = String.format("%s.%s.COUNT.DELETE", "%s", "%s");
+        private final String METRIC_COUNTER_READ = String.format("%s.%s.COUNT.READ", "%s", "%s");
+        private final String METRIC_COUNTER_SEARCH = String.format("%s.%s.COUNT.SEARCH", "%s", "%s");
+        private final String METRIC_COUNTER_ERROR_CREATE = String.format("%s.%s.COUNT.ERRORS.CREATE", "%s", "%s");
+        private final String METRIC_COUNTER_ERROR_UPDATE = String.format("%s.%s.COUNT.ERRORS.UPDATE", "%s", "%s");
+        private final String METRIC_COUNTER_ERROR_DELETE = String.format("%s.%s.COUNT.ERRORS.DELETE", "%s", "%s");
+        private final String METRIC_COUNTER_READ_ERROR = String.format("%s.%s.COUNT.ERRORS.READ", "%s", "%s");
+        private final String METRIC_COUNTER_SEARCH_ERROR = String.format("%s.%s.COUNT.ERRORS.SEARCH", "%s", "%s");
+        public KeyValuePair<String, String>[] TAGS = new KeyValuePair[2];
+        /**
+         * Metrics - CRUD Latency
+         */
+        @Setter(AccessLevel.NONE)
+        protected Timer createLatency = null;
+        /**
+         * Metrics - CRUD Latency
+         */
+        @Setter(AccessLevel.NONE)
+        protected Timer updateLatency = null;
+        /**
+         * Metrics - CRUD Latency
+         */
+        @Setter(AccessLevel.NONE)
+        protected Timer deleteLatency = null;
+        /**
+         * Metrics - Read Latency
+         */
+        @Setter(AccessLevel.NONE)
+        protected Timer readLatency = null;
+        /**
+         * Metrics - Read Latency
+         */
+        @Setter(AccessLevel.NONE)
+        protected Timer searchLatency = null;
+        /**
+         * Counter - CRUD events
+         */
+        @Setter(AccessLevel.NONE)
+        protected Id createCounter = null;
+        /**
+         * Counter - CRUD events
+         */
+        @Setter(AccessLevel.NONE)
+        protected Id updateCounter = null;
+        /**
+         * Counter - CRUD events
+         */
+        @Setter(AccessLevel.NONE)
+        protected Id deleteCounter = null;
+        /**
+         * Counter - Read events
+         */
+        @Setter(AccessLevel.NONE)
+        protected Id readCounter = null;
+        /**
+         * Counter - Search events
+         */
+        @Setter(AccessLevel.NONE)
+        protected Id searchCounter = null;
+        /**
+         * Counter - CRUD Error events
+         */
+        @Setter(AccessLevel.NONE)
+        protected Id createCounterErrors = null;
+        /**
+         * Counter - CRUD Error events
+         */
+        @Setter(AccessLevel.NONE)
+        protected Id updateCounterErrors = null;
+        /**
+         * Counter - CRUD Error events
+         */
+        @Setter(AccessLevel.NONE)
+        protected Id deleteCounterErrors = null;
+        /**
+         * Counter - Read Error events
+         */
+        @Setter(AccessLevel.NONE)
+        protected Id readCounterErrors = null;
+        /**
+         * Counter - Search Error events
+         */
+        @Setter(AccessLevel.NONE)
+        protected Id searchCounterErrors = null;
+    }
 }

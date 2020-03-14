@@ -38,7 +38,7 @@ import java.util.List;
  * ZooKeeper node that stores a configuration value list.
  */
 @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, include = JsonTypeInfo.As.PROPERTY,
-              property = "@class")
+        property = "@class")
 public class PersistedConfigListValueNode extends PersistedConfigPathNode {
     /**
      * List of configuration values.

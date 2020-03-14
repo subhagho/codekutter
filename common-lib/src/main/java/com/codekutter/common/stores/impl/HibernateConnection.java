@@ -54,36 +54,8 @@ import java.util.Properties;
 @Setter
 @Accessors(fluent = true)
 public class HibernateConnection extends AbstractConnection<Session> {
-    @Getter
-    @Setter
-    @Accessors(fluent = true)
-    @ConfigPath(path = "connection")
-    public static class HibernateConfig {
-        public static final String CACHE_FACTORY_CLASS = "org.hibernate.cache.ehcache.EhCacheRegionFactory";
-        public static final String CACHE_CONFIG_FILE = "net.sf.ehcache.configurationResourceName";
-        public static final String CONFIG_HIBERNATE_PATH = "hibernate";
-
-        @ConfigValue(name = "url", required = true)
-        private String dbUrl;
-        @ConfigValue(name = "username", required = true)
-        private String dbUser;
-        @ConfigValue(name = "dbname")
-        private String dbName;
-        @ConfigAttribute(name = "driver", required = true)
-        private String driver;
-        @ConfigAttribute(name = "dialect", required = true)
-        private String dialect;
-        @ConfigValue(name = "enableCaching")
-        private boolean enableCaching = false;
-        @ConfigValue(name = "enableQueryCaching")
-        private boolean enableQueryCaching = false;
-        @ConfigValue(name = "cacheConfig")
-        private String cacheConfig;
-    }
-
     @Setter(AccessLevel.NONE)
     private SessionFactory sessionFactory = null;
-
     @ConfigValue(name = "config")
     private String hibernateConfigSource;
     @ConfigValue(name = "password", required = true)
@@ -176,7 +148,7 @@ public class HibernateConnection extends AbstractConnection<Session> {
                 configuration.setProperties(settings);
 
                 if (supportedTypes() != null && !supportedTypes().isEmpty()) {
-                    for(Class<?> cls : supportedTypes()) {
+                    for (Class<?> cls : supportedTypes()) {
                         configuration.addAnnotatedClass(cls);
                     }
                 }
@@ -214,6 +186,33 @@ public class HibernateConnection extends AbstractConnection<Session> {
             sessionFactory.close();
             sessionFactory = null;
         }
+    }
+
+    @Getter
+    @Setter
+    @Accessors(fluent = true)
+    @ConfigPath(path = "connection")
+    public static class HibernateConfig {
+        public static final String CACHE_FACTORY_CLASS = "org.hibernate.cache.ehcache.EhCacheRegionFactory";
+        public static final String CACHE_CONFIG_FILE = "net.sf.ehcache.configurationResourceName";
+        public static final String CONFIG_HIBERNATE_PATH = "hibernate";
+
+        @ConfigValue(name = "url", required = true)
+        private String dbUrl;
+        @ConfigValue(name = "username", required = true)
+        private String dbUser;
+        @ConfigValue(name = "dbname")
+        private String dbName;
+        @ConfigAttribute(name = "driver", required = true)
+        private String driver;
+        @ConfigAttribute(name = "dialect", required = true)
+        private String dialect;
+        @ConfigValue(name = "enableCaching")
+        private boolean enableCaching = false;
+        @ConfigValue(name = "enableQueryCaching")
+        private boolean enableQueryCaching = false;
+        @ConfigValue(name = "cacheConfig")
+        private String cacheConfig;
     }
 
 }

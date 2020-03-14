@@ -43,43 +43,19 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
 public class Monitoring {
-    @ConfigPath(path = "monitoring")
-    @Getter
-    @Setter
-    @Accessors(fluent = true)
-    public static class MonitorConfig {
-        @ConfigAttribute
-        private boolean enableJmx = false;
-        @ConfigAttribute
-        private boolean enableSlf4j = true;
-        @ConfigAttribute
-        private boolean enableFileLogging = false;
-        @ConfigValue
-        private boolean enableGcStats = true;
-        @ConfigValue
-        private boolean enableMemoryStats = true;
-        @ConfigValue
-        private String fileLoggerDir = null;
-        @ConfigAttribute
-        private String namespace = null;
-    }
-
-    public static final int REPORTER_JMX = (int)Math.pow(2, 1);
-    public static final int REPORTER_CSV = (int)Math.pow(2,2);
-    public static final int REPORTER_SLF4J = (int)Math.pow(2,3);
-
+    public static final int REPORTER_JMX = (int) Math.pow(2, 1);
+    public static final int REPORTER_CSV = (int) Math.pow(2, 2);
+    public static final int REPORTER_SLF4J = (int) Math.pow(2, 3);
+    private static final int REPORT_INTERVAL = 10;
+    private static final MetricRegistry codaRegistry = new MetricRegistry();
     private static boolean enableGcStats = true;
     private static boolean enableMemoryStats = true;
-    private static final int REPORT_INTERVAL = 10;
-
     private static Registry __REGISTRY;
-    private static final MetricRegistry codaRegistry = new MetricRegistry();
     private static Map<String, Id> counters = new ConcurrentHashMap<>();
     private static Map<String, Timer> timers = new ConcurrentHashMap<>();
     private static Map<String, DistributionSummary> distributionSummaries = new ConcurrentHashMap<>();
     private static GcLogger gcLogger = null;
     private static String namespace;
-
     private static List<Reporter> reporters = new ArrayList<>();
 
     public static void start(String ns, int reporters, String metricsDir, boolean memStats, boolean gcStats) throws ConfigurationException {
@@ -122,7 +98,7 @@ public class Monitoring {
 
     public static void stop() {
         if (!reporters.isEmpty()) {
-            for(Reporter r : reporters) {
+            for (Reporter r : reporters) {
                 if (r instanceof JmxReporter) {
                     ((JmxReporter) r).stop();
                 } else if (r instanceof CsvReporter) {
@@ -216,7 +192,7 @@ public class Monitoring {
             Id id = counters.get(name);
             Id contId = id;
             if (tags != null && !tags.isEmpty()) {
-                for(String tag : tags.keySet()) {
+                for (String tag : tags.keySet()) {
                     contId = contId.withTag(tag, tags.get(tag));
                 }
             }
@@ -230,7 +206,7 @@ public class Monitoring {
             Id id = counters.get(name);
             Id contId = id;
             if (tags != null && tags.length > 0) {
-                for(KeyValuePair<String, String> tag : tags) {
+                for (KeyValuePair<String, String> tag : tags) {
                     contId = contId.withTag(tag.key(), tag.value());
                 }
             }
@@ -261,5 +237,26 @@ public class Monitoring {
             return name;
         }
         return null;
+    }
+
+    @ConfigPath(path = "monitoring")
+    @Getter
+    @Setter
+    @Accessors(fluent = true)
+    public static class MonitorConfig {
+        @ConfigAttribute
+        private boolean enableJmx = false;
+        @ConfigAttribute
+        private boolean enableSlf4j = true;
+        @ConfigAttribute
+        private boolean enableFileLogging = false;
+        @ConfigValue
+        private boolean enableGcStats = true;
+        @ConfigValue
+        private boolean enableMemoryStats = true;
+        @ConfigValue
+        private String fileLoggerDir = null;
+        @ConfigAttribute
+        private String namespace = null;
     }
 }

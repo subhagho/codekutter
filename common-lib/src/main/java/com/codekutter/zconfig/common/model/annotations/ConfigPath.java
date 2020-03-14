@@ -28,12 +28,12 @@ import java.lang.annotation.*;
 
 /**
  * Annotation to be used for auto-wiring configurations.
- *
+ * <p>
  * Created by subho on 16/11/15.
  */
 @Inherited
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.TYPE })
+@Target({ElementType.TYPE})
 public @interface ConfigPath {
     /**
      * Get the configuration node path defined for this type.

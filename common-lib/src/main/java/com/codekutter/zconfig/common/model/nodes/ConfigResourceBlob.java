@@ -71,17 +71,17 @@ public class ConfigResourceBlob extends ConfigResourceFile {
      * @throws ConfigurationException
      */
     public FileReadResponse getBlob(long position, int size)
-    throws ConfigurationException {
+            throws ConfigurationException {
         Preconditions.checkArgument(position >= 0);
         Preconditions.checkArgument(size > 0);
         Preconditions.checkArgument(getResourceHandle() != null);
 
         try {
             try (RandomAccessFile fis = new RandomAccessFile(
-                            getResourceHandle().getAbsoluteFile(), "r")) {
+                    getResourceHandle().getAbsoluteFile(), "r")) {
                 FileReadResponse response =
                         new FileReadResponse(getResourceHandle().getAbsolutePath(),
-                                             position);
+                                position);
                 if (position > 0) {
                     fis.seek(position);
                 }

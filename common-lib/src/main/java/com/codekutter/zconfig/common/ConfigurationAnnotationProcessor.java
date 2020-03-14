@@ -48,25 +48,6 @@ import java.util.Set;
  */
 public class ConfigurationAnnotationProcessor {
     /**
-     * Struct class to pass information about field annotations.
-     */
-    public static class StructFieldAnnotation {
-        /**
-         * Annotated field.
-         */
-        public Field field;
-        /**
-         * Annotation type.
-         */
-        public Annotation annotation;
-    }
-
-    private static class StructNodeInfo {
-        public String name;
-        public AbstractConfigNode node;
-    }
-
-    /**
      * Reader and apply the values from the passed configuration based on the type annotations.
      *
      * @param type   - Type of the target object.
@@ -125,7 +106,6 @@ public class ConfigurationAnnotationProcessor {
         }
         return target;
     }
-
 
     /**
      * Reader and apply the values from the passed configuration based on the type annotations.
@@ -1021,5 +1001,24 @@ public class ConfigurationAnnotationProcessor {
             }
         }
         return null;
+    }
+
+    /**
+     * Struct class to pass information about field annotations.
+     */
+    public static class StructFieldAnnotation {
+        /**
+         * Annotated field.
+         */
+        public Field field;
+        /**
+         * Annotation type.
+         */
+        public Annotation annotation;
+    }
+
+    private static class StructNodeInfo {
+        public String name;
+        public AbstractConfigNode node;
     }
 }

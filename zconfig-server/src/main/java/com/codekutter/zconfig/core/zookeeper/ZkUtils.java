@@ -83,8 +83,8 @@ public class ZkUtils {
             RetryPolicy retryPolicy = null;
             if (!Strings.isNullOrEmpty(config.getRetryClass())) {
                 LogUtils.debug(ZkUtils.class,
-                               String.format("Using Retry implemenation : %s",
-                                             config.getRetryClass()));
+                        String.format("Using Retry implemenation : %s",
+                                config.getRetryClass()));
                 Class<?> type = Class.forName(config.getRetryClass());
                 if (type.equals(ExponentialBackoffRetry.class)) {
                     if (config.getSleepTime() <= 0 || config.getMaxRetries() < 0) {
@@ -93,7 +93,7 @@ public class ZkUtils {
                                 config.getRetryClass()));
                     }
                     retryPolicy = new ExponentialBackoffRetry(config.getSleepTime(),
-                                                              config.getMaxRetries());
+                            config.getMaxRetries());
                 }
             }
             if (retryPolicy == null) {
@@ -152,13 +152,13 @@ public class ZkUtils {
     public static final InterProcessMutex getZkLock(
             @Nonnull CuratorFramework client,
             @Nonnull String name)
-    throws PersistenceException {
+            throws PersistenceException {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(name));
         String path =
                 String.format("%s/%s/%s", getServerRootPath(), ZK_LOCK_PATH, name);
 
         LogUtils.debug(ZkUtils.class,
-                       String.format("Getting ZK Lock : [lock=%s]...", path));
+                String.format("Getting ZK Lock : [lock=%s]...", path));
 
         return new InterProcessMutex(client, path);
     }
@@ -172,7 +172,7 @@ public class ZkUtils {
      */
     public static final InterProcessMutex getSystemLock(
             @Nonnull CuratorFramework client)
-    throws PersistenceException {
+            throws PersistenceException {
         return getZkLock(client, ZK_ROOT_LOCK);
     }
 
@@ -187,7 +187,7 @@ public class ZkUtils {
     public static final InterProcessMutex getZkLock(
             @Nonnull CuratorFramework client,
             @Nonnull ApplicationGroup group)
-    throws PersistenceException {
+            throws PersistenceException {
         String path = group.getAbsolutePath();
         return getZkLock(client, path);
     }
@@ -203,7 +203,7 @@ public class ZkUtils {
     public static final InterProcessMutex getZkLock(
             @Nonnull CuratorFramework client,
             @Nonnull Application application)
-    throws PersistenceException {
+            throws PersistenceException {
         String path = application.getAbsolutePath();
         return getZkLock(client, path);
     }
@@ -221,9 +221,9 @@ public class ZkUtils {
             @Nonnull CuratorFramework client,
             @Nonnull PersistedConfigNode configuration,
             @Nonnull Version version)
-    throws PersistenceException {
+            throws PersistenceException {
         String path = String.format("%s/%d", configuration.getAbsolutePath(),
-                                    version.getMajorVersion());
+                version.getMajorVersion());
         return getZkLock(client, path);
     }
 
@@ -235,7 +235,7 @@ public class ZkUtils {
      * @throws PersistenceException
      */
     public static final String getZkPath(@Nonnull IZkNode node)
-    throws PersistenceException {
+            throws PersistenceException {
         return String.format("%s/%s", getServerRootPath(), node.getAbsolutePath());
     }
 
@@ -250,7 +250,7 @@ public class ZkUtils {
      */
     public static final String getZkPath(@Nonnull PersistedConfigNode configNode,
                                          @Nonnull String path)
-    throws PersistenceException {
+            throws PersistenceException {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(path));
         String p = getZkPath(configNode);
         StringBuilder buff = new StringBuilder(p);
@@ -271,12 +271,12 @@ public class ZkUtils {
      * @throws PersistenceException
      */
     public static final String getZkPath(@Nonnull Configuration configuration)
-    throws PersistenceException {
+            throws PersistenceException {
         String path = String.format("%s/%s/%s", configuration.getApplicationGroup(),
-                                    configuration.getApplication(),
-                                    configuration.getName());
+                configuration.getApplication(),
+                configuration.getName());
         return String.format("%s/%s/%d", getServerRootPath(), path,
-                             configuration.getVersion().getMajorVersion());
+                configuration.getVersion().getMajorVersion());
     }
 
     /**
@@ -287,7 +287,7 @@ public class ZkUtils {
      * @throws PersistenceException
      */
     public static final String getZkPath(@Nonnull ApplicationGroup group)
-    throws PersistenceException {
+            throws PersistenceException {
         return String.format("%s%s", getServerRootPath(), group.getAbsolutePath());
     }
 
@@ -299,7 +299,7 @@ public class ZkUtils {
      * @throws PersistenceException
      */
     public static final String getZkPath(@Nonnull Application application)
-    throws PersistenceException {
+            throws PersistenceException {
         return String
                 .format("%s%s", getServerRootPath(), application.getAbsolutePath());
     }
@@ -312,7 +312,7 @@ public class ZkUtils {
      * @throws PersistenceException
      */
     public static final String getZkPath(@Nonnull String group) throws
-                                                                PersistenceException {
+            PersistenceException {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(group));
         return String.format("%s/%s", getServerRootPath(), group);
     }
@@ -327,7 +327,7 @@ public class ZkUtils {
      */
     public static final String getZkPath(ApplicationGroup group,
                                          @Nonnull String application)
-    throws PersistenceException {
+            throws PersistenceException {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(application));
         return String
                 .format("%s%s/%s", getServerRootPath(), group.getAbsolutePath(),
@@ -345,7 +345,7 @@ public class ZkUtils {
     public static final String getZkPath(@Nonnull Application application,
                                          @Nonnull String configname,
                                          @Nonnull Version version)
-    throws PersistenceException {
+            throws PersistenceException {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(configname));
         return String
                 .format("%s%s/%s/%d", getServerRootPath(),

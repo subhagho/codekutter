@@ -48,9 +48,9 @@ public class ConfigUtils {
     /**
      * Get the resolved search path for specified search string.
      *
-     * @param path - Specified Search Path
+     * @param path     - Specified Search Path
      * @param settings - Configuration Settings.
-     * @param node - Node to search under
+     * @param node     - Node to search under
      * @return - Resolved search path.
      * @throws ConfigurationException
      */
@@ -58,7 +58,7 @@ public class ConfigUtils {
                                                @Nonnull
                                                        ConfigurationSettings settings,
                                                AbstractConfigNode node)
-    throws ConfigurationException {
+            throws ConfigurationException {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(path));
         Preconditions.checkArgument(settings != null);
 

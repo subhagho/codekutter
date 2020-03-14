@@ -33,7 +33,9 @@ public class StringKey implements IKey, Serializable {
     @Column(name = "key")
     private String key;
 
-    public StringKey() {}
+    public StringKey() {
+    }
+
     public StringKey(@Nonnull String key) {
         this.key = key;
     }
@@ -57,7 +59,7 @@ public class StringKey implements IKey, Serializable {
     @Override
     public int compareTo(IKey key) {
         if (key instanceof StringKey) {
-            StringKey s = (StringKey)key;
+            StringKey s = (StringKey) key;
             return this.key.compareTo(s.key);
         }
         return -1;

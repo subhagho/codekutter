@@ -34,7 +34,8 @@ public class DummyResponseHandler implements IRestResponseHandler {
      * @throws JobExecutionException
      */
     @Override
-    public @Nonnull Object handle(@Nonnull Response response) throws JobExecutionException {
+    public @Nonnull
+    Object handle(@Nonnull Response response) throws JobExecutionException {
         String output = response.readEntity(String.class);
         LogUtils.debug(getClass(), output);
 

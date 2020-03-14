@@ -38,6 +38,26 @@ public class CypherUtils {
     private static final String HASH_ALGO = "MD5";
     private static final String CIPHER_ALGO = "AES/CBC/PKCS5Padding";
     private static final String CIPHER_TYPE = "AES";
+    @Option(name = "-h", usage = "Get the MD5 Hash",
+            handler = BooleanOptionHandler.class,
+            aliases = {"--hash"})
+    private boolean doHash = false;
+    @Option(name = "-e", usage = "Encrypt the passed String",
+            handler = BooleanOptionHandler.class,
+            aliases = {"--encrypt"})
+    private boolean encrypt = false;
+    @Option(name = "-d", usage = "Decrypt the passed String",
+            handler = BooleanOptionHandler.class,
+            aliases = {"--decrypt"})
+    private boolean decrypt = false;
+    @Option(name = "-p", usage = "Password used to encrypt/decrypt",
+            aliases = {"--password"})
+    private String password;
+    @Option(name = "-i", usage = "IV Spec used to encrypt/decrypt",
+            aliases = {"--iv"})
+    private String ivSpec;
+    @Argument
+    private List<String> otherArgs = new ArrayList<>();
 
     /**
      * Get an MD5 hash of the specified key.
@@ -111,7 +131,6 @@ public class CypherUtils {
         return new String(Base64.encodeBase64(encrypted));
     }
 
-
     /**
      * Encrypt the passed data buffer using the passcode.
      *
@@ -181,27 +200,14 @@ public class CypherUtils {
         return decrypt(array, password, iv);
     }
 
-    @Option(name = "-h", usage = "Get the MD5 Hash",
-            handler = BooleanOptionHandler.class,
-            aliases = {"--hash"})
-    private boolean doHash = false;
-    @Option(name = "-e", usage = "Encrypt the passed String",
-            handler = BooleanOptionHandler.class,
-            aliases = {"--encrypt"})
-    private boolean encrypt = false;
-    @Option(name = "-d", usage = "Decrypt the passed String",
-            handler = BooleanOptionHandler.class,
-            aliases = {"--decrypt"})
-    private boolean decrypt = false;
-    @Option(name = "-p", usage = "Password used to encrypt/decrypt",
-            aliases = {"--password"})
-    private String password;
-    @Option(name = "-i", usage = "IV Spec used to encrypt/decrypt",
-            aliases = {"--iv"})
-    private String ivSpec;
-
-    @Argument
-    private List<String> otherArgs = new ArrayList<>();
+    public static void main(String[] args) {
+        try {
+            new CypherUtils().execute(args);
+        } catch (Throwable t) {
+            LogUtils.error(CypherUtils.class, t);
+            t.printStackTrace();
+        }
+    }
 
     private void execute(String[] args) throws Exception {
         CmdLineParser parser = new CmdLineParser(this);
@@ -287,14 +293,5 @@ public class CypherUtils {
             }
         }
         return password;
-    }
-
-    public static void main(String[] args) {
-        try {
-            new CypherUtils().execute(args);
-        } catch (Throwable t) {
-            LogUtils.error(CypherUtils.class, t);
-            t.printStackTrace();
-        }
     }
 }

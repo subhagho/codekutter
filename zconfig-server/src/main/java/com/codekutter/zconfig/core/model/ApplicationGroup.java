@@ -44,7 +44,7 @@ import java.util.Map;
  * configurations/access/updates are managed together.
  */
 @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, include = JsonTypeInfo.As.PROPERTY,
-              property = "@class")
+        property = "@class")
 public class ApplicationGroup extends BaseEntity<StringKey, ApplicationGroup>
         implements IZkNode {
 

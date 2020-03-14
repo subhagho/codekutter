@@ -96,7 +96,7 @@ public class ConfigListElementNode extends ConfigListNode<ConfigElementNode> {
      */
     @Override
     public AbstractConfigNode find(List<String> path, int index)
-    throws ConfigurationException {
+            throws ConfigurationException {
         String key = path.get(index);
         if (getName().compareTo(key) == 0) {
             if (index == path.size() - 1) {

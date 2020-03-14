@@ -37,25 +37,24 @@ public interface IEntity<K extends IKey> extends IValidate, IKeyed<K> {
     /**
      * Copy the changes from the specified source entity
      * to this instance.
-     *
+     * <p>
      * All properties other than the Key will be copied.
      * Copy Type:
-     *  Primitive - Copy
-     *  String - Copy
-     *  Enum - Copy
-     *  Nested Entity - Copy Recursive
-     *  Other Objects - Copy Reference.
+     * Primitive - Copy
+     * String - Copy
+     * Enum - Copy
+     * Nested Entity - Copy Recursive
+     * Other Objects - Copy Reference.
      *
-     * @param source - Source instance to Copy from.
+     * @param source  - Source instance to Copy from.
      * @param context - Execution context.
      * @return - Copied Entity instance.
-     * @exception CopyException
+     * @throws CopyException
      */
     IEntity<K> copyChanges(IEntity<K> source, Context context) throws CopyException;
 
     /**
      * Clone this instance of Entity.
-     *
      *
      * @param context - Clone Context.
      * @return - Cloned Instance.

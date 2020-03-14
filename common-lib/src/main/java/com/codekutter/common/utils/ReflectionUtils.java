@@ -184,13 +184,14 @@ public class ReflectionUtils {
         Field[] fields = getAllFields(type);
         if (fields != null && fields.length > 0) {
             Map<String, Field> map = new HashMap<>();
-            for(Field field : fields) {
+            for (Field field : fields) {
                 map.put(field.getName(), field);
             }
             return map;
         }
         return null;
     }
+
     /**
      * Get fields declared for this type and add them to the list passed.
      *

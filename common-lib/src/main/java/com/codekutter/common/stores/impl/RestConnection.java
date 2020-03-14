@@ -49,11 +49,10 @@ import java.util.Map;
 @Accessors(fluent = true)
 public class RestConnection extends AbstractConnection<Client> {
     public static final String CONFIG_PATH_CONFIG = "configuration";
-
-    @ConfigAttribute
-    private boolean useSSL = false;
     @Setter(AccessLevel.NONE)
     protected Client client;
+    @ConfigAttribute
+    private boolean useSSL = false;
 
     @Override
     public Client connection() throws ConnectionException {
@@ -124,7 +123,7 @@ public class RestConnection extends AbstractConnection<Client> {
         return null;
     }
 
-    public Invocation.Builder target(@Nonnull String url) throws ConnectionException{
+    public Invocation.Builder target(@Nonnull String url) throws ConnectionException {
         state().checkOpened();
         return client.target(url).request();
     }

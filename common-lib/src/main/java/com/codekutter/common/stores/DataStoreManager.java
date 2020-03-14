@@ -48,19 +48,6 @@ import java.util.Map;
 public class DataStoreManager implements IConfigurable {
     public static final String CONFIG_NODE_DATA_STORES = "dataStores";
     public static final String CONFIG_NODE_SHARDED_ENTITIES = "shardedEntities";
-
-    @Getter
-    @Setter
-    @Accessors(fluent = true)
-    @ConfigPath(path = "shard")
-    public static final class ShardConfig {
-        @ConfigAttribute(name = "provider")
-        private Class<? extends IShardProvider> provider;
-        @ConfigAttribute(name = "entityType", required = true)
-        private Class<? extends IShardedEntity> entityType;
-        private Map<Integer, String> shards = new HashMap<>();
-    }
-
     private final Map<String, AbstractConnection<?>> connections = new HashMap<>();
     private final Map<Class<? extends IEntity>, Map<Class<? extends AbstractDataStore>, DataStoreConfig>> entityIndex = new HashMap<>();
     private final Map<String, DataStoreConfig> dataStoreConfigs = new HashMap<>();
@@ -312,7 +299,7 @@ public class DataStoreManager implements IConfigurable {
                     }
                     storeList.add(store);
                 }
-                for(AbstractDataStore store : storeList) {
+                for (AbstractDataStore store : storeList) {
                     try {
                         store.close();
                     } catch (IOException e) {
@@ -474,5 +461,17 @@ public class DataStoreManager implements IConfigurable {
         } catch (Exception ex) {
             throw new ConfigurationException(ex);
         }
+    }
+
+    @Getter
+    @Setter
+    @Accessors(fluent = true)
+    @ConfigPath(path = "shard")
+    public static final class ShardConfig {
+        @ConfigAttribute(name = "provider")
+        private Class<? extends IShardProvider> provider;
+        @ConfigAttribute(name = "entityType", required = true)
+        private Class<? extends IShardedEntity> entityType;
+        private Map<Integer, String> shards = new HashMap<>();
     }
 }

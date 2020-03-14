@@ -48,11 +48,53 @@ import java.util.concurrent.ConcurrentHashMap;
 @Accessors(fluent = true)
 @SuppressWarnings("rawtypes")
 public class ConnectionManager implements IConfigurable, Closeable {
+    private static final ConnectionManager __instance = new ConnectionManager();
     @Setter(AccessLevel.NONE)
     @Getter(AccessLevel.NONE)
     private Map<String, AbstractConnection> connections = new ConcurrentHashMap<>();
     @Setter(AccessLevel.NONE)
     private ObjectState state = new ObjectState();
+
+    @SuppressWarnings("unchecked")
+    public static <T> AbstractConnection<T> readConnection(@Nonnull ConfigPathNode inode) throws ConfigurationException {
+        try {
+            AbstractConfigNode node = ConfigUtils.getPathNode(AbstractConnection.class, inode);
+            if (!(node instanceof ConfigPathNode)) {
+                throw new ConfigurationException(String.format("Connection configuration node not found. [path=%s]",
+                        inode.getAbsolutePath()));
+            }
+            String cname = ConfigUtils.getClassAttribute(node);
+            if (Strings.isNullOrEmpty(cname)) {
+                throw new ConfigurationException(String.format("Connection class attribute not found. [path=%s]",
+                        node.getAbsolutePath()));
+            }
+            Class<? extends AbstractConnection<?>> type = (Class<? extends AbstractConnection<?>>) Class.forName(cname);
+            AbstractConnection<?> connection = type.newInstance();
+            connection.configure(node);
+
+            return (AbstractConnection<T>) connection;
+        } catch (Exception ex) {
+            throw new ConfigurationException(ex);
+        }
+    }
+
+    public static ConnectionManager get() {
+        return __instance;
+    }
+
+    public static void setup(@Nonnull AbstractConfigNode node) throws ConfigurationException {
+        if (__instance.state.getState() != EObjectState.Available) {
+            __instance.configure(node);
+        }
+    }
+
+    public static void dispose() {
+        try {
+            __instance.close();
+        } catch (Exception ex) {
+            LogUtils.error(ConnectionManager.class, ex);
+        }
+    }
 
     /**
      * Configure this type instance.
@@ -87,29 +129,6 @@ public class ConnectionManager implements IConfigurable, Closeable {
     }
 
     @SuppressWarnings("unchecked")
-    public static <T> AbstractConnection<T> readConnection(@Nonnull ConfigPathNode inode) throws ConfigurationException {
-        try {
-            AbstractConfigNode node = ConfigUtils.getPathNode(AbstractConnection.class, inode);
-            if (!(node instanceof ConfigPathNode)) {
-                throw new ConfigurationException(String.format("Connection configuration node not found. [path=%s]",
-                        inode.getAbsolutePath()));
-            }
-            String cname = ConfigUtils.getClassAttribute(node);
-            if (Strings.isNullOrEmpty(cname)) {
-                throw new ConfigurationException(String.format("Connection class attribute not found. [path=%s]",
-                        node.getAbsolutePath()));
-            }
-            Class<? extends AbstractConnection<?>> type = (Class<? extends AbstractConnection<?>>) Class.forName(cname);
-            AbstractConnection<?> connection = type.newInstance();
-            connection.configure(node);
-
-            return (AbstractConnection<T>) connection;
-        } catch (Exception ex) {
-            throw new ConfigurationException(ex);
-        }
-    }
-
-    @SuppressWarnings("unchecked")
     public <T> AbstractConnection<T> connection(@Nonnull String name, @Nonnull Class<? extends T> type) throws DataStoreException {
         if (connections.containsKey(name)) {
             return connections.get(name);
@@ -127,26 +146,6 @@ public class ConnectionManager implements IConfigurable, Closeable {
                 connection.close();
             }
             connections.clear();
-        }
-    }
-
-    private static final ConnectionManager __instance = new ConnectionManager();
-
-    public static ConnectionManager get() {
-        return __instance;
-    }
-
-    public static void setup(@Nonnull AbstractConfigNode node) throws ConfigurationException {
-        if (__instance.state.getState() != EObjectState.Available) {
-            __instance.configure(node);
-        }
-    }
-
-    public static void dispose() {
-        try {
-            __instance.close();
-        } catch (Exception ex) {
-            LogUtils.error(ConnectionManager.class, ex);
         }
     }
 }

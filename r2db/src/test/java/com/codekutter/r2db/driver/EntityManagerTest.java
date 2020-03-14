@@ -29,14 +29,12 @@ import com.codekutter.r2db.driver.impl.ElasticSearchContext;
 import com.codekutter.r2db.driver.impl.FacetedSearchResult;
 import com.codekutter.r2db.driver.impl.SearchableRdbmsDataStore;
 import com.codekutter.r2db.driver.impl.query.ElasticFacetedQueryBuilder;
-import com.codekutter.r2db.driver.impl.query.ElasticQueryBuilder;
 import com.codekutter.r2db.driver.impl.query.LuceneQueryBuilder;
 import com.codekutter.zconfig.common.ConfigProviderFactory;
 import com.codekutter.zconfig.common.R2dbEnv;
 import com.codekutter.zconfig.common.model.Version;
 import com.google.common.base.Strings;
 import org.apache.lucene.search.Query;
-import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.search.aggregations.AbstractAggregationBuilder;
 import org.elasticsearch.search.aggregations.bucket.histogram.DateHistogramInterval;
 import org.elasticsearch.search.sort.SortBuilder;
@@ -58,10 +56,10 @@ class EntityManagerTest {
 
     private static final String BASE_PROPS_FILE =
             "src/test/resources/test-extended-env.properties";
+    private static final User user = new User(UUID.randomUUID().toString());
     private static String encryptionKey = "21947a50-6755-47";
     private static String IV = "/NK/c+NKGUwMm0RF";
     private static EntityManager entityManager = null;
-    private static final User user = new User(UUID.randomUUID().toString());
 
     @BeforeAll
     static void setup() throws Exception {
@@ -170,7 +168,7 @@ class EntityManagerTest {
             entityManager.closeStores();
 
             Order deleted = orders.get(1);
-            entityManager.delete(deleted, Order.class, user, null,SearchableRdbmsDataStore.class);
+            entityManager.delete(deleted, Order.class, user, null, SearchableRdbmsDataStore.class);
             entityManager.commit();
             entityManager.closeStores();
             LogUtils.debug(getClass(), String.format("Deleted order [id=%s]...", deleted.getId().stringKey()));

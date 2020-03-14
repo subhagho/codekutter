@@ -52,16 +52,25 @@ import java.util.concurrent.ConcurrentHashMap;
 @ConfigPath(path = "audit-manager")
 @SuppressWarnings("rawtypes")
 public class AuditManager implements IConfigurable, Closeable {
+    private static final AuditManager __instance = new AuditManager();
     @Setter(AccessLevel.NONE)
     private final Map<String, AbstractAuditLogger> loggers = new ConcurrentHashMap<>();
     @Setter(AccessLevel.NONE)
     private final Map<Class<? extends IKeyed>, AbstractAuditLogger> entityIndex = new HashMap<>();
     @Setter(AccessLevel.NONE)
+    private final Map<Class<? extends IAuditContextGenerator>, IAuditContextGenerator> contextGenerators = new HashMap<>();
+    @Setter(AccessLevel.NONE)
     private AbstractAuditLogger defaultLogger = null;
     @Setter(AccessLevel.NONE)
     private DataStoreManager dataStoreManager;
-    @Setter(AccessLevel.NONE)
-    private final Map<Class<? extends IAuditContextGenerator>, IAuditContextGenerator> contextGenerators = new HashMap<>();
+
+    public static void init(@Nonnull AbstractConfigNode node) throws ConfigurationException {
+        __instance.configure(node);
+    }
+
+    public static AuditManager get() {
+        return __instance;
+    }
 
     public AuditManager withDataStoreManager(@Nonnull DataStoreManager dataStoreManager) {
         this.dataStoreManager = dataStoreManager;
@@ -243,15 +252,5 @@ public class AuditManager implements IConfigurable, Closeable {
             }
             loggers.clear();
         }
-    }
-
-    private static final AuditManager __instance = new AuditManager();
-
-    public static void init(@Nonnull AbstractConfigNode node) throws ConfigurationException {
-        __instance.configure(node);
-    }
-
-    public static AuditManager get() {
-        return __instance;
     }
 }

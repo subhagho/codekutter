@@ -40,7 +40,22 @@ import java.util.concurrent.locks.ReentrantLock;
 @Accessors(fluent = true)
 public abstract class DistributedLock extends ReentrantLock implements Closeable {
     private static final long DEFAULT_LOCK_TIMEOUT = 15 * 60 * 1000; // 15 mins.
-
+    /**
+     * Timer to measure Lock latency.
+     */
+    protected Timer lockLatency = null;
+    /**
+     * Timer to measure unlock latency.
+     */
+    protected Timer unlockLatency = null;
+    /**
+     * Counter to measure total # of lock/Unlock errors.
+     */
+    protected Id callCounter = null;
+    /**
+     * Counter to measure total # of lock/Unlock errors.
+     */
+    protected Id errorCounter = null;
     /**
      * Unique ID for each lock instance.
      */
@@ -63,25 +78,7 @@ public abstract class DistributedLock extends ReentrantLock implements Closeable
      * can be acquired by other processes.
      */
     private long lockExpiryTimeout = -1;
-
     private AbstractLockAllocator allocator;
-
-    /**
-     * Timer to measure Lock latency.
-     */
-    protected Timer lockLatency = null;
-    /**
-     * Timer to measure unlock latency.
-     */
-    protected Timer unlockLatency = null;
-    /**
-     * Counter to measure total # of lock/Unlock errors.
-     */
-    protected Id callCounter = null;
-    /**
-     * Counter to measure total # of lock/Unlock errors.
-     */
-    protected Id errorCounter = null;
 
     /**
      * Lock Constructor with namespace and name.
@@ -183,9 +180,9 @@ public abstract class DistributedLock extends ReentrantLock implements Closeable
     }
 
     protected void setupMetrics(String metricLockLatency,
-                              String metricUnlockLatency,
-                              String counterLocked,
-                              String counterError) {
+                                String metricUnlockLatency,
+                                String counterLocked,
+                                String counterError) {
         lockLatency = Monitoring.addTimer(String.format(metricLockLatency, id().getNamespace(), id().getName()));
         unlockLatency = Monitoring.addTimer(String.format(metricUnlockLatency, id().getNamespace(), id().getName()));
         callCounter = Monitoring.addCounter(String.format(counterLocked, id().getNamespace(), id().getName()));

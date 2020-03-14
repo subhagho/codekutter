@@ -31,6 +31,7 @@ import lombok.Setter;
         property = "@class")
 public class FileDataStoreContext extends DataStoreAuditContext {
     private String directory;
+
     /**
      * Get the context as a JSON string.
      *

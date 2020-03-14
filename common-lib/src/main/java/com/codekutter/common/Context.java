@@ -58,7 +58,7 @@ public class Context {
      */
     public Context(@Nonnull Context source) {
         if (!source.params.isEmpty()) {
-            for(String key : source.params.keySet()) {
+            for (String key : source.params.keySet()) {
                 Object value = source.params.get(key);
                 params.put(key, value);
             }
@@ -240,7 +240,7 @@ public class Context {
      * Get the Double value for the specified Param Key.
      * If value is String, use the passed Date/Time Format.
      *
-     * @param key - Param Key.
+     * @param key    - Param Key.
      * @param format - Date/Time format.
      * @return - DateTime Value.
      */

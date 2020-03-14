@@ -31,29 +31,6 @@ import java.util.Set;
 @Setter
 @SuppressWarnings("rawtypes")
 public class FacetedSearchResult<T extends IEntity> extends BaseSearchResult<T> {
-    @Getter
-    @Setter
-    public static class FacetResult {
-        private String name;
-        private Map<String, Long> results = new HashMap<>();
-        private Map<String, FacetResult> nested = null;
-
-        public FacetResult() {
-        }
-
-        public FacetResult(@Nonnull String name) {
-            this.name = name;
-        }
-
-        public void addNested(@Nonnull String name, @Nonnull String key, @Nonnull Long value) {
-            if (nested == null) nested = new HashMap<>();
-            if (!nested.containsKey(name)) {
-                nested.put(name, new FacetResult(name));
-            }
-            nested.get(name).results.put(key, value);
-        }
-    }
-
     private Map<String, FacetResult> facets = new HashMap<>();
 
     public FacetedSearchResult(@Nonnull Class<? extends IEntity> type) {
@@ -83,5 +60,28 @@ public class FacetedSearchResult<T extends IEntity> extends BaseSearchResult<T> 
             facets.put(facet, new FacetResult(facet));
         }
         facets.get(facet).results.put(key, value);
+    }
+
+    @Getter
+    @Setter
+    public static class FacetResult {
+        private String name;
+        private Map<String, Long> results = new HashMap<>();
+        private Map<String, FacetResult> nested = null;
+
+        public FacetResult() {
+        }
+
+        public FacetResult(@Nonnull String name) {
+            this.name = name;
+        }
+
+        public void addNested(@Nonnull String name, @Nonnull String key, @Nonnull Long value) {
+            if (nested == null) nested = new HashMap<>();
+            if (!nested.containsKey(name)) {
+                nested.put(name, new FacetResult(name));
+            }
+            nested.get(name).results.put(key, value);
+        }
     }
 }

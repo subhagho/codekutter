@@ -64,12 +64,12 @@ public class ValidationException extends Exception {
      * @throws ValidationException
      */
     public static void checkNotNull(@Nonnull String property, Object value)
-    throws ValidationException {
+            throws ValidationException {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(property));
         if (value == null) {
             throw new ValidationException(
                     String.format("Property value is NULL. [property=%s]",
-                                  property));
+                            property));
         }
     }
 
@@ -81,12 +81,12 @@ public class ValidationException extends Exception {
      * @throws ValidationException
      */
     public static ValidationExceptions checkNotNull(@Nonnull String property, Object value,
-                                    ValidationExceptions errors) {
+                                                    ValidationExceptions errors) {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(property));
         if (value == null) {
             ValidationException ve = new ValidationException(
                     String.format("Property value is NULL. [property=%s]",
-                                  property));
+                            property));
             errors = ValidationExceptions.add(ve, errors);
         }
         return errors;
@@ -100,12 +100,12 @@ public class ValidationException extends Exception {
      * @throws ValidationException
      */
     public static void checkNotEmpty(@Nonnull String property, String value)
-    throws ValidationException {
+            throws ValidationException {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(property));
         if (Strings.isNullOrEmpty(value)) {
             throw new ValidationException(
                     String.format("Property value is NULL/Empty. [property=%s]",
-                                  property));
+                            property));
         }
     }
 
@@ -125,7 +125,7 @@ public class ValidationException extends Exception {
         if (Strings.isNullOrEmpty(value)) {
             ValidationException ve = new ValidationException(
                     String.format("Property value is NULL/Empty. [property=%s]",
-                                  property));
+                            property));
             errors = ValidationExceptions.add(ve, errors);
         }
         return errors;

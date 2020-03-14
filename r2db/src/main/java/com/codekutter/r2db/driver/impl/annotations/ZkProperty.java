@@ -20,9 +20,10 @@ package com.codekutter.r2db.driver.impl.annotations;
 import java.lang.annotation.*;
 
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.FIELD })
+@Target({ElementType.FIELD})
 @Inherited
 public @interface ZkProperty {
     boolean ignore() default false;
+
     boolean cascade() default true;
 }

@@ -70,7 +70,7 @@ public class ConfigurationUpdateHandler {
                 updatePaths.add(event.getPath());
             }
             ZConfigClientEnv.clientEnv().getConfigurationManager()
-                            .applyConfigurationUpdates(configName, updatePaths);
+                    .applyConfigurationUpdates(configName, updatePaths);
         } catch (Exception e) {
             LogUtils.error(getClass(), String.format(
                     "Update failed to configuration [name=%s][transaction=%s] : %s",
@@ -95,9 +95,9 @@ public class ConfigurationUpdateHandler {
             Configuration config = manager.getWithLock(event.getHeader().getConfigName());
             if (config == null) {
                 LogUtils.debug(getClass(),
-                               String.format(
-                                       "Configuration not loaded. [name=%s]",
-                                       event.getHeader().getConfigName()));
+                        String.format(
+                                "Configuration not loaded. [name=%s]",
+                                event.getHeader().getConfigName()));
                 return;
             }
             try {
@@ -151,11 +151,11 @@ public class ConfigurationUpdateHandler {
      */
     private void processAddEvent(ConfigUpdateEvent event, AbstractConfigNode parent,
                                  Configuration configuration)
-    throws ConfigurationException {
+            throws ConfigurationException {
         LogUtils.debug(getClass(),
-                       String.format("Applying Add change. [config=%s][path=%s]",
-                                     event.getHeader().getConfigName(),
-                                     parent.getAbsolutePath()));
+                String.format("Applying Add change. [config=%s][path=%s]",
+                        event.getHeader().getConfigName(),
+                        parent.getAbsolutePath()));
         if (parent instanceof ConfigPathNode) {
             ConfigPathNode cp = (ConfigPathNode) parent;
             AbstractConfigNode cnode = cp.getChildNode(event.getValue().getName());
@@ -187,7 +187,7 @@ public class ConfigurationUpdateHandler {
             cp.addValue(event.getValue());
         } else throw new ConfigurationException(
                 String.format("Add event not supported : [config=%s][path=%s]",
-                              event.getHeader().getConfigName(), parent.getAbsolutePath()));
+                        event.getHeader().getConfigName(), parent.getAbsolutePath()));
     }
 
     /**
@@ -201,7 +201,7 @@ public class ConfigurationUpdateHandler {
     private void processUpdateEvent(ConfigUpdateEvent event,
                                     AbstractConfigNode parent,
                                     Configuration configuration)
-    throws ConfigurationException {
+            throws ConfigurationException {
         if (parent instanceof ConfigPathNode) {
             ConfigPathNode cp = (ConfigPathNode) parent;
             AbstractConfigNode cnode = cp.getChildNode(event.getValue().getName());
@@ -239,7 +239,7 @@ public class ConfigurationUpdateHandler {
             cp.addKeyValue(event.getValue().getName(), event.getValue().getValue());
         } else throw new ConfigurationException(
                 String.format("Add event not supported : [config=%s][path=%s]",
-                              event.getHeader().getConfigName(), parent.getAbsolutePath()));
+                        event.getHeader().getConfigName(), parent.getAbsolutePath()));
     }
 
     /**
@@ -253,7 +253,7 @@ public class ConfigurationUpdateHandler {
     private void processDeleteEvent(ConfigUpdateEvent event,
                                     AbstractConfigNode parent,
                                     Configuration configuration)
-    throws ConfigurationException {
+            throws ConfigurationException {
         if (parent instanceof ConfigPathNode) {
             ConfigPathNode cp = (ConfigPathNode) parent;
             AbstractConfigNode cnode = cp.getChildNode(event.getValue().getName());
@@ -291,6 +291,6 @@ public class ConfigurationUpdateHandler {
             cp.removeKeyValue(event.getValue().getName());
         } else throw new ConfigurationException(
                 String.format("Add event not supported : [config=%s][path=%s]",
-                              event.getHeader().getConfigName(), parent.getAbsolutePath()));
+                        event.getHeader().getConfigName(), parent.getAbsolutePath()));
     }
 }

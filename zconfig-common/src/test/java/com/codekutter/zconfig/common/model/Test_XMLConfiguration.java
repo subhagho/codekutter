@@ -128,7 +128,7 @@ class Test_XMLConfiguration {
             String param = ((ConfigValueNode) node).getValue();
             assertFalse(Strings.isNullOrEmpty(param));
             debug(getClass(),
-                  String.format("[path=%s] property value = %s", path, param));
+                    String.format("[path=%s] property value = %s", path, param));
 
         } catch (Throwable e) {
             error(getClass(), e);
@@ -151,7 +151,7 @@ class Test_XMLConfiguration {
             String param = ((ConfigValueNode) node).getValue();
             assertFalse(Strings.isNullOrEmpty(param));
             debug(getClass(),
-                  String.format("[path=%s] parameter value = %s", path, param));
+                    String.format("[path=%s] parameter value = %s", path, param));
 
             path = "configuration/node_1/node_2#";
             node = configuration.find(path);
@@ -164,9 +164,9 @@ class Test_XMLConfiguration {
             assertNotNull(node);
             assertTrue(node instanceof ConfigParametersNode);
             assertEquals(path, node.getSearchPath());
-            ConfigParametersNode pnode = (ConfigParametersNode)node;
+            ConfigParametersNode pnode = (ConfigParametersNode) node;
             Map<String, ConfigValueNode> values = pnode.getKeyValues();
-            for(String key : values.keySet()) {
+            for (String key : values.keySet()) {
                 ConfigValueNode vn = values.get(key);
                 Object v = vn.getParsedValue();
                 assertNotNull(v);
@@ -194,7 +194,7 @@ class Test_XMLConfiguration {
             assertFalse(Strings.isNullOrEmpty(param));
             assertEquals("TEST_PROP_1", param);
             debug(getClass(),
-                  String.format("[path=%s] parameter value = %s", path, param));
+                    String.format("[path=%s] parameter value = %s", path, param));
         } catch (Throwable e) {
             error(getClass(), e);
             fail(e);
@@ -283,7 +283,7 @@ class Test_XMLConfiguration {
             AbstractConfigNode node = configuration.find(path);
             assertNotNull(node);
             assertTrue(node instanceof ConfigListElementNode);
-            assertEquals(7, ((ConfigListElementNode)node).getValues().size());
+            assertEquals(7, ((ConfigListElementNode) node).getValues().size());
             debug(getClass(), node);
         } catch (Throwable e) {
             error(getClass(), e);

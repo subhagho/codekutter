@@ -43,6 +43,10 @@ public class ElasticFacetedQueryBuilder<T extends IEntity> {
         this.type = type;
     }
 
+    public static <E extends IEntity> ElasticFacetedQueryBuilder<E> builder(Class<? extends E> type) {
+        return new ElasticFacetedQueryBuilder<>(type);
+    }
+
     public ElasticFacetedQueryBuilder<T> filter(@Nonnull String name, @Nonnull String field, int size) throws ValidationException {
         try {
             Field f = ReflectionUtils.findField(type, field);
@@ -102,6 +106,7 @@ public class ElasticFacetedQueryBuilder<T extends IEntity> {
             throw new ValidationException(ex);
         }
     }
+
     public ElasticFacetedQueryBuilder<T> range(@Nonnull String name,
                                                @Nonnull String field,
                                                @Nonnull List<Double[]> ranges,
@@ -181,9 +186,5 @@ public class ElasticFacetedQueryBuilder<T extends IEntity> {
 
     public AbstractAggregationBuilder build() {
         return builder;
-    }
-
-    public static <E extends IEntity> ElasticFacetedQueryBuilder<E> builder(Class<? extends E> type) {
-        return new ElasticFacetedQueryBuilder<>(type);
     }
 }

@@ -21,7 +21,9 @@ import com.codekutter.common.AbstractState;
 import com.codekutter.common.StateException;
 
 public class ObjectState extends AbstractState<EObjectState> {
-    public ObjectState() { setState(EObjectState.Unknown);}
+    public ObjectState() {
+        setState(EObjectState.Unknown);
+    }
 
     public void check(EObjectState expected, Class<?> caller) throws StateException {
         if (getState() != expected) {

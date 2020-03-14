@@ -29,7 +29,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 
 /**
  * State object used to represent the state of a configuration node.
- *
  */
 public class NodeState extends AbstractState<ENodeState> {
     /**

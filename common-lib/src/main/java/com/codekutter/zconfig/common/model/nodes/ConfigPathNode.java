@@ -190,7 +190,7 @@ public class ConfigPathNode extends ConfigElementNode {
      */
     @Override
     public AbstractConfigNode find(List<String> path, int index)
-    throws ConfigurationException {
+            throws ConfigurationException {
         String key = path.get(index);
         if (key.compareTo(ConfigurationSettings.NODE_PARENT_TERM) == 0) {
             if (getParent() != null) {
@@ -235,7 +235,7 @@ public class ConfigPathNode extends ConfigElementNode {
      * @return - Found node or NULL.
      */
     public AbstractConfigNode findChild(List<String> path, int index)
-    throws ConfigurationException {
+            throws ConfigurationException {
         String cname = path.get(index + 1);
         String name = path.get(index);
         if (children.containsKey(cname)) {
@@ -261,7 +261,7 @@ public class ConfigPathNode extends ConfigElementNode {
                 if (nodes.size() > 1) {
                     ConfigSearchListNode nodeList =
                             new ConfigSearchListNode(getConfiguration(),
-                                                     null);
+                                    null);
                     for (AbstractConfigNode nn : nodes) {
                         nodeList.addValue(nn);
                     }
@@ -283,7 +283,7 @@ public class ConfigPathNode extends ConfigElementNode {
                 if (nodes.size() > 1) {
                     ConfigSearchListNode nodeList =
                             new ConfigSearchListNode(getConfiguration(),
-                                                     null);
+                                    null);
                     for (AbstractConfigNode nn : nodes) {
                         nodeList.addValue(nn);
                     }
@@ -300,12 +300,12 @@ public class ConfigPathNode extends ConfigElementNode {
     }
 
     private AbstractConfigNode findInParent(List<String> path, int index, int offset)
-    throws ConfigurationException {
+            throws ConfigurationException {
         String pname = getParent().getName();
         StringBuffer buff = new StringBuffer(pname);
         for (int ii = offset; ii < path.size(); ii++) {
             buff.append(ConfigurationSettings.NODE_SEARCH_SEPERATOR)
-                .append(path.get(ii));
+                    .append(path.get(ii));
         }
         return getParent().find(buff.toString());
     }

@@ -69,6 +69,32 @@ public class Version {
     }
 
     /**
+     * Utility method to parse the Version object from the specified string value.
+     *
+     * @param value - String value of version (majorVersion.minorVersion)
+     * @return - Parsed Version object.
+     * @throws ValueParseException
+     */
+    public static final Version parse(@Nonnull String value)
+            throws ValueParseException {
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(value));
+        String[] parts = value.split("\\.");
+        if (parts == null || parts.length < 2) {
+            throw new ValueParseException(
+                    String.format("Error parsing Version from string. [value=%s]",
+                            value));
+        }
+        Version version = new Version();
+        version.majorVersion = Integer.parseInt(parts[0]);
+        if (parts[1].trim().compareTo("*") == 0) {
+            version.minorVersion = MATCH_ALL_MARKER;
+        } else
+            version.minorVersion = Integer.parseInt(parts[1]);
+
+        return version;
+    }
+
+    /**
      * Get the Major Version number.
      *
      * @return - Major version number.
@@ -186,31 +212,5 @@ public class Version {
                         v.minorVersion == minorVersion);
         }
         return super.equals(o);
-    }
-
-    /**
-     * Utility method to parse the Version object from the specified string value.
-     *
-     * @param value - String value of version (majorVersion.minorVersion)
-     * @return - Parsed Version object.
-     * @throws ValueParseException
-     */
-    public static final Version parse(@Nonnull String value)
-    throws ValueParseException {
-        Preconditions.checkArgument(!Strings.isNullOrEmpty(value));
-        String[] parts = value.split("\\.");
-        if (parts == null || parts.length < 2) {
-            throw new ValueParseException(
-                    String.format("Error parsing Version from string. [value=%s]",
-                                  value));
-        }
-        Version version = new Version();
-        version.majorVersion = Integer.parseInt(parts[0]);
-        if (parts[1].trim().compareTo("*") == 0) {
-            version.minorVersion = MATCH_ALL_MARKER;
-        } else
-            version.minorVersion = Integer.parseInt(parts[1]);
-
-        return version;
     }
 }

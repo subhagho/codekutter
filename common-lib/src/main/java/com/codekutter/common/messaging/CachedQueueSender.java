@@ -34,10 +34,9 @@ public class CachedQueueSender<C, M extends IKeyed> implements Runnable {
     private final CachedQueue<C, M> queue;
     private final int partitionCount;
     private final Class<? extends M> type;
+    private final ExecutorService executorService;
     private long startDelay = DEFAULT_INTERVAL;
     private long sendInterval = DEFAULT_INTERVAL;
-    private final ExecutorService executorService;
-
     private Runnable[] runTasks;
 
     public CachedQueueSender(@Nonnull CachedQueue<C, M> queue, int partitionCount, @Nonnull Class<? extends M> type) {

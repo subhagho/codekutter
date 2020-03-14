@@ -185,8 +185,8 @@ public class ElasticSearchDataStore extends AbstractDataStore<RestHighLevelClien
                     String qstr = null;
                     if (query instanceof String) {
                         qstr = (String) query;
-                    } else if (query instanceof Query){
-                        qstr = ((Query)query).toString();
+                    } else if (query instanceof Query) {
+                        qstr = ((Query) query).toString();
                     }
                     return helper.facetedSearch((AbstractAggregationBuilder) aggregates, index, connection().connection(), type, qstr, sortBuilders);
                 }
@@ -197,8 +197,8 @@ public class ElasticSearchDataStore extends AbstractDataStore<RestHighLevelClien
                     String qstr = null;
                     if (query instanceof String) {
                         qstr = (String) query;
-                    } else if (query instanceof Query){
-                        qstr = ((Query)query).toString();
+                    } else if (query instanceof Query) {
+                        qstr = ((Query) query).toString();
                     }
                     return helper.facetedSearch((AbstractAggregationBuilder[]) aggregates, index, connection().connection(), type, qstr, sortBuilders);
                 }

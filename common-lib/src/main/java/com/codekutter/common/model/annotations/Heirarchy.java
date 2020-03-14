@@ -28,8 +28,9 @@ import java.lang.annotation.*;
 public @interface Heirarchy {
     /**
      * Permission check policy.
-     *
+     * <p>
      * Default is Override.
+     *
      * @return - Check Policy.
      */
     EPermissionPolicy policy() default EPermissionPolicy.Override;

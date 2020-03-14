@@ -49,38 +49,6 @@ import java.nio.file.Paths;
  */
 public class ConfigProviderFactory {
     /**
-     * Enum to define the configuration type.
-     */
-    public static enum EConfigType {
-        /**
-         * JSON configuration file.
-         */
-        JSON,
-        /**
-         * XML configuration file.
-         */
-        XML;
-
-        /**
-         * Get the config type based on passed string.
-         *
-         * @param value - String value to parse.
-         * @return - Config Type or NULL.
-         */
-        public static EConfigType parse(String value) {
-            if (!Strings.isNullOrEmpty(value)) {
-                value = value.trim().toUpperCase();
-                if (value.compareTo(JSON.name()) == 0) {
-                    return JSON;
-                } else if (value.compareTo(XML.name()) == 0) {
-                    return XML;
-                }
-            }
-            return null;
-        }
-    }
-
-    /**
      * Method will try to get the configuration parser based on the extension of the
      * specified configuration file name.
      *
@@ -104,7 +72,7 @@ public class ConfigProviderFactory {
      * Get a new configuration parser instance of the parser for the specified configuration type.
      *
      * @param type - Configuration type.
-         * @return - Parser instance.
+     * @return - Parser instance.
      */
     public static final AbstractConfigParser parser(EConfigType type) {
         switch (type) {
@@ -145,7 +113,7 @@ public class ConfigProviderFactory {
      * @throws ConfigurationException
      */
     public static final AbstractConfigReader reader(URI uri)
-    throws ConfigurationException {
+            throws ConfigurationException {
         Preconditions.checkArgument(uri != null);
         EReaderType type = EReaderType.parseFromUri(uri);
         try {
@@ -161,6 +129,38 @@ public class ConfigProviderFactory {
             return null;
         } catch (MalformedURLException e) {
             throw new ConfigurationException(e);
+        }
+    }
+
+    /**
+     * Enum to define the configuration type.
+     */
+    public static enum EConfigType {
+        /**
+         * JSON configuration file.
+         */
+        JSON,
+        /**
+         * XML configuration file.
+         */
+        XML;
+
+        /**
+         * Get the config type based on passed string.
+         *
+         * @param value - String value to parse.
+         * @return - Config Type or NULL.
+         */
+        public static EConfigType parse(String value) {
+            if (!Strings.isNullOrEmpty(value)) {
+                value = value.trim().toUpperCase();
+                if (value.compareTo(JSON.name()) == 0) {
+                    return JSON;
+                } else if (value.compareTo(XML.name()) == 0) {
+                    return XML;
+                }
+            }
+            return null;
         }
     }
 }

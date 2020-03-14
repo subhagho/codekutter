@@ -219,14 +219,14 @@ public abstract class AbstractConfigParser implements Closeable {
                 Query query = session.createQuery(qstr);
                 query.setParameter("config", configuration.getId());
                 query.setParameter("version",
-                                   configuration.getVersion().getMajorVersion());
+                        configuration.getVersion().getMajorVersion());
                 List<ConfigDbRecord> records = query.getResultList();
                 if (records != null && !records.isEmpty()) {
                     Map<String, ConfigDbRecord> map = new HashMap<>();
                     for (ConfigDbRecord record : records) {
                         String key =
                                 String.format("%s/%s", record.getId().getPath(),
-                                              record.getId().getName());
+                                        record.getId().getName());
                         map.put(key, record);
                     }
                     return map;
@@ -244,9 +244,9 @@ public abstract class AbstractConfigParser implements Closeable {
         AbstractConnection<Session> connection =
                 ConnectionManager.readConnection(node);
         LogUtils.debug(getClass(),
-                       String.format("Loaded Db connection: [name=%s][type=%s]",
-                                     connection.name(),
-                                     connection.getClass().getCanonicalName()));
+                String.format("Loaded Db connection: [name=%s][type=%s]",
+                        connection.name(),
+                        connection.getClass().getCanonicalName()));
         configuration.setConnection(connection);
 
         return connection;
@@ -351,6 +351,6 @@ public abstract class AbstractConfigParser implements Closeable {
     public abstract void parse(String name, AbstractConfigReader reader,
                                ConfigurationSettings settings,
                                Version version, String password)
-    throws ConfigurationException;
+            throws ConfigurationException;
 
 }

@@ -40,13 +40,13 @@ import static org.junit.jupiter.api.Assertions.*;
 class Test_ExtendedZConfigEnv {
     private static final String BASE_PROPS_FILE =
             "src/test/resources/XML/test-extended-env.properties";
+    private static final User user = new User(UUID.randomUUID().toString());
     private static String encryptionKey = "21947a50-6755-47";
     private static String IV = "/NK/c+NKGUwMm0RF";
     private static String namespace = Test_ExtendedZConfigEnv.class.getCanonicalName();
     private static String zkLockName = "TEST_ZK_LOCK";
     private static String dbLockName = "TEST_DB_LOCK";
     private static String sqsQueueName = "TEST-SQS-QUEUE";
-    private static final User user = new User(UUID.randomUUID().toString());
 
     @BeforeAll
     public static void setup() throws Exception {

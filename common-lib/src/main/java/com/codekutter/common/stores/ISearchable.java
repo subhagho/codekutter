@@ -44,6 +44,7 @@ public interface ISearchable {
                                                        int offset,
                                                        @Nonnull Class<? extends T> type,
                                                        Context context) throws DataStoreException;
+
     <T extends IEntity> BaseSearchResult<T> facetedSearch(Object query,
                                                           @Nonnull Object aggregates,
                                                           @Nonnull Class<? extends T> type,

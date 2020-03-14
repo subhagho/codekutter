@@ -55,51 +55,6 @@ public class ZConfigCoreEnv extends ZConfigEnv {
     }
 
     /**
-     * Perform post-initialisation tasks if any.
-     *
-     * @throws ConfigurationException
-     */
-    @Override
-    public void postInit() throws ConfigurationException {
-        instance = new ZConfigCoreInstance();
-        setupInstance(ZConfigCoreInstance.class, instance);
-        LogUtils.debug(getClass(), instance);
-
-        zkConnectionConfig = new ZkConnectionConfig();
-        ConfigurationAnnotationProcessor
-                .readConfigAnnotations(ZkConnectionConfig.class, getConfiguration(),
-                                       zkConnectionConfig);
-        LogUtils.debug(getClass(), zkConnectionConfig);
-        LogUtils.info(getClass(),
-                      "Core environment successfully initialized...");
-    }
-
-    /**
-     * Client environment singleton.
-     */
-    public ZConfigCoreInstance getInstance() {
-        return instance;
-    }
-
-    /**
-     * Get the ZooKeeper connection configuration.
-     *
-     * @return - ZooKeeper connection configuration.
-     */
-    public ZkConnectionConfig getZkConnectionConfig() {
-        return zkConnectionConfig;
-    }
-
-    /**
-     * Get the Unique ID Generator handle.
-     *
-     * @return - Unique ID Generator
-     */
-    public IUniqueIDGenerator getIdGenerator() {
-        return idGenerator;
-    }
-
-    /**
      * Setup the client environment using the passed configuration file.
      *
      * @param configfile - Configuration file (path) to read from.
@@ -110,7 +65,7 @@ public class ZConfigCoreEnv extends ZConfigEnv {
                              @Nonnull String configfile,
                              @Nonnull String version,
                              String password)
-    throws ConfigurationException {
+            throws ConfigurationException {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(configfile));
         Preconditions.checkArgument(!Strings.isNullOrEmpty(version));
 
@@ -144,7 +99,7 @@ public class ZConfigCoreEnv extends ZConfigEnv {
                              @Nonnull String configfile,
                              @Nonnull ConfigProviderFactory.EConfigType type,
                              @Nonnull String version, String password)
-    throws ConfigurationException {
+            throws ConfigurationException {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(configfile));
         Preconditions.checkArgument(type != null);
         Preconditions.checkArgument(!Strings.isNullOrEmpty(version));
@@ -178,6 +133,51 @@ public class ZConfigCoreEnv extends ZConfigEnv {
         }
         throw new EnvException(
                 String.format("Env handle is not of client type. [type=%s]",
-                              env.getClass().getCanonicalName()));
+                        env.getClass().getCanonicalName()));
+    }
+
+    /**
+     * Perform post-initialisation tasks if any.
+     *
+     * @throws ConfigurationException
+     */
+    @Override
+    public void postInit() throws ConfigurationException {
+        instance = new ZConfigCoreInstance();
+        setupInstance(ZConfigCoreInstance.class, instance);
+        LogUtils.debug(getClass(), instance);
+
+        zkConnectionConfig = new ZkConnectionConfig();
+        ConfigurationAnnotationProcessor
+                .readConfigAnnotations(ZkConnectionConfig.class, getConfiguration(),
+                        zkConnectionConfig);
+        LogUtils.debug(getClass(), zkConnectionConfig);
+        LogUtils.info(getClass(),
+                "Core environment successfully initialized...");
+    }
+
+    /**
+     * Client environment singleton.
+     */
+    public ZConfigCoreInstance getInstance() {
+        return instance;
+    }
+
+    /**
+     * Get the ZooKeeper connection configuration.
+     *
+     * @return - ZooKeeper connection configuration.
+     */
+    public ZkConnectionConfig getZkConnectionConfig() {
+        return zkConnectionConfig;
+    }
+
+    /**
+     * Get the Unique ID Generator handle.
+     *
+     * @return - Unique ID Generator
+     */
+    public IUniqueIDGenerator getIdGenerator() {
+        return idGenerator;
     }
 }

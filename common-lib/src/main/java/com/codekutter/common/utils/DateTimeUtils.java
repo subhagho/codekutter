@@ -110,7 +110,7 @@ public class DateTimeUtils {
      * Convert to a milliseconds period.
      *
      * @param timeout - Timeout value
-     * @param unit - Time unit.
+     * @param unit    - Time unit.
      * @return - Milliseconds window.
      */
     public static long period(long timeout, @Nonnull TimeUnit unit) {

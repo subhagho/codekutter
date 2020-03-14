@@ -37,18 +37,10 @@ import java.util.concurrent.TimeUnit;
  * persist and synchronize lock(s) and state(s).
  */
 public class DistributedDbLock extends DistributedLock {
-    private static final class Metrics {
-        private static final String METRIC_LATENCY_LOCK = String.format("%s.%s.%s.LOCK", DistributedDbLock.class.getName(), "%s", "%s");
-        private static final String METRIC_LATENCY_UNLOCK = String.format("%s.%s.%s.UNLOCK", DistributedDbLock.class.getName(), "%s", "%s");
-        private static final String METRIC_COUNTER_ERROR = String.format("%s.%s.%s.ERRORS", DistributedDbLock.class.getName(), "%s", "%s");
-        private static final String METRIC_COUNTER_CALLS = String.format("%s.%s.%s.CALLS", DistributedDbLock.class.getName(), "%s", "%s");
-    }
-
     /**
      * Default Sleep interval between lock queries to check for DB lock.
      */
     private static final long DEFAULT_SLEEP_INTERVAL = 300;
-
     /**
      * Hibernate DB session.
      */
@@ -58,7 +50,6 @@ public class DistributedDbLock extends DistributedLock {
      * already acquired the lock.
      */
     private boolean locked = false;
-
     /**
      * Create Lock instance with the specified namespace/name.
      *
@@ -319,5 +310,12 @@ public class DistributedDbLock extends DistributedLock {
             session.save(record);
         }
         return record;
+    }
+
+    private static final class Metrics {
+        private static final String METRIC_LATENCY_LOCK = String.format("%s.%s.%s.LOCK", DistributedDbLock.class.getName(), "%s", "%s");
+        private static final String METRIC_LATENCY_UNLOCK = String.format("%s.%s.%s.UNLOCK", DistributedDbLock.class.getName(), "%s", "%s");
+        private static final String METRIC_COUNTER_ERROR = String.format("%s.%s.%s.ERRORS", DistributedDbLock.class.getName(), "%s", "%s");
+        private static final String METRIC_COUNTER_CALLS = String.format("%s.%s.%s.CALLS", DistributedDbLock.class.getName(), "%s", "%s");
     }
 }

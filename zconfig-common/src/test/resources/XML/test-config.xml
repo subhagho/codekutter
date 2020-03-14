@@ -23,7 +23,8 @@
   ~
   -->
 <root>
-    <header ID="UNIQUE-99918239013" group="TEST-APP-GROUP" application="TEST-APPLICATION" name="test-config" version="0.2">
+    <header ID="UNIQUE-99918239013" group="TEST-APP-GROUP" application="TEST-APPLICATION" name="test-config"
+            version="0.2">
         <description>This is a test JSON configuration file.</description>
         <createdBy user="subho" tiemstamp="1552835141000"/>
         <updatedBy user="subho" tiemstamp="1552835341000"/>
@@ -60,14 +61,14 @@
                 <PARAM_4>TEST_PARAM_4</PARAM_4>
             </parameters>
             <EMPTY_LIST>
-                <TEST_VALUE_LIST testAttr ="TEST_EMPTY" />
-                <TEST_VALUE_LIST testAttr ="TEST_EMPTY" />
-                <TEST_VALUE_LIST testAttr ="TEST_EMPTY" />
-                <TEST_VALUE_LIST testAttr ="TEST_EMPTY" />
-                <TEST_VALUE_LIST testAttr ="TEST_EMPTY" />
-                <TEST_VALUE_LIST testAttr ="TEST_EMPTY" />
-                <TEST_VALUE_LIST testAttr ="TEST_EMPTY" >
-                    <params />
+                <TEST_VALUE_LIST testAttr="TEST_EMPTY"/>
+                <TEST_VALUE_LIST testAttr="TEST_EMPTY"/>
+                <TEST_VALUE_LIST testAttr="TEST_EMPTY"/>
+                <TEST_VALUE_LIST testAttr="TEST_EMPTY"/>
+                <TEST_VALUE_LIST testAttr="TEST_EMPTY"/>
+                <TEST_VALUE_LIST testAttr="TEST_EMPTY"/>
+                <TEST_VALUE_LIST testAttr="TEST_EMPTY">
+                    <params/>
                 </TEST_VALUE_LIST>
             </EMPTY_LIST>
             <VALUE_LIST>
@@ -213,7 +214,9 @@
                             <param name="test.integer" type="INT">88878</param>
                             <param name="test.double" type="DOUBLE">949584.3460</param>
                             <param name="test.class" type="CLASS">com.codekutter.common.TimeWindow</param>
-                            <param name="test.enum" type="ENUM" enumType="com.codekutter.common.model.EObjectState">Initialized</param>
+                            <param name="test.enum" type="ENUM" enumType="com.codekutter.common.model.EObjectState">
+                                Initialized
+                            </param>
                         </parameters>
                     </node_5>
                     <remoteResource type="FILE" resourceName="data/LICENSE.txt">

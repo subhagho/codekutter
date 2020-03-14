@@ -41,7 +41,7 @@ import javax.annotation.Nonnull;
  * Class represents an instance of an application definition.
  */
 @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, include = JsonTypeInfo.As.PROPERTY,
-              property = "@class")
+        property = "@class")
 public class Application extends BaseEntity<StringKey, Application>
         implements IZkNode {
     /**
@@ -158,6 +158,7 @@ public class Application extends BaseEntity<StringKey, Application>
     public int getHashCode() {
         return EntityUtils.getStringHashCode(getId().getKey());
     }
+
     /**
      * Get the path name of this node.
      *

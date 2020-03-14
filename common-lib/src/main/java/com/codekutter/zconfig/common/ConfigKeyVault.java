@@ -27,7 +27,22 @@ import javax.annotation.Nonnull;
 import java.nio.charset.Charset;
 
 public class ConfigKeyVault {
+    private static final ConfigKeyVault _instance = new ConfigKeyVault();
     private IKeyVault vault = null;
+
+    public static String getIvSpec(@Nonnull String id, @Nonnull String group,
+                                   @Nonnull String app, @Nonnull String name,
+                                   @Nonnull String keyHash) throws Exception {
+        StringBuffer buffer = new StringBuffer();
+        buffer.append(id).append(group).append(app).append(name).append(keyHash);
+
+        String spec = CypherUtils.getKeyHash(buffer.toString());
+        return spec.substring(0, 16);
+    }
+
+    public static ConfigKeyVault getInstance() {
+        return _instance;
+    }
 
     public ConfigKeyVault withVault(@Nonnull IKeyVault vault) {
         this.vault = vault;
@@ -68,21 +83,5 @@ public class ConfigKeyVault {
     private String getIVSpec(Configuration config) throws Exception {
         return getIvSpec(config.getId(), config.getApplicationGroup(),
                 config.getApplication(), config.getName(), config.getEncryptionHash());
-    }
-
-    public static String getIvSpec(@Nonnull String id, @Nonnull String group,
-                                   @Nonnull String app, @Nonnull String name,
-                                   @Nonnull String keyHash) throws Exception {
-        StringBuffer buffer = new StringBuffer();
-        buffer.append(id).append(group).append(app).append(name).append(keyHash);
-
-        String spec = CypherUtils.getKeyHash(buffer.toString());
-        return spec.substring(0, 16);
-    }
-
-    private static final ConfigKeyVault _instance = new ConfigKeyVault();
-
-    public static ConfigKeyVault getInstance() {
-        return _instance;
     }
 }

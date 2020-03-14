@@ -35,7 +35,6 @@ import lombok.experimental.Accessors;
 import org.apache.lucene.search.Query;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.index.query.QueryBuilder;
-import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.aggregations.AbstractAggregationBuilder;
 import org.elasticsearch.search.sort.SortBuilder;
 import org.hibernate.Session;
@@ -50,17 +49,9 @@ import java.util.Map;
 @Accessors(fluent = true)
 @SuppressWarnings("rawtypes")
 public class SearchableRdbmsDataStore extends RdbmsDataStore implements ISearchable {
-    @Getter
-    @Setter
-    @Accessors(fluent = true)
-    private static class CacheEntry {
-        private EAuditType entryType;
-        private IEntity entity;
-    }
-
+    private final ElasticSearchHelper helper = new ElasticSearchHelper();
     private ElasticSearchConnection readConnection = null;
     private Map<Class<? extends IEntity>, Map<IKey, CacheEntry>> dirtyCache = new HashMap<>();
-    private final ElasticSearchHelper helper = new ElasticSearchHelper();
 
     @Override
     public void commit() throws DataStoreException {
@@ -334,5 +325,13 @@ public class SearchableRdbmsDataStore extends RdbmsDataStore implements ISearcha
         } catch (Exception ex) {
             throw new ConfigurationException(ex);
         }
+    }
+
+    @Getter
+    @Setter
+    @Accessors(fluent = true)
+    private static class CacheEntry {
+        private EAuditType entryType;
+        private IEntity entity;
     }
 }

@@ -43,7 +43,8 @@ public class ModifiedBy {
     private String modifiedBy;
     private long timestamp;
 
-    public ModifiedBy() {}
+    public ModifiedBy() {
+    }
 
     public ModifiedBy(@Nonnull String userId) {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(userId));

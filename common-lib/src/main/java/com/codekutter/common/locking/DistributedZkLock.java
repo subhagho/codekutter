@@ -32,18 +32,10 @@ import java.util.concurrent.TimeUnit;
  * persist and synchronize lock(s) and state(s).
  */
 public class DistributedZkLock extends DistributedLock {
-    private static final class Metrics {
-        private static final String METRIC_LATENCY_LOCK = String.format("%s.%s.%s.LOCK", DistributedZkLock.class.getName(), "%s", "%s");
-        private static final String METRIC_LATENCY_UNLOCK = String.format("%s.%s.%s.UNLOCK", DistributedZkLock.class.getName(), "%s", "%s");
-        private static final String METRIC_COUNTER_ERROR = String.format("%s.%s.%s.ERRORS", DistributedZkLock.class.getName(), "%s", "%s");
-        private static final String METRIC_COUNTER_CALLS = String.format("%s.%s.%s.CALLS", DistributedZkLock.class.getName(), "%s", "%s");
-    }
-
     /**
      * Default Lock get timeout.
      */
     private static final int DEFAULT_LOCK_TIMEOUT = 500;
-
     /**
      * ZooKeeper Inter-process Mutex instance.
      */
@@ -188,5 +180,12 @@ public class DistributedZkLock extends DistributedLock {
             return mutex.isAcquiredInThisProcess();
         }
         return false;
+    }
+
+    private static final class Metrics {
+        private static final String METRIC_LATENCY_LOCK = String.format("%s.%s.%s.LOCK", DistributedZkLock.class.getName(), "%s", "%s");
+        private static final String METRIC_LATENCY_UNLOCK = String.format("%s.%s.%s.UNLOCK", DistributedZkLock.class.getName(), "%s", "%s");
+        private static final String METRIC_COUNTER_ERROR = String.format("%s.%s.%s.ERRORS", DistributedZkLock.class.getName(), "%s", "%s");
+        private static final String METRIC_COUNTER_CALLS = String.format("%s.%s.%s.CALLS", DistributedZkLock.class.getName(), "%s", "%s");
     }
 }

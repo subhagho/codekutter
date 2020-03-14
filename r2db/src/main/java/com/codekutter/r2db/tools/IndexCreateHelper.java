@@ -17,7 +17,6 @@
 
 package com.codekutter.r2db.tools;
 
-import com.codekutter.common.utils.ReflectionUtils;
 import com.codekutter.r2db.driver.impl.annotations.Indexed;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -37,7 +36,7 @@ public class IndexCreateHelper {
                 .put("type", "custom")
                 .put("tokenizer", indexed.tokenizer())
                 .put("filter", "lowercase");
-         return root.toPrettyString();
+        return root.toPrettyString();
     }
 
     public static String parseFieldType(Field field) {
@@ -62,7 +61,7 @@ public class IndexCreateHelper {
             return Float.class.getName().toLowerCase();
         } else if (type.equals(double.class) || type.equals(Double.class)) {
             return Double.class.getName().toLowerCase();
-        } 
+        }
         return null;
     }
 }
