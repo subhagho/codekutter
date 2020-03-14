@@ -60,6 +60,7 @@ import org.elasticsearch.search.aggregations.bucket.range.Range;
 import org.elasticsearch.search.aggregations.bucket.terms.ParsedTerms;
 import org.elasticsearch.search.aggregations.bucket.terms.Terms;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
+import org.elasticsearch.search.sort.SortBuilder;
 
 import javax.annotation.Nonnull;
 import java.io.IOException;
@@ -345,6 +346,13 @@ public class ElasticSearchHelper {
             sourceBuilder.from(offset);
             sourceBuilder.size(batchSize);
             sourceBuilder.query(query);
+            if (context instanceof ElasticSearchContext) {
+                List<SortBuilder<?>> sortBuilders = ((ElasticSearchContext) context).sort();
+                if (sortBuilders != null && !sortBuilders.isEmpty()) {
+                    for (SortBuilder<?> sortBuilder : sortBuilders)
+                        sourceBuilder.sort(sortBuilder);
+                }
+            }
             request.source(sourceBuilder);
 
             SearchResponse response = client.search(request, RequestOptions.DEFAULT);
@@ -391,6 +399,13 @@ public class ElasticSearchHelper {
             sourceBuilder.from(offset);
             sourceBuilder.size(batchSize);
             sourceBuilder.query(QueryBuilders.queryStringQuery(query));
+            if (context instanceof ElasticSearchContext) {
+                List<SortBuilder<?>> sortBuilders = ((ElasticSearchContext) context).sort();
+                if (sortBuilders != null && !sortBuilders.isEmpty()) {
+                    for (SortBuilder<?> sortBuilder : sortBuilders)
+                        sourceBuilder.sort(sortBuilder);
+                }
+            }
             request.source(sourceBuilder);
 
             SearchResponse response = client.search(request, RequestOptions.DEFAULT);
@@ -427,17 +442,22 @@ public class ElasticSearchHelper {
     public <T extends IEntity> FacetedSearchResult<T> facetedSearch(@Nonnull AbstractAggregationBuilder[] builders,
                                                                     @Nonnull String index,
                                                                     @Nonnull RestHighLevelClient client,
-                                                                    @Nonnull Class<? extends T> type) throws DataStoreException {
+                                                                    @Nonnull Class<? extends T> type,
+                                                                    List<SortBuilder<?>> sortBuilders) throws DataStoreException {
         try {
             SearchRequest request = new SearchRequest(index);
             SearchSourceBuilder sourceBuilder = new SearchSourceBuilder();
             sourceBuilder.from(0);
             sourceBuilder.size(0);
             sourceBuilder.query(QueryBuilders.matchAllQuery());
-            for(AbstractAggregationBuilder builder : builders) {
+            for (AbstractAggregationBuilder builder : builders) {
                 sourceBuilder.aggregation(builder);
             }
             request.source(sourceBuilder);
+            if (sortBuilders != null && !sortBuilders.isEmpty()) {
+                for (SortBuilder<?> sortBuilder : sortBuilders)
+                    sourceBuilder.sort(sortBuilder);
+            }
 
             SearchResponse response = client.search(request, RequestOptions.DEFAULT);
             RestStatus status = response.status();
@@ -463,7 +483,8 @@ public class ElasticSearchHelper {
     public <T extends IEntity> FacetedSearchResult<T> facetedSearch(@Nonnull AbstractAggregationBuilder builder,
                                                                     @Nonnull String index,
                                                                     @Nonnull RestHighLevelClient client,
-                                                                    @Nonnull Class<? extends T> type) throws DataStoreException {
+                                                                    @Nonnull Class<? extends T> type,
+                                                                    List<SortBuilder<?>> sortBuilders) throws DataStoreException {
         try {
             SearchRequest request = new SearchRequest(index);
             SearchSourceBuilder sourceBuilder = new SearchSourceBuilder();
@@ -472,7 +493,10 @@ public class ElasticSearchHelper {
             sourceBuilder.query(QueryBuilders.matchAllQuery());
             sourceBuilder.aggregation(builder);
             request.source(sourceBuilder);
-
+            if (sortBuilders != null && !sortBuilders.isEmpty()) {
+                for (SortBuilder<?> sortBuilder : sortBuilders)
+                    sourceBuilder.sort(sortBuilder);
+            }
             SearchResponse response = client.search(request, RequestOptions.DEFAULT);
             RestStatus status = response.status();
             if (status != RestStatus.OK && status != RestStatus.NOT_FOUND && status != RestStatus.FOUND) {
@@ -536,7 +560,7 @@ public class ElasticSearchHelper {
                 }
             }
         } else if (aggregation instanceof ParsedRange) {
-            ParsedRange parsedRange = (ParsedRange)aggregation;
+            ParsedRange parsedRange = (ParsedRange) aggregation;
             String name = parsedRange.getName();
             List<Range.Bucket> buckets = (List<Range.Bucket>) parsedRange.getBuckets();
             for (Range.Bucket bucket : buckets) {

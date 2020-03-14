@@ -25,6 +25,7 @@ import com.codekutter.common.stores.BaseSearchResult;
 import com.codekutter.common.stores.impl.EntitySearchResult;
 import com.codekutter.common.stores.model.*;
 import com.codekutter.common.utils.LogUtils;
+import com.codekutter.r2db.driver.impl.ElasticSearchContext;
 import com.codekutter.r2db.driver.impl.FacetedSearchResult;
 import com.codekutter.r2db.driver.impl.SearchableRdbmsDataStore;
 import com.codekutter.r2db.driver.impl.query.ElasticFacetedQueryBuilder;
@@ -36,6 +37,9 @@ import com.google.common.base.Strings;
 import org.apache.lucene.search.Query;
 import org.elasticsearch.search.aggregations.AbstractAggregationBuilder;
 import org.elasticsearch.search.aggregations.bucket.histogram.DateHistogramInterval;
+import org.elasticsearch.search.sort.SortBuilder;
+import org.elasticsearch.search.sort.SortBuilders;
+import org.elasticsearch.search.sort.SortOrder;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -93,22 +97,6 @@ class EntityManagerTest {
             LogUtils.error(EntityManagerTest.class, t);
             throw new RuntimeException(t);
         }
-    }
-
-    @Test
-    void textSearch() {
-    }
-
-    @Test
-    void testTextSearch() {
-    }
-
-    @Test
-    void testTextSearch1() {
-    }
-
-    @Test
-    void testTextSearch2() {
     }
 
     @Test
@@ -221,12 +209,14 @@ class EntityManagerTest {
                             GlobalConstants.quote(orders.get(0).getItems().get(35).getId().getProductId())})
                     .build();
             LogUtils.debug(getClass(), String.format("query=[%s]", query.toString()));
-            BaseSearchResult<Order> result = entityManager.textSearch(query, Order.class, SearchableRdbmsDataStore.class, null);
+            ElasticSearchContext context = new ElasticSearchContext();
+            context.sort(SortBuilders.fieldSort("amount").order(SortOrder.DESC)).sort(SortBuilders.fieldSort("customer.id.key").order(SortOrder.ASC));
+            BaseSearchResult<Order> result = entityManager.textSearch(query, Order.class, SearchableRdbmsDataStore.class, context);
             assertTrue(result instanceof EntitySearchResult);
             EntitySearchResult<Order> or = (EntitySearchResult<Order>) result;
             assertFalse(or.getEntities().isEmpty());
             for (Order order : or.getEntities()) {
-                LogUtils.debug(getClass(), order);
+                LogUtils.debug(getClass(), String.format("Order Amount=%f, Customer = %s", order.getAmount(), order.getCustomer().getId().stringKey()));
             }
         } catch (Exception ex) {
             LogUtils.error(getClass(), ex);
@@ -247,10 +237,13 @@ class EntityManagerTest {
             AbstractAggregationBuilder tb = builder.filter("Product Filter", "items.id.productId", 0)
                     .dateFilter("Create Date Filter", "createdOn", DateHistogramInterval.days(1)).build();
             LogUtils.debug(getClass(), String.format("query=[%s]", tb.toString()));
-            BaseSearchResult<Order> result = entityManager.facetedSearch(tb, Order.class, SearchableRdbmsDataStore.class, null);
+            ElasticSearchContext context = new ElasticSearchContext();
+            SortBuilder<?> sortBuilder = SortBuilders.fieldSort("amount").order(SortOrder.DESC);
+            context.sort(sortBuilder);
+            BaseSearchResult<Order> result = entityManager.facetedSearch(tb, Order.class, SearchableRdbmsDataStore.class, context);
             assertTrue(result instanceof FacetedSearchResult);
-            FacetedSearchResult<Order> fr = (FacetedSearchResult<Order>)result;
-            for(String key : fr.keys()) {
+            FacetedSearchResult<Order> fr = (FacetedSearchResult<Order>) result;
+            for (String key : fr.keys()) {
                 FacetedSearchResult.FacetResult f = fr.getFacets().get(key);
                 LogUtils.debug(getClass(), f);
             }
@@ -270,16 +263,18 @@ class EntityManagerTest {
 
 
             ElasticFacetedQueryBuilder<Order> builder = new ElasticFacetedQueryBuilder<>(Order.class);
-            AbstractAggregationBuilder[] builders = new  AbstractAggregationBuilder[2];
-            builders[0] = builder.filter("Product Filter", "items.id.productId", 100).build();;
+            AbstractAggregationBuilder[] builders = new AbstractAggregationBuilder[2];
+            builders[0] = builder.filter("Product Filter", "items.id.productId", 100).build();
+            ;
             builder = new ElasticFacetedQueryBuilder<>(Order.class);
-            builders[1] = builder.dateFilter("Create Date Filter", "createdOn", DateHistogramInterval.days(1)).build();;
+            builders[1] = builder.dateFilter("Create Date Filter", "createdOn", DateHistogramInterval.days(1)).build();
+            ;
 
-            LogUtils.debug(getClass(),  builders);
+            LogUtils.debug(getClass(), builders);
             BaseSearchResult<Order> result = entityManager.facetedSearch(builders, Order.class, SearchableRdbmsDataStore.class, null);
             assertTrue(result instanceof FacetedSearchResult);
-            FacetedSearchResult<Order> fr = (FacetedSearchResult<Order>)result;
-            for(String key : fr.keys()) {
+            FacetedSearchResult<Order> fr = (FacetedSearchResult<Order>) result;
+            for (String key : fr.keys()) {
                 FacetedSearchResult.FacetResult f = fr.getFacets().get(key);
                 LogUtils.debug(getClass(), f);
             }
@@ -300,18 +295,18 @@ class EntityManagerTest {
 
             ElasticFacetedQueryBuilder<Order> builder = new ElasticFacetedQueryBuilder<>(Order.class);
             List<Double[]> ranges = new ArrayList<>();
-            ranges.add(new Double[]{(double)10000, (double)20000});
-            ranges.add(new Double[]{(double)20000, (double)50000});
-            ranges.add(new Double[]{(double)50000, (double)100000});
-            ranges.add(new Double[]{(double)100000, (double)200000});
-            ranges.add(new Double[]{(double)200000, (double)500000});
+            ranges.add(new Double[]{(double) 10000, (double) 20000});
+            ranges.add(new Double[]{(double) 20000, (double) 50000});
+            ranges.add(new Double[]{(double) 50000, (double) 100000});
+            ranges.add(new Double[]{(double) 100000, (double) 200000});
+            ranges.add(new Double[]{(double) 200000, (double) 500000});
 
             AbstractAggregationBuilder tb = builder.range("Order Amount", "amount", ranges, true).build();
             LogUtils.debug(getClass(), String.format("query=[%s]", tb.toString()));
             BaseSearchResult<Order> result = entityManager.facetedSearch(tb, Order.class, SearchableRdbmsDataStore.class, null);
             assertTrue(result instanceof FacetedSearchResult);
-            FacetedSearchResult<Order> fr = (FacetedSearchResult<Order>)result;
-            for(String key : fr.keys()) {
+            FacetedSearchResult<Order> fr = (FacetedSearchResult<Order>) result;
+            for (String key : fr.keys()) {
                 FacetedSearchResult.FacetResult f = fr.getFacets().get(key);
                 LogUtils.debug(getClass(), f);
             }

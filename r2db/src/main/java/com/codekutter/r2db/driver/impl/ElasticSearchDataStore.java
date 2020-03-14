@@ -28,9 +28,11 @@ import org.apache.lucene.search.Query;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.search.aggregations.AbstractAggregationBuilder;
+import org.elasticsearch.search.sort.SortBuilder;
 
 import javax.annotation.Nonnull;
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 
 @SuppressWarnings("rawtypes")
@@ -166,10 +168,14 @@ public class ElasticSearchDataStore extends AbstractDataStore<RestHighLevelClien
             throw new DataStoreException(String.format("Type is not indexed. [type=%s]", type.getCanonicalName()));
         }
         try {
+            List<SortBuilder<?>> sortBuilders = null;
+            if (context instanceof ElasticSearchContext) {
+                sortBuilders = ((ElasticSearchContext) context).sort();
+            }
             if (query instanceof AbstractAggregationBuilder) {
-                return helper.facetedSearch((AbstractAggregationBuilder) query, index, connection().connection(), type);
+                return helper.facetedSearch((AbstractAggregationBuilder) query, index, connection().connection(), type, sortBuilders);
             } else if (query instanceof AbstractAggregationBuilder[]) {
-                return helper.facetedSearch((AbstractAggregationBuilder[]) query, index, connection().connection(), type);
+                return helper.facetedSearch((AbstractAggregationBuilder[]) query, index, connection().connection(), type, sortBuilders);
             }
         } catch (Exception ex) {
             throw new DataStoreException(ex);

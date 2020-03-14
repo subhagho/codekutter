@@ -35,10 +35,12 @@ import org.apache.lucene.search.Query;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.search.aggregations.AbstractAggregationBuilder;
+import org.elasticsearch.search.sort.SortBuilder;
 import org.hibernate.Session;
 
 import javax.annotation.Nonnull;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Getter
@@ -210,10 +212,14 @@ public class SearchableRdbmsDataStore extends RdbmsDataStore implements ISearcha
         if (Strings.isNullOrEmpty(index)) {
             throw new DataStoreException(String.format("Type is not indexed. [type=%s]", type.getCanonicalName()));
         }
+        List<SortBuilder<?>> sortBuilders = null;
+        if (context instanceof ElasticSearchContext) {
+            sortBuilders = ((ElasticSearchContext) context).sort();
+        }
         if (query instanceof AbstractAggregationBuilder) {
-            return helper.facetedSearch((AbstractAggregationBuilder) query, index, readConnection.connection(), type);
+            return helper.facetedSearch((AbstractAggregationBuilder) query, index, readConnection.connection(), type, sortBuilders);
         } else if (query instanceof AbstractAggregationBuilder[]) {
-            return helper.facetedSearch((AbstractAggregationBuilder[]) query, index, readConnection.connection(), type);
+            return helper.facetedSearch((AbstractAggregationBuilder[]) query, index, readConnection.connection(), type, sortBuilders);
         }
         throw new DataStoreException(String.format("Query type not supported. [type=%s]", query.getClass().getCanonicalName()));
     }
