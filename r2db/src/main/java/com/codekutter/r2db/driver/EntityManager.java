@@ -72,9 +72,9 @@ public class EntityManager implements IConfigurable {
     private Map<Class<? extends IShardProvider>, IShardProvider> shardProviders = new ConcurrentHashMap<>();
 
     public <T, E extends IEntity> BaseSearchResult<E> textSearch(@Nonnull Query query,
-                                                  @Nonnull Class<? extends E> type,
-                                                  Class<? extends AbstractDataStore<T>> storeType,
-                                                  Context context) throws DataStoreException {
+                                                                 @Nonnull Class<? extends E> type,
+                                                                 Class<? extends AbstractDataStore<T>> storeType,
+                                                                 Context context) throws DataStoreException {
         AbstractDataStore<T> dataStore = findStore(type, storeType);
         if (dataStore == null) {
             throw new DataStoreException(String.format("No data store found for entity. [type=%s]", type.getCanonicalName()));
@@ -86,9 +86,9 @@ public class EntityManager implements IConfigurable {
     }
 
     public <T, E extends IEntity> BaseSearchResult<E> textSearch(@Nonnull Query query, int batchSize, int offset,
-                                                  @Nonnull Class<? extends E> type,
-                                                  Class<? extends AbstractDataStore<T>> storeType,
-                                                  Context context) throws DataStoreException {
+                                                                 @Nonnull Class<? extends E> type,
+                                                                 Class<? extends AbstractDataStore<T>> storeType,
+                                                                 Context context) throws DataStoreException {
         AbstractDataStore<T> dataStore = findStore(type, storeType);
         if (dataStore == null) {
             throw new DataStoreException(String.format("No data store found for entity. [type=%s]", type.getCanonicalName()));
@@ -100,9 +100,9 @@ public class EntityManager implements IConfigurable {
     }
 
     public <T, E extends IEntity> BaseSearchResult<E> textSearch(@Nonnull String query,
-                                                  @Nonnull Class<? extends E> type,
-                                                  Class<? extends AbstractDataStore<T>> storeType,
-                                                  Context context) throws DataStoreException {
+                                                                 @Nonnull Class<? extends E> type,
+                                                                 Class<? extends AbstractDataStore<T>> storeType,
+                                                                 Context context) throws DataStoreException {
         AbstractDataStore<T> dataStore = findStore(type, storeType);
         if (dataStore == null) {
             throw new DataStoreException(String.format("No data store found for entity. [type=%s]", type.getCanonicalName()));
@@ -114,20 +114,6 @@ public class EntityManager implements IConfigurable {
     }
 
     public <T, E extends IEntity> BaseSearchResult<E> textSearch(@Nonnull String query, int batchSize, int offset,
-                                                  @Nonnull Class<? extends E> type,
-                                                  Class<? extends AbstractDataStore<T>> storeType,
-                                                  Context context) throws DataStoreException {
-        AbstractDataStore<T> dataStore = (AbstractDataStore<T>) findStore(type, storeType);
-        if (dataStore == null) {
-            throw new DataStoreException(String.format("No data store found for entity. [type=%s]", type.getCanonicalName()));
-        }
-        if (!(dataStore instanceof ISearchable)) {
-            throw new DataStoreException(String.format("Specified store type doesn't support text search. [data store=%s]", storeType.getCanonicalName()));
-        }
-        return ((ISearchable) dataStore).textSearch(query, batchSize, offset, type, context);
-    }
-
-    public <T, E extends IEntity> BaseSearchResult<E> facetedSearch(@Nonnull Object query,
                                                                  @Nonnull Class<? extends E> type,
                                                                  Class<? extends AbstractDataStore<T>> storeType,
                                                                  Context context) throws DataStoreException {
@@ -138,7 +124,22 @@ public class EntityManager implements IConfigurable {
         if (!(dataStore instanceof ISearchable)) {
             throw new DataStoreException(String.format("Specified store type doesn't support text search. [data store=%s]", storeType.getCanonicalName()));
         }
-        return ((ISearchable) dataStore).facetedSearch(query, type, context);
+        return ((ISearchable) dataStore).textSearch(query, batchSize, offset, type, context);
+    }
+
+    public <T, E extends IEntity> BaseSearchResult<E> facetedSearch(Object query,
+                                                                    Object aggregates,
+                                                                    @Nonnull Class<? extends E> type,
+                                                                    Class<? extends AbstractDataStore<T>> storeType,
+                                                                    Context context) throws DataStoreException {
+        AbstractDataStore<T> dataStore = (AbstractDataStore<T>) findStore(type, storeType);
+        if (dataStore == null) {
+            throw new DataStoreException(String.format("No data store found for entity. [type=%s]", type.getCanonicalName()));
+        }
+        if (!(dataStore instanceof ISearchable)) {
+            throw new DataStoreException(String.format("Specified store type doesn't support text search. [data store=%s]", storeType.getCanonicalName()));
+        }
+        return ((ISearchable) dataStore).facetedSearch(query, aggregates, type, context);
     }
 
     public <T> void beingTransaction(@Nonnull Class<? extends IEntity> type, Class<? extends AbstractDataStore<T>> storeType) throws DataStoreException {

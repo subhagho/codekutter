@@ -443,13 +443,62 @@ public class ElasticSearchHelper {
                                                                     @Nonnull String index,
                                                                     @Nonnull RestHighLevelClient client,
                                                                     @Nonnull Class<? extends T> type,
+                                                                    QueryBuilder query,
                                                                     List<SortBuilder<?>> sortBuilders) throws DataStoreException {
         try {
             SearchRequest request = new SearchRequest(index);
             SearchSourceBuilder sourceBuilder = new SearchSourceBuilder();
             sourceBuilder.from(0);
             sourceBuilder.size(0);
-            sourceBuilder.query(QueryBuilders.matchAllQuery());
+            if (query != null) {
+                sourceBuilder.query(query);
+            } else
+                sourceBuilder.query(QueryBuilders.matchAllQuery());
+            for (AbstractAggregationBuilder builder : builders) {
+                sourceBuilder.aggregation(builder);
+            }
+            request.source(sourceBuilder);
+            if (sortBuilders != null && !sortBuilders.isEmpty()) {
+                for (SortBuilder<?> sortBuilder : sortBuilders)
+                    sourceBuilder.sort(sortBuilder);
+            }
+
+            SearchResponse response = client.search(request, RequestOptions.DEFAULT);
+            RestStatus status = response.status();
+            if (status != RestStatus.OK && status != RestStatus.NOT_FOUND && status != RestStatus.FOUND) {
+                throw new DataStoreException(String.format("Search failed. [status=%s][index=%s]", response.status().name(), index));
+            }
+            if (status == RestStatus.FOUND || status == RestStatus.OK) {
+                FacetedSearchResult<T> result = new FacetedSearchResult<>(type);
+                Aggregations aggregations = response.getAggregations();
+                if (aggregations != null) {
+                    for (Aggregation aggregation : aggregations) {
+                        readAggregation(aggregation, result.getFacets());
+                    }
+                }
+                return result;
+            }
+            return null;
+        } catch (Exception ex) {
+            throw new DataStoreException(ex);
+        }
+    }
+
+    public <T extends IEntity> FacetedSearchResult<T> facetedSearch(@Nonnull AbstractAggregationBuilder[] builders,
+                                                                    @Nonnull String index,
+                                                                    @Nonnull RestHighLevelClient client,
+                                                                    @Nonnull Class<? extends T> type,
+                                                                    String query,
+                                                                    List<SortBuilder<?>> sortBuilders) throws DataStoreException {
+        try {
+            SearchRequest request = new SearchRequest(index);
+            SearchSourceBuilder sourceBuilder = new SearchSourceBuilder();
+            sourceBuilder.from(0);
+            sourceBuilder.size(0);
+            if (query != null) {
+                sourceBuilder.query(QueryBuilders.queryStringQuery(query));
+            } else
+                sourceBuilder.query(QueryBuilders.matchAllQuery());
             for (AbstractAggregationBuilder builder : builders) {
                 sourceBuilder.aggregation(builder);
             }
@@ -484,13 +533,59 @@ public class ElasticSearchHelper {
                                                                     @Nonnull String index,
                                                                     @Nonnull RestHighLevelClient client,
                                                                     @Nonnull Class<? extends T> type,
+                                                                    QueryBuilder query,
                                                                     List<SortBuilder<?>> sortBuilders) throws DataStoreException {
         try {
             SearchRequest request = new SearchRequest(index);
             SearchSourceBuilder sourceBuilder = new SearchSourceBuilder();
             sourceBuilder.from(0);
             sourceBuilder.size(0);
-            sourceBuilder.query(QueryBuilders.matchAllQuery());
+            if (query != null) {
+                sourceBuilder.query(query);
+            } else
+                sourceBuilder.query(QueryBuilders.matchAllQuery());
+            sourceBuilder.aggregation(builder);
+            request.source(sourceBuilder);
+            if (sortBuilders != null && !sortBuilders.isEmpty()) {
+                for (SortBuilder<?> sortBuilder : sortBuilders)
+                    sourceBuilder.sort(sortBuilder);
+            }
+            SearchResponse response = client.search(request, RequestOptions.DEFAULT);
+            RestStatus status = response.status();
+            if (status != RestStatus.OK && status != RestStatus.NOT_FOUND && status != RestStatus.FOUND) {
+                throw new DataStoreException(String.format("Search failed. [status=%s][index=%s]", response.status().name(), index));
+            }
+            if (status == RestStatus.FOUND || status == RestStatus.OK) {
+                FacetedSearchResult<T> result = new FacetedSearchResult<>(type);
+                Aggregations aggregations = response.getAggregations();
+                if (aggregations != null) {
+                    for (Aggregation aggregation : aggregations) {
+                        readAggregation(aggregation, result.getFacets());
+                    }
+                }
+                return result;
+            }
+            return null;
+        } catch (Exception ex) {
+            throw new DataStoreException(ex);
+        }
+    }
+
+    public <T extends IEntity> FacetedSearchResult<T> facetedSearch(@Nonnull AbstractAggregationBuilder builder,
+                                                                    @Nonnull String index,
+                                                                    @Nonnull RestHighLevelClient client,
+                                                                    @Nonnull Class<? extends T> type,
+                                                                    String query,
+                                                                    List<SortBuilder<?>> sortBuilders) throws DataStoreException {
+        try {
+            SearchRequest request = new SearchRequest(index);
+            SearchSourceBuilder sourceBuilder = new SearchSourceBuilder();
+            sourceBuilder.from(0);
+            sourceBuilder.size(0);
+            if (query != null) {
+                sourceBuilder.query(QueryBuilders.queryStringQuery(query));
+            } else
+                sourceBuilder.query(QueryBuilders.matchAllQuery());
             sourceBuilder.aggregation(builder);
             request.source(sourceBuilder);
             if (sortBuilders != null && !sortBuilders.isEmpty()) {

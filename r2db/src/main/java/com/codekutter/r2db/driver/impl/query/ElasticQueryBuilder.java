@@ -53,9 +53,11 @@ public class ElasticQueryBuilder<T extends IEntity> {
                 bq.must(queryBuilder);
                 if (not) bq.mustNot(query);
                 else bq.must(query);
+                queryBuilder = bq;
             }
         }
     }
+
     private ElasticQueryBuilder<T> notMatches(@Nonnull String field, @Nonnull String regex) throws ValidationException {
         return matches(field, regex, true);
     }
@@ -78,25 +80,25 @@ public class ElasticQueryBuilder<T extends IEntity> {
         }
     }
 
-    public ElasticQueryBuilder<T> notInRange(@Nonnull String field, @Nonnull String start, @Nonnull String end) throws ValidationException {
+    public ElasticQueryBuilder<T> notInRange(@Nonnull String field, Object start, Object end) throws ValidationException {
         return range(field, start, end, true, true, true);
     }
 
-    public ElasticQueryBuilder<T> notInRange(@Nonnull String field, @Nonnull String start, @Nonnull String end,
+    public ElasticQueryBuilder<T> notInRange(@Nonnull String field, Object start, Object end,
                                              boolean includeStart, boolean includeEnd) throws ValidationException {
         return range(field, start, end, includeStart, includeEnd, true);
     }
 
-    public ElasticQueryBuilder<T> range(@Nonnull String field, @Nonnull String start, @Nonnull String end) throws ValidationException {
+    public ElasticQueryBuilder<T> range(@Nonnull String field, Object start, Object end) throws ValidationException {
         return range(field, start, end, true, true, false);
     }
 
-    public ElasticQueryBuilder<T> range(@Nonnull String field, @Nonnull String start, @Nonnull String end,
+    public ElasticQueryBuilder<T> range(@Nonnull String field, Object start, Object end,
                                         boolean includeStart, boolean includeEnd) throws ValidationException {
         return range(field, start, end, includeStart, includeEnd, false);
     }
 
-    public ElasticQueryBuilder<T> range(@Nonnull String field, @Nonnull String start, @Nonnull String end,
+    public ElasticQueryBuilder<T> range(@Nonnull String field, Object start, Object end,
                                         boolean includeStart, boolean includeEnd, boolean not) throws ValidationException {
         try {
             Field f = ReflectionUtils.findField(type, field);
@@ -104,7 +106,12 @@ public class ElasticQueryBuilder<T extends IEntity> {
                 throw new ReflectionException(String.format("Field not found. [type=%s][field=%s]", type.getCanonicalName(), field));
             }
             RangeQueryBuilder qb = QueryBuilders.rangeQuery(field);
-            qb.from(start, includeStart).to(end, includeEnd);
+            if (start != null) {
+                qb.from(start, includeStart);
+            }
+            if (end != null) {
+                qb.to(end, includeEnd);
+            }
             addQuery(qb, not);
             return this;
         } catch (Exception ex) {

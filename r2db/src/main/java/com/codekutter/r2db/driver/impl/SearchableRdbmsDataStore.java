@@ -34,6 +34,7 @@ import lombok.experimental.Accessors;
 import org.apache.lucene.search.Query;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.index.query.QueryBuilder;
+import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.aggregations.AbstractAggregationBuilder;
 import org.elasticsearch.search.sort.SortBuilder;
 import org.hibernate.Session;
@@ -205,9 +206,13 @@ public class SearchableRdbmsDataStore extends RdbmsDataStore implements ISearcha
     }
 
     @Override
-    public <T extends IEntity> BaseSearchResult<T> facetedSearch(@Nonnull Object query,
+    public <T extends IEntity> BaseSearchResult<T> facetedSearch(Object query,
+                                                                 @Nonnull Object aggregates,
                                                                  @Nonnull Class<? extends T> type,
                                                                  Context context) throws DataStoreException {
+        if (query != null) {
+            Preconditions.checkArgument(query instanceof QueryBuilder || query instanceof Query || query instanceof String);
+        }
         String index = helper.getIndexName(type);
         if (Strings.isNullOrEmpty(index)) {
             throw new DataStoreException(String.format("Type is not indexed. [type=%s]", type.getCanonicalName()));
@@ -216,12 +221,32 @@ public class SearchableRdbmsDataStore extends RdbmsDataStore implements ISearcha
         if (context instanceof ElasticSearchContext) {
             sortBuilders = ((ElasticSearchContext) context).sort();
         }
-        if (query instanceof AbstractAggregationBuilder) {
-            return helper.facetedSearch((AbstractAggregationBuilder) query, index, readConnection.connection(), type, sortBuilders);
-        } else if (query instanceof AbstractAggregationBuilder[]) {
-            return helper.facetedSearch((AbstractAggregationBuilder[]) query, index, readConnection.connection(), type, sortBuilders);
+        if (aggregates instanceof AbstractAggregationBuilder) {
+            if (query instanceof QueryBuilder) {
+                return helper.facetedSearch((AbstractAggregationBuilder) aggregates, index, readConnection.connection(), type, (QueryBuilder) query, sortBuilders);
+            } else {
+                String qstr = null;
+                if (query instanceof String) {
+                    qstr = (String) query;
+                } else if (query instanceof Query){
+                    qstr = ((Query)query).toString();
+                }
+                return helper.facetedSearch((AbstractAggregationBuilder) aggregates, index, readConnection.connection(), type, qstr, sortBuilders);
+            }
+        } else if (aggregates instanceof AbstractAggregationBuilder[]) {
+            if (query instanceof QueryBuilder) {
+                return helper.facetedSearch((AbstractAggregationBuilder[]) aggregates, index, readConnection.connection(), type, (QueryBuilder) query, sortBuilders);
+            } else {
+                String qstr = null;
+                if (query instanceof String) {
+                    qstr = (String) query;
+                } else if (query instanceof Query){
+                    qstr = ((Query)query).toString();
+                }
+                return helper.facetedSearch((AbstractAggregationBuilder[]) aggregates, index, readConnection.connection(), type, qstr, sortBuilders);
+            }
         }
-        throw new DataStoreException(String.format("Query type not supported. [type=%s]", query.getClass().getCanonicalName()));
+        throw new DataStoreException(String.format("Query type not supported. [type=%s]", aggregates.getClass().getCanonicalName()));
     }
 
     public <T extends IEntity> BaseSearchResult<T> textSearch(@Nonnull QueryBuilder query,

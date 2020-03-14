@@ -15,15 +15,13 @@
  *
  */
 
-package com.codekutter.r2db.driver.impl.annotations;
+package com.codekutter.r2db.driver.model;
 
 import java.lang.annotation.*;
 
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.TYPE })
+@Target({ElementType.FIELD})
 @Inherited
-public @interface Indexed {
-    String index() default "";
-    String language() default "english";
-    String tokenizer() default "whitespace";
+public @interface Searchable {
+    boolean faceted() default false;
 }

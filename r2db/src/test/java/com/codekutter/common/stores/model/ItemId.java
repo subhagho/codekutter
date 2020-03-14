@@ -19,6 +19,7 @@ package com.codekutter.common.stores.model;
 
 import com.codekutter.common.model.IKey;
 import com.codekutter.common.utils.CommonUtils;
+import com.codekutter.r2db.driver.model.Searchable;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -34,6 +35,7 @@ import java.io.Serializable;
 public class ItemId implements IKey, Serializable {
     @Column(name = "order_id")
     private String orderId;
+    @Searchable(faceted = true)
     @Column(name = "product_id")
     private String productId;
 

@@ -22,6 +22,7 @@ import com.codekutter.common.model.CopyException;
 import com.codekutter.common.model.IEntity;
 import com.codekutter.common.model.ValidationExceptions;
 import com.codekutter.r2db.driver.impl.annotations.Indexed;
+import com.codekutter.r2db.driver.model.Searchable;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -39,6 +40,7 @@ import java.util.Date;
 public class Customer implements IEntity<CustomerKey> {
     @EmbeddedId
     private CustomerKey id;
+    @Searchable(faceted = true)
     @Column(name = "first_name")
     private String firstName;
     @Column(name = "last_name")
@@ -47,6 +49,7 @@ public class Customer implements IEntity<CustomerKey> {
     private Date dateOfBirth;
     @Column(name = "email_id")
     private String emailId;
+    @Searchable(faceted = true)
     @Column(name = "phone_no")
     private String phoneNumber;
 

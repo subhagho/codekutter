@@ -162,7 +162,13 @@ public class ElasticSearchDataStore extends AbstractDataStore<RestHighLevelClien
     }
 
     @Override
-    public <T extends IEntity> BaseSearchResult<T> facetedSearch(@Nonnull Object query, @Nonnull Class<? extends T> type, Context context) throws DataStoreException {
+    public <T extends IEntity> BaseSearchResult<T> facetedSearch(Object query,
+                                                                 @Nonnull Object aggregates,
+                                                                 @Nonnull Class<? extends T> type,
+                                                                 Context context) throws DataStoreException {
+        if (query != null) {
+            Preconditions.checkArgument(query instanceof QueryBuilder || query instanceof Query || query instanceof String);
+        }
         String index = helper.getIndexName(type);
         if (Strings.isNullOrEmpty(index)) {
             throw new DataStoreException(String.format("Type is not indexed. [type=%s]", type.getCanonicalName()));
@@ -172,10 +178,30 @@ public class ElasticSearchDataStore extends AbstractDataStore<RestHighLevelClien
             if (context instanceof ElasticSearchContext) {
                 sortBuilders = ((ElasticSearchContext) context).sort();
             }
-            if (query instanceof AbstractAggregationBuilder) {
-                return helper.facetedSearch((AbstractAggregationBuilder) query, index, connection().connection(), type, sortBuilders);
-            } else if (query instanceof AbstractAggregationBuilder[]) {
-                return helper.facetedSearch((AbstractAggregationBuilder[]) query, index, connection().connection(), type, sortBuilders);
+            if (aggregates instanceof AbstractAggregationBuilder) {
+                if (query instanceof QueryBuilder) {
+                    return helper.facetedSearch((AbstractAggregationBuilder) aggregates, index, connection().connection(), type, (QueryBuilder) query, sortBuilders);
+                } else {
+                    String qstr = null;
+                    if (query instanceof String) {
+                        qstr = (String) query;
+                    } else if (query instanceof Query){
+                        qstr = ((Query)query).toString();
+                    }
+                    return helper.facetedSearch((AbstractAggregationBuilder) aggregates, index, connection().connection(), type, qstr, sortBuilders);
+                }
+            } else if (aggregates instanceof AbstractAggregationBuilder[]) {
+                if (query instanceof QueryBuilder) {
+                    return helper.facetedSearch((AbstractAggregationBuilder[]) aggregates, index, connection().connection(), type, (QueryBuilder) query, sortBuilders);
+                } else {
+                    String qstr = null;
+                    if (query instanceof String) {
+                        qstr = (String) query;
+                    } else if (query instanceof Query){
+                        qstr = ((Query)query).toString();
+                    }
+                    return helper.facetedSearch((AbstractAggregationBuilder[]) aggregates, index, connection().connection(), type, qstr, sortBuilders);
+                }
             }
         } catch (Exception ex) {
             throw new DataStoreException(ex);
