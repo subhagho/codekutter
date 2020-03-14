@@ -25,6 +25,7 @@ import com.codekutter.common.stores.*;
 import com.codekutter.common.stores.impl.HibernateConnection;
 import com.codekutter.common.stores.impl.RdbmsConfig;
 import com.codekutter.common.stores.impl.RdbmsDataStore;
+import com.codekutter.r2db.driver.impl.annotations.Indexed;
 import com.codekutter.zconfig.common.ConfigurationException;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
@@ -40,6 +41,7 @@ import org.elasticsearch.search.sort.SortBuilder;
 import org.hibernate.Session;
 
 import javax.annotation.Nonnull;
+import javax.persistence.Entity;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -92,72 +94,117 @@ public class SearchableRdbmsDataStore extends RdbmsDataStore implements ISearcha
     @Override
     @SuppressWarnings("unchecked")
     public <E extends IEntity> E findEntity(@Nonnull Object key, @Nonnull Class<? extends E> type, Context context) throws DataStoreException {
-        if (dirtyCache.containsKey(type)) {
-            Map<IKey, CacheEntry> entries = dirtyCache.get(type);
-            if (key instanceof IKey) {
-                IKey k = (IKey) key;
-                if (entries.containsKey(k)) {
-                    CacheEntry entry = entries.get(k);
-                    if (entry.entryType != EAuditType.Delete) {
-                        return (E) entry.entity;
+        boolean indexedOnly = false;
+        if (type.isAnnotationPresent(Indexed.class)) {
+            indexedOnly = true;
+        }
+        if (type.isAnnotationPresent(Entity.class)) {
+            indexedOnly = false;
+        }
+        if (type.isAnnotationPresent(Indexed.class)) {
+            if (dirtyCache.containsKey(type)) {
+                Map<IKey, CacheEntry> entries = dirtyCache.get(type);
+                if (key instanceof IKey) {
+                    IKey k = (IKey) key;
+                    if (entries.containsKey(k)) {
+                        CacheEntry entry = entries.get(k);
+                        if (entry.entryType != EAuditType.Delete) {
+                            return (E) entry.entity;
+                        }
                     }
                 }
             }
         }
-        return super.findEntity(key, type, context);
+        if (!indexedOnly)
+            return super.findEntity(key, type, context);
+        else {
+            try {
+                return helper.findEntity(readConnection.connection(), key, type, context);
+            } catch (Exception ex) {
+                throw new DataStoreException(ex);
+            }
+        }
     }
 
     @Override
     public <E extends IEntity> E createEntity(@Nonnull E entity, @Nonnull Class<? extends E> type, Context context) throws DataStoreException {
-        entity = super.createEntity(entity, type, context);
-        CacheEntry ce = new CacheEntry();
-        ce.entryType = EAuditType.Create;
-        ce.entity = entity;
-        Map<IKey, CacheEntry> entries = null;
-        if (dirtyCache.containsKey(type)) {
-            entries = dirtyCache.get(type);
-        } else {
-            entries = new HashMap<>();
-            dirtyCache.put(type, entries);
+        boolean indexedOnly = false;
+        if (type.isAnnotationPresent(Indexed.class)) {
+            indexedOnly = true;
         }
-        entries.put(entity.getKey(), ce);
-
+        if (type.isAnnotationPresent(Entity.class)) {
+            indexedOnly = false;
+        }
+        if (!indexedOnly)
+            entity = super.createEntity(entity, type, context);
+        if (type.isAnnotationPresent(Indexed.class)) {
+            CacheEntry ce = new CacheEntry();
+            ce.entryType = EAuditType.Create;
+            ce.entity = entity;
+            Map<IKey, CacheEntry> entries = null;
+            if (dirtyCache.containsKey(type)) {
+                entries = dirtyCache.get(type);
+            } else {
+                entries = new HashMap<>();
+                dirtyCache.put(type, entries);
+            }
+            entries.put(entity.getKey(), ce);
+        }
         return entity;
     }
 
     @Override
     public <E extends IEntity> E updateEntity(@Nonnull E entity, @Nonnull Class<? extends E> type, Context context) throws DataStoreException {
-        entity = super.updateEntity(entity, type, context);
-        CacheEntry ce = new CacheEntry();
-        ce.entryType = EAuditType.Update;
-        ce.entity = entity;
-        Map<IKey, CacheEntry> entries = null;
-        if (dirtyCache.containsKey(type)) {
-            entries = dirtyCache.get(type);
-        } else {
-            entries = new HashMap<>();
-            dirtyCache.put(type, entries);
+        boolean indexedOnly = false;
+        if (type.isAnnotationPresent(Indexed.class)) {
+            indexedOnly = true;
         }
-        if (entries.containsKey(entity.getKey())) {
-            CacheEntry cce = entries.get(entity.getKey());
-            if (cce.entryType == EAuditType.Create) {
-                cce.entity = entity;
-            } else if (cce.entryType == EAuditType.Delete) {
-                throw new DataStoreException(String.format("Attempt to update an entity that has been deleted. [type=%s][key=%s]",
-                        type.getCanonicalName(), entity.getKey().stringKey()));
+        if (type.isAnnotationPresent(Entity.class)) {
+            indexedOnly = false;
+        }
+        if (!indexedOnly)
+            entity = super.updateEntity(entity, type, context);
+        if (type.isAnnotationPresent(Indexed.class)) {
+            CacheEntry ce = new CacheEntry();
+            ce.entryType = EAuditType.Update;
+            ce.entity = entity;
+            Map<IKey, CacheEntry> entries = null;
+            if (dirtyCache.containsKey(type)) {
+                entries = dirtyCache.get(type);
             } else {
-                entries.put(entity.getKey(), ce);
+                entries = new HashMap<>();
+                dirtyCache.put(type, entries);
             }
-        } else
-            entries.put(entity.getKey(), ce);
-
+            if (entries.containsKey(entity.getKey())) {
+                CacheEntry cce = entries.get(entity.getKey());
+                if (cce.entryType == EAuditType.Create) {
+                    cce.entity = entity;
+                } else if (cce.entryType == EAuditType.Delete) {
+                    throw new DataStoreException(String.format("Attempt to update an entity that has been deleted. [type=%s][key=%s]",
+                            type.getCanonicalName(), entity.getKey().stringKey()));
+                } else {
+                    entries.put(entity.getKey(), ce);
+                }
+            } else
+                entries.put(entity.getKey(), ce);
+        }
         return entity;
     }
 
     @Override
     public <E extends IEntity> boolean deleteEntity(@Nonnull Object key, @Nonnull Class<? extends E> type, Context context) throws DataStoreException {
-        boolean ret = super.deleteEntity(key, type, context);
-        if (ret) {
+        boolean indexedOnly = false;
+        if (type.isAnnotationPresent(Indexed.class)) {
+            indexedOnly = true;
+        }
+        if (type.isAnnotationPresent(Entity.class)) {
+            indexedOnly = false;
+        }
+
+        boolean ret = true;
+        if (!indexedOnly)
+            ret = super.deleteEntity(key, type, context);
+        if (ret && type.isAnnotationPresent(Indexed.class)) {
             CacheEntry ce = new CacheEntry();
             ce.entryType = EAuditType.Delete;
             ce.entity = null;
@@ -228,8 +275,8 @@ public class SearchableRdbmsDataStore extends RdbmsDataStore implements ISearcha
                 String qstr = null;
                 if (query instanceof String) {
                     qstr = (String) query;
-                } else if (query instanceof Query){
-                    qstr = ((Query)query).toString();
+                } else if (query instanceof Query) {
+                    qstr = ((Query) query).toString();
                 }
                 return helper.facetedSearch((AbstractAggregationBuilder) aggregates, index, readConnection.connection(), type, qstr, sortBuilders);
             }
@@ -240,8 +287,8 @@ public class SearchableRdbmsDataStore extends RdbmsDataStore implements ISearcha
                 String qstr = null;
                 if (query instanceof String) {
                     qstr = (String) query;
-                } else if (query instanceof Query){
-                    qstr = ((Query)query).toString();
+                } else if (query instanceof Query) {
+                    qstr = ((Query) query).toString();
                 }
                 return helper.facetedSearch((AbstractAggregationBuilder[]) aggregates, index, readConnection.connection(), type, qstr, sortBuilders);
             }
