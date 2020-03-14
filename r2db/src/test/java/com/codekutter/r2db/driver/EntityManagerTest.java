@@ -159,6 +159,43 @@ class EntityManagerTest {
 
     @Test
     void delete() {
+        try {
+            String prefix = UUID.randomUUID().toString();
+            List<Order> orders = createOrders(prefix, 10, 3);
+            assertNotNull(orders);
+            assertEquals(3, orders.size());
+            entityManager.commit();
+            entityManager.closeStores();
+
+            Order deleted = orders.get(1);
+            entityManager.delete(deleted, Order.class, user, null,SearchableRdbmsDataStore.class);
+            entityManager.commit();
+            entityManager.closeStores();
+            LogUtils.debug(getClass(), String.format("Deleted order [id=%s]...", deleted.getId().stringKey()));
+            LuceneQueryBuilder<Order> builder = LuceneQueryBuilder.builder(Order.class);
+            Query query = builder
+                    .range("items.quantity", "5", "*")
+                    .term("items.id.productId", new String[]{GlobalConstants.quote(orders.get(0).getItems().get(5).getId().getProductId()),
+                            GlobalConstants.quote(orders.get(0).getItems().get(2).getId().getProductId()),
+                            GlobalConstants.quote(orders.get(0).getItems().get(8).getId().getProductId())})
+                    .build();
+            LogUtils.debug(getClass(), String.format("query=[%s]", query.toString()));
+            ElasticSearchContext context = new ElasticSearchContext();
+            context.sort(SortBuilders.fieldSort("amount").order(SortOrder.DESC)).sort(SortBuilders.fieldSort("customer.id.key").order(SortOrder.ASC));
+            BaseSearchResult<Order> result = entityManager.textSearch(query, Order.class, SearchableRdbmsDataStore.class, context);
+            assertTrue(result instanceof EntitySearchResult);
+            EntitySearchResult<Order> or = (EntitySearchResult<Order>) result;
+            assertFalse(or.getEntities().isEmpty());
+            for (Order order : or.getEntities()) {
+                LogUtils.debug(getClass(),
+                        String.format("Order Amount=%f, Customer = %s",
+                                order.getAmount(), order.getCustomer().getId().stringKey()));
+                assertNotEquals(deleted.getId().stringKey(), order.getId().stringKey());
+            }
+        } catch (Exception ex) {
+            LogUtils.error(getClass(), ex);
+            fail(ex);
+        }
     }
 
     @Test
@@ -314,18 +351,6 @@ class EntityManagerTest {
             LogUtils.error(getClass(), ex);
             fail(ex);
         }
-    }
-
-    @Test
-    void testSearch4() {
-    }
-
-    @Test
-    void testSearch5() {
-    }
-
-    @Test
-    void testSearch6() {
     }
 
     private List<Order> createOrders(String productPrefix, int count, int orderCount) throws Exception {

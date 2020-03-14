@@ -128,7 +128,7 @@ public class SearchableRdbmsDataStore extends RdbmsDataStore implements ISearcha
     public <E extends IEntity> E updateEntity(@Nonnull E entity, @Nonnull Class<? extends E> type, Context context) throws DataStoreException {
         entity = super.updateEntity(entity, type, context);
         CacheEntry ce = new CacheEntry();
-        ce.entryType = EAuditType.Create;
+        ce.entryType = EAuditType.Update;
         ce.entity = entity;
         Map<IKey, CacheEntry> entries = null;
         if (dirtyCache.containsKey(type)) {
@@ -158,7 +158,7 @@ public class SearchableRdbmsDataStore extends RdbmsDataStore implements ISearcha
         boolean ret = super.deleteEntity(key, type, context);
         if (ret) {
             CacheEntry ce = new CacheEntry();
-            ce.entryType = EAuditType.Create;
+            ce.entryType = EAuditType.Delete;
             ce.entity = null;
             IKey k = (IKey) key;
             Map<IKey, CacheEntry> entries = null;

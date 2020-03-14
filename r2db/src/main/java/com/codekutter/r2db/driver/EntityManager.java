@@ -1158,11 +1158,12 @@ public class EntityManager implements IConfigurable {
                                                                                        Context context,
                                                                                        boolean appendQuery) throws DataStoreException {
         Reference reference = f.getAnnotation(Reference.class);
-        String query = JoinPredicateHelper.generateHibernateJoinQuery(reference, entity, f, dataStoreManager, appendQuery);
-        if (Strings.isNullOrEmpty(query)) {
+        String condition = JoinPredicateHelper.generateHibernateJoinQuery(reference, entity, f, dataStoreManager, appendQuery);
+        if (Strings.isNullOrEmpty(condition)) {
             throw new DataStoreException(String.format("NULL query returned. [type=%s][field=%s]",
                     entityType.getCanonicalName(), f.getName()));
         }
+        String query = String.format("FROM %s WHERE (%s)", fieldType.getCanonicalName(), condition);
         int offset = 0;
         List<E> entities = new ArrayList<>();
         while (true) {
