@@ -701,20 +701,8 @@ public class ReflectionUtils {
      * @return - Is primitive?
      */
     public static boolean isPrimitiveTypeOrClass(@Nonnull Class<?> type) {
-        if (type.isPrimitive())
-            return true;
-        else if (type.equals(Boolean.class) || type.equals(boolean.class) ||
-                type.equals(Short.class) || type.equals(short.class)
-                || type.equals(Integer.class) || type.equals(int.class) ||
-                type.equals(Long.class) || type.equals(long.class)
-                || type.equals(Float.class) || type.equals(float.class) ||
-                type.equals(Double.class) || type.equals(double.class)
-                || type.equals(Character.class) || type.equals(char.class)) {
-            return true;
-        } else if (type.equals(Class.class)) {
-            return true;
-        }
-        return false;
+        if (isNumericType(type)) return true;
+        return type.equals(Class.class);
     }
 
     /**
@@ -744,6 +732,17 @@ public class ReflectionUtils {
         return false;
     }
 
+    public static boolean isNumericType(@Nonnull Class<?> type) {
+        if (type.isPrimitive())
+            return true;
+        else return type.equals(Boolean.class) || type.equals(boolean.class) ||
+                type.equals(Short.class) || type.equals(short.class)
+                || type.equals(Integer.class) || type.equals(int.class) ||
+                type.equals(Long.class) || type.equals(long.class)
+                || type.equals(Float.class) || type.equals(float.class) ||
+                type.equals(Double.class) || type.equals(double.class)
+                || type.equals(Character.class) || type.equals(char.class);
+    }
     /**
      * Check if the parent type specified is an ancestor (inheritance) of the passed type.
      *

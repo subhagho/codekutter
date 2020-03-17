@@ -31,6 +31,7 @@ import java.net.URI;
 @Setter
 public abstract class RemoteFileEntity<K extends IKey, C> extends File implements IEntity<K> {
     private long updateTimestamp;
+    private URI remoteUri;
 
     public RemoteFileEntity(String pathname) {
         super(pathname);
