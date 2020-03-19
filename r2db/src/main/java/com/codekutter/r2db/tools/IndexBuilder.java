@@ -188,9 +188,7 @@ public class IndexBuilder {
         if (field.isAnnotationPresent(Searchable.class)) {
             Searchable searchable = field.getAnnotation(Searchable.class);
             if (searchable.faceted()) {
-                if (ReflectionUtils.isPrimitiveTypeOrString(field)
-                        || field.getType().equals(Date.class)
-                        || field.getType().equals(Timestamp.class)) {
+                if (canIndexField(field)) {
                     String dt = IndexCreateHelper.parseFieldType(field);
                     if (Strings.isNullOrEmpty(dt)) {
                         throw new Exception(String.format("Error getting datatype for field. [type=%s]", field.getType().getCanonicalName()));
@@ -205,9 +203,7 @@ public class IndexBuilder {
                             String.format("Field type cannot be faceted. [type=%s]", field.getType().getCanonicalName()));
                 }
             }
-        } else if (!ReflectionUtils.isPrimitiveTypeOrString(field)
-                && !field.getType().equals(Date.class)
-                && !field.getType().equals(Timestamp.class)) {
+        } else if (!canIndexField(field)) {
             Class<?> ft = field.getType();
             if (ReflectionUtils.implementsInterface(List.class, ft)) {
                 ft = ReflectionUtils.getGenericListType(field);
@@ -221,6 +217,13 @@ public class IndexBuilder {
                 }
             }
         }
+    }
+
+    private boolean canIndexField(Field field) {
+        return ReflectionUtils.isPrimitiveTypeOrString(field)
+                || field.getType().equals(Date.class)
+                || field.getType().equals(Timestamp.class)
+                || field.getType().isEnum();
     }
 
     public void printSettings() throws Exception {
