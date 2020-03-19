@@ -62,6 +62,22 @@ public class ConfigKeyVault {
         return this;
     }
 
+    public String encrypt(@Nonnull String value, @Nonnull Configuration config) throws SecurityException {
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(value));
+        Preconditions.checkState(vault != null);
+
+        try {
+            String name = String.format("%s:%s:%s", config.getApplicationGroup(), config.getApplication(), config.getName());
+
+            String iv = getIVSpec(config);
+            char[] pc = vault.getPasscode(name);
+            byte[] data = CypherUtils.encrypt(value.getBytes(Charset.defaultCharset()), new String(pc), iv);
+            return new String(data);
+        } catch (Exception ex) {
+            throw new SecurityException(ex);
+        }
+    }
+
     public String decrypt(@Nonnull String value, @Nonnull Configuration config) throws SecurityException {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(value));
         Preconditions.checkState(vault != null);
@@ -80,7 +96,7 @@ public class ConfigKeyVault {
         }
     }
 
-    private String getIVSpec(Configuration config) throws Exception {
+    public static String getIVSpec(Configuration config) throws Exception {
         return getIvSpec(config.getId(), config.getApplicationGroup(),
                 config.getApplication(), config.getName(), config.getEncryptionHash());
     }

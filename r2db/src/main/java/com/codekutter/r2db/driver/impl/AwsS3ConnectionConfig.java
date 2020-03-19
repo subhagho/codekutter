@@ -34,12 +34,14 @@ import java.util.Map;
 @Getter
 @Setter
 @Entity
-@Table(name = "connection_config_aws_storage")
+@Table(name = "tb_connection_config_aws_filesystem")
 public class AwsS3ConnectionConfig extends ConnectionConfig {
+    public static final String DEFAULT_PROFILE = "default";
+
     @Column(name = "region")
     private String region;
     @Column(name = "profile")
-    private String profile;
+    private String profile = DEFAULT_PROFILE;
     @Column(name = "parameter")
     private String parameters;
     @Transient

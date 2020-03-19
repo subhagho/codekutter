@@ -83,3 +83,15 @@ CREATE TABLE `tb_job_audit`
     KEY `tb_job_audit_namespace_IDX` (`namespace`, `name`, `job_id`) USING BTREE
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8 COMMENT ='Audit table for logging Scheduled Job execution history.';
+
+DROP TABLE IF EXISTS `tb_connection_config_aws_filesystem`;
+
+CREATE TABLE `tb_connection_config_aws_filesystem`
+(
+    `name`           varchar(256) NOT NULL,
+    `region`         varchar(118) NOT NULL,
+    `profile`        varchar(128) NOT NULL,
+    `register_types` text DEFAULT NULL,
+    PRIMARY KEY (`name`)
+) ENGINE = InnoDB
+  DEFAULT CHARSET = utf8 COMMENT ='Table to store AWS S3 connection definitions.';

@@ -64,8 +64,8 @@ public class ExtendedZConfigEnv extends ZConfigEnv {
         try {
             ZConfigEnv.getEnvLock();
             try {
-                ZConfigEnv env = ZConfigEnv.initialize(envType, configName);
-                if (env.getState() != EEnvState.Initialized) {
+                ZConfigEnv env = (ZConfigEnv) ZConfigEnv.initialize(envType, configName);
+                if (env.getState().getState() != EEnvState.Initialized) {
                     env.init(configfile, type, Version.parse(version), password);
                 }
             } finally {

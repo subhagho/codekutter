@@ -125,8 +125,8 @@ public class ZConfigClientEnv extends ZConfigEnv {
         try {
             ZConfigEnv.getEnvLock();
             try {
-                ZConfigEnv env = ZConfigEnv.initialize(ZConfigClientEnv.class, configName);
-                if (env.getState() != EEnvState.Initialized) {
+                ZConfigEnv env = (ZConfigEnv) ZConfigEnv.initialize(ZConfigClientEnv.class, configName);
+                if (env.getState().getState() != EEnvState.Initialized) {
                     env.init(configfile, Version.parse(version), password);
                 }
             } finally {
@@ -160,8 +160,8 @@ public class ZConfigClientEnv extends ZConfigEnv {
         try {
             ZConfigEnv.getEnvLock();
             try {
-                ZConfigEnv env = ZConfigEnv.initialize(ZConfigClientEnv.class, configName);
-                if (env.getState() != EEnvState.Initialized) {
+                ZConfigEnv env = (ZConfigEnv) ZConfigEnv.initialize(ZConfigClientEnv.class, configName);
+                if (env.getState().getState() != EEnvState.Initialized) {
                     env.init(configfile, type, Version.parse(version), password);
                 }
             } finally {

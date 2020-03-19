@@ -35,8 +35,10 @@ import com.google.common.base.Strings;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
+import org.hibernate.Session;
 
 import javax.annotation.Nonnull;
+import javax.persistence.Query;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -410,6 +412,23 @@ public class DataStoreManager implements IConfigurable {
             shardConfigs.put(config.entityType, config);
         } else {
             throw new ConfigurationException(String.format("Shard configuration not found. [node=%s]", node.getAbsolutePath()));
+        }
+    }
+
+    public <T> List<AbstractDataStore> readDynamicDConfig(@Nonnull Session session,
+                                                          @Nonnull Class<? extends AbstractDataStore> dataStoreType,
+                                                          @Nonnull Class<? extends DataStoreConfig> configType,
+                                                          String filter) throws DataStoreException {
+        try {
+            String qstr = String.format("FROM %s", configType.getCanonicalName());
+            if (!Strings.isNullOrEmpty(filter)) {
+                qstr = String.format("%s WHERE (%s)", qstr, filter);
+            }
+            Query query = session.createQuery(qstr);
+
+            return null;
+        } catch (Exception ex) {
+            throw new DataStoreException(ex);
         }
     }
 
