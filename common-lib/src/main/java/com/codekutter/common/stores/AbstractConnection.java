@@ -25,6 +25,7 @@ import com.codekutter.zconfig.common.model.annotations.ConfigAttribute;
 import com.codekutter.zconfig.common.model.annotations.ConfigPath;
 import com.codekutter.zconfig.common.model.annotations.ConfigValue;
 import com.codekutter.zconfig.common.transformers.ClassListParser;
+import com.codekutter.zconfig.common.transformers.ClassSetParser;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
@@ -32,9 +33,7 @@ import lombok.experimental.Accessors;
 
 import javax.annotation.Nonnull;
 import java.io.Closeable;
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 @Getter
@@ -51,7 +50,7 @@ public abstract class AbstractConnection<T> implements IConfigurable, Closeable 
     private Class<? extends AbstractConnection> type;
     @ConfigAttribute(name = "source")
     private EConfigSource configSource = EConfigSource.File;
-    @ConfigValue(name = "classes", parser = ClassListParser.class)
+    @ConfigValue(name = "classes", parser = ClassSetParser.class)
     private Set<Class<?>> supportedTypes = new HashSet<>();
 
     public AbstractConnection() {

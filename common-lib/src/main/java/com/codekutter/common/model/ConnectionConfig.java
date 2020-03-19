@@ -19,7 +19,6 @@ package com.codekutter.common.model;
 
 import com.codekutter.common.utils.ICryptoHandler;
 import com.codekutter.zconfig.common.BaseConfigEnv;
-import com.codekutter.zconfig.common.ConfigKeyVault;
 import com.codekutter.zconfig.common.ConfigurationException;
 import com.google.common.base.Strings;
 import lombok.Getter;
