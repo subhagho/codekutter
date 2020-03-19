@@ -894,6 +894,14 @@ public class EntityManager implements IConfigurable {
         if (dataStore == null) {
             throw new DataStoreException(String.format("No data store found for entity. [type=%s]", type.getCanonicalName()));
         }
+        return search(query, params, type, dataStore, context);
+    }
+
+    public <T, E extends IEntity> BaseSearchResult<E> search(@Nonnull String query,
+                                                             Map<String, Object> params,
+                                                             @Nonnull Class<? extends E> type,
+                                                             @Nonnull AbstractDataStore<T> dataStore,
+                                                             Context context) throws DataStoreException {
         if (ReflectionUtils.implementsInterface(IShardedEntity.class, type)) {
             throw new DataStoreException(String.format("Sharded entity should be called with shard key. [type=%s]", type.getCanonicalName()));
         }
@@ -952,6 +960,16 @@ public class EntityManager implements IConfigurable {
         if (dataStore == null) {
             throw new DataStoreException(String.format("No data store found for entity. [type=%s]", type.getCanonicalName()));
         }
+        return search(query, offset, maxResults, params, type, dataStore, context);
+    }
+
+    public <T, E extends IEntity> BaseSearchResult<E> search(@Nonnull String query,
+                                                             int offset,
+                                                             int maxResults,
+                                                             Map<String, Object> params,
+                                                             @Nonnull Class<? extends E> type,
+                                                             @Nonnull AbstractDataStore<T> dataStore,
+                                                             Context context) throws DataStoreException {
         if (ReflectionUtils.implementsInterface(IShardedEntity.class, type)) {
             throw new DataStoreException(String.format("Sharded entity should be called with shard key. [type=%s]", type.getCanonicalName()));
         }
@@ -962,7 +980,6 @@ public class EntityManager implements IConfigurable {
         }
         return null;
     }
-
 
     @SuppressWarnings("unchecked")
     public <T, E extends IEntity> BaseSearchResult<E> search(Object shardKey,
