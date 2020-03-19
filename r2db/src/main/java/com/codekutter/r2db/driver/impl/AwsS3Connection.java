@@ -22,6 +22,7 @@ import com.amazonaws.auth.profile.ProfileCredentialsProvider;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.codekutter.common.messaging.AwsSQSConnection;
+import com.codekutter.common.model.ConnectionConfig;
 import com.codekutter.common.stores.AbstractConnection;
 import com.codekutter.common.stores.ConnectionException;
 import com.codekutter.common.stores.EConnectionState;
@@ -36,6 +37,7 @@ import com.codekutter.zconfig.common.model.nodes.ConfigParametersNode;
 import com.codekutter.zconfig.common.model.nodes.ConfigPathNode;
 import com.codekutter.zconfig.common.model.nodes.ConfigValueNode;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
@@ -108,6 +110,28 @@ public class AwsS3Connection extends AbstractConnection<AmazonS3> {
         }
     }
 
+    @Override
+    public void configure(ConnectionConfig cfg) throws ConfigurationException {
+        Preconditions.checkArgument(cfg instanceof AwsS3ConnectionConfig);
+        AwsS3ConnectionConfig s3cfg = (AwsS3ConnectionConfig) cfg;
+        region = s3cfg.getRegion();
+        if (Strings.isNullOrEmpty(region)) {
+                    throw ConfigurationException.propertyNotFoundException("region");
+        }
+        if (!Strings.isNullOrEmpty(s3cfg.getProfile())) {
+            profile = s3cfg.getProfile();
+        }
+        ClientConfiguration config = configBuilder((AwsS3ConnectionConfig) cfg);
+        ProfileCredentialsProvider provider = new ProfileCredentialsProvider(profile);
+        // Only to check a valid profile is specified.
+        provider.getCredentials();
+        client = AmazonS3ClientBuilder.standard()
+                .withRegion(region)
+                .withClientConfiguration(config)
+                .withCredentials(provider).build();
+        state().setState(EConnectionState.Open);
+    }
+
     private ClientConfiguration configBuilder(ConfigPathNode node) throws ConfigurationException {
         ClientConfiguration config = new ClientConfiguration();
         ConfigParametersNode params = node.parmeters();
@@ -115,6 +139,22 @@ public class AwsS3Connection extends AbstractConnection<AmazonS3> {
             Map<String, ConfigValueNode> values = params.getKeyValues();
             for (String f : values.keySet()) {
                 boolean ret = ReflectionUtils.setValueFromString(values.get(f).getValue(), config, ClientConfiguration.class, f);
+                if (!ret) {
+                    LogUtils.warn(AwsSQSConnection.class, String.format("Ignored Invalid configuration : [property=%s]", f));
+                } else {
+                    LogUtils.debug(AwsSQSConnection.class, String.format("Set client configuration [property=%s]", f));
+                }
+            }
+        }
+        return config;
+    }
+
+    private ClientConfiguration configBuilder(AwsS3ConnectionConfig cfg) throws ConfigurationException {
+        ClientConfiguration config = new ClientConfiguration();
+        Map<String, String> params = cfg.getParams();
+        if (params != null && !params.isEmpty()) {
+            for (String f : params.keySet()) {
+                boolean ret = ReflectionUtils.setValueFromString(params.get(f), config, ClientConfiguration.class, f);
                 if (!ret) {
                     LogUtils.warn(AwsSQSConnection.class, String.format("Ignored Invalid configuration : [property=%s]", f));
                 } else {

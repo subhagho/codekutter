@@ -25,27 +25,46 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 
+import javax.persistence.Column;
+import javax.persistence.MappedSuperclass;
+import javax.persistence.Transient;
+
 @Getter
 @Setter
 @Accessors(fluent = true)
 @ConfigPath(path = "dataStore")
 @SuppressWarnings("rawtypes")
+@MappedSuperclass
 public class DataStoreConfig {
     @ConfigAttribute(name = "dataStoreClass", required = true)
     @SuppressWarnings("rawtypes")
+    @Transient
     private Class<? extends AbstractDataStore> dataStoreClass;
+    @Column(name = "data_store_class")
+    private String dataStoreClassString;
     @ConfigAttribute(name = "name", required = true)
+    @Column(name = "name")
     private String name;
     @ConfigValue(name = "description")
+    @Column(name = "description")
     private String description;
     @ConfigAttribute(name = "connection", required = true)
+    @Column(name = "connection")
     private String connectionName;
     @ConfigAttribute(name = "connectionType", required = true)
+    @Transient
     private Class<?> connectionType;
+    @Column(name = "connection_type")
+    private String connectionTypeString;
     @ConfigAttribute(name = "audited")
+    @Column(name = "audited")
     private boolean audited = false;
     @ConfigAttribute(name = "auditLogger")
+    @Column(name = "audit_logger_name")
     private String auditLogger;
     @ConfigAttribute(name = "auditContextProvider")
+    @Transient
     private Class<? extends IAuditContextGenerator> auditContextProvider;
+    @Column(name = "audit_context_provider_type")
+    private String auditContextProviderClass;
 }

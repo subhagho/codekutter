@@ -267,6 +267,10 @@ public abstract class AbstractDataStore<T> implements Closeable {
         }
     }
 
+    public void configure(@Nonnull DataStoreConfig config) throws ConfigurationException {
+        throw new ConfigurationException("Method not supported...");
+    }
+
     public abstract DataStoreAuditContext context();
 
     private static final class Metrics {

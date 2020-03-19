@@ -242,7 +242,7 @@ public abstract class AbstractConfigParser implements Closeable {
 
     protected AbstractConnection<Session> readConnection(@Nonnull ConfigPathNode node) throws ConfigurationException {
         AbstractConnection<Session> connection =
-                ConnectionManager.readConnection(node);
+                ConnectionManager.get().readConnection(node);
         LogUtils.debug(getClass(),
                 String.format("Loaded Db connection: [name=%s][type=%s]",
                         connection.name(),
