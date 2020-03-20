@@ -24,7 +24,6 @@ import com.codekutter.zconfig.common.IConfigurable;
 import com.codekutter.zconfig.common.model.annotations.ConfigAttribute;
 import com.codekutter.zconfig.common.model.annotations.ConfigPath;
 import com.codekutter.zconfig.common.model.annotations.ConfigValue;
-import com.codekutter.zconfig.common.transformers.ClassListParser;
 import com.codekutter.zconfig.common.transformers.ClassSetParser;
 import lombok.AccessLevel;
 import lombok.Getter;

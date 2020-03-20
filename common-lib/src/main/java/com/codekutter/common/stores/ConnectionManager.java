@@ -23,6 +23,7 @@ import com.codekutter.common.model.ObjectState;
 import com.codekutter.common.utils.ConfigUtils;
 import com.codekutter.common.utils.LogUtils;
 import com.codekutter.common.utils.ReflectionUtils;
+import com.codekutter.common.utils.TypeUtils;
 import com.codekutter.zconfig.common.ConfigurationException;
 import com.codekutter.zconfig.common.IConfigurable;
 import com.codekutter.zconfig.common.model.annotations.ConfigPath;
@@ -81,7 +82,7 @@ public class ConnectionManager implements IConfigurable, Closeable {
                         node.getAbsolutePath()));
             }
             Class<? extends AbstractConnection<T>> type = (Class<? extends AbstractConnection<T>>) Class.forName(cname);
-            connection = type.newInstance();
+            connection = TypeUtils.createInstance(type);
             connection.configure(node);
 
             return connection;
@@ -197,7 +198,7 @@ public class ConnectionManager implements IConfigurable, Closeable {
                 ConnectionConfig config = configs.get(0);
                 config.load();
 
-                AbstractConnection<T> connection = connectionType.newInstance();
+                AbstractConnection<T> connection = TypeUtils.createInstance(connectionType);
                 connection.configure(config);
                 if (connection.supportedTypes() == null)
                     connection.supportedTypes(config.getSupportedTypes());
@@ -228,19 +229,9 @@ public class ConnectionManager implements IConfigurable, Closeable {
                 List<AbstractConnection<T>> conns = new ArrayList<>();
                 synchronized (connections) {
                     for (ConnectionConfig config : configs) {
-                        if (connections.containsKey(config.getName())) {
-                            AbstractConnection<T> conn = connections.get(config.getName());
-                            if (!ReflectionUtils.isSuperType(connectionType, conn.getClass())) {
-                                throw new ConfigurationException(
-                                        String.format("Connection of incompatible type found. [name=%s][type=%s]",
-                                                config.getName(), conn.getClass().getCanonicalName()));
-                            }
-                            conns.add(conn);
-                            continue;
-                        }
                         config.load();
 
-                        AbstractConnection<T> connection = connectionType.newInstance();
+                        AbstractConnection<T> connection = TypeUtils.createInstance(connectionType);
                         connection.configure(config);
                         if (connection.supportedTypes() == null)
                             connection.supportedTypes(config.getSupportedTypes());

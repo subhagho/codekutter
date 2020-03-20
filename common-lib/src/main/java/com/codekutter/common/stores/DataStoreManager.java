@@ -20,10 +20,7 @@ package com.codekutter.common.stores;
 import com.codekutter.common.model.IEntity;
 import com.codekutter.common.stores.annotations.IShardProvider;
 import com.codekutter.common.stores.annotations.SchemaSharded;
-import com.codekutter.common.utils.ConfigUtils;
-import com.codekutter.common.utils.LogUtils;
-import com.codekutter.common.utils.MapThreadCache;
-import com.codekutter.common.utils.ReflectionUtils;
+import com.codekutter.common.utils.*;
 import com.codekutter.zconfig.common.ConfigurationAnnotationProcessor;
 import com.codekutter.zconfig.common.ConfigurationException;
 import com.codekutter.zconfig.common.IConfigurable;
@@ -40,10 +37,7 @@ import org.hibernate.Session;
 import javax.annotation.Nonnull;
 import javax.persistence.Query;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @ConfigPath(path = "dataStoreManager")
 @SuppressWarnings("rawtypes")
@@ -165,7 +159,7 @@ public class DataStoreManager implements IConfigurable {
         }
 
         try {
-            AbstractDataStore<T> store = storeType.newInstance();
+            AbstractDataStore<T> store = TypeUtils.createInstance(storeType);
             store.name(config.name());
             store.withConfig(config).configure(this);
             openedStores.put(store.name(), store);
@@ -188,10 +182,10 @@ public class DataStoreManager implements IConfigurable {
                     if (config.provider == null) {
                         SchemaSharded ss = type.getAnnotation(SchemaSharded.class);
                         Class<? extends IShardProvider> cls = ss.provider();
-                        provider = cls.newInstance();
+                        provider = TypeUtils.createInstance(cls);
                     } else {
                         Class<? extends IShardProvider> cls = config.provider();
-                        provider = cls.newInstance();
+                        provider = TypeUtils.createInstance(cls);
                     }
                     int shard = provider.withShardCount(config.shards.size()).getShard(shardKey);
                     String name = config.shards.get(shard);
@@ -415,47 +409,46 @@ public class DataStoreManager implements IConfigurable {
         }
     }
 
-    public <T> List<AbstractDataStore> readDynamicDConfig(@Nonnull Session session,
-                                                          @Nonnull Class<? extends AbstractDataStore> dataStoreType,
-                                                          @Nonnull Class<? extends DataStoreConfig> configType,
-                                                          String filter) throws DataStoreException {
+    public <T> Set<String> readDynamicDConfig(@Nonnull Session session,
+                                                         @Nonnull Class<? extends AbstractDataStore<T>> dataStoreType,
+                                                         @Nonnull Class<? extends DataStoreConfig> configType,
+                                                         String filter) throws DataStoreException {
         try {
             String qstr = String.format("FROM %s", configType.getCanonicalName());
             if (!Strings.isNullOrEmpty(filter)) {
                 qstr = String.format("%s WHERE (%s)", qstr, filter);
             }
             Query query = session.createQuery(qstr);
-
+            List<DataStoreConfig> configs = query.getResultList();
+            if (configs != null && !configs.isEmpty()) {
+                Set<String> dataStores = new HashSet<>();
+                synchronized (dataStoreConfigs) {
+                    for (DataStoreConfig config : configs) {
+                        if (openedStores.containsKey(config.name())) {
+                            throw new DataStoreException(
+                                    String.format("Store already opened by current thread. [name=%s][type=%s]",
+                                            config.name(), dataStoreType.getCanonicalName()));
+                        }
+                        config.postLoad();
+                        loadDataStoreConfig(config);
+                        dataStores.add(config.name());
+                    }
+                }
+                return dataStores;
+            }
             return null;
         } catch (Exception ex) {
             throw new DataStoreException(ex);
         }
     }
 
-    @SuppressWarnings("unchecked")
-    private void readDataStoreConfig(ConfigPathNode node) throws ConfigurationException {
-        AbstractConfigNode cnode = ConfigUtils.getPathNode(DataStoreConfig.class, node);
-        if (!(cnode instanceof ConfigPathNode)) {
-            throw new ConfigurationException(String.format("Invalid/NULL data store configuration. [node=%s]", node.getAbsolutePath()));
-        }
-        String type = ConfigUtils.getClassAttribute(cnode);
-        if (Strings.isNullOrEmpty(type)) {
-            throw new ConfigurationException(String.format("Invalid configuration: Class attribute not found. [node=%s]", cnode.getAbsolutePath()));
-        }
+    private void loadDataStoreConfig(DataStoreConfig config) throws ConfigurationException {
         try {
-            Class<?> cls = Class.forName(type);
-            Object obj = cls.newInstance();
-            if (!(obj instanceof DataStoreConfig)) {
-                throw new ConfigurationException(String.format("Invalid data store config type. [type=%s]", cls.getCanonicalName()));
-            }
-            DataStoreConfig config = (DataStoreConfig) obj;
-            ConfigurationAnnotationProcessor.readConfigAnnotations(cls,
-                    (ConfigPathNode) cnode, config);
             dataStoreConfigs.put(
                     config.name(), config);
             AbstractConnection<?> connection = ConnectionManager.get().connection(config.connectionName(), config.connectionType());
             if (connection == null) {
-                throw new ConfigurationException(String.format("No connection found. [store=%s][node=%s]", config.name(), cnode.getAbsolutePath()));
+                throw new ConfigurationException(String.format("No connection found. [store=%s][connection=%s]", config.name(), config.connectionName()));
             }
             if (connections.containsKey(connection.name())) {
                 AbstractConnection<?> conn = connections.get(connection.name());
@@ -477,6 +470,27 @@ public class DataStoreManager implements IConfigurable {
                     }
                 }
             }
+        } catch (Exception ex) {
+            throw new ConfigurationException(ex);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private void readDataStoreConfig(ConfigPathNode node) throws ConfigurationException {
+        AbstractConfigNode cnode = ConfigUtils.getPathNode(DataStoreConfig.class, node);
+        if (!(cnode instanceof ConfigPathNode)) {
+            throw new ConfigurationException(String.format("Invalid/NULL data store configuration. [node=%s]", node.getAbsolutePath()));
+        }
+        String type = ConfigUtils.getClassAttribute(cnode);
+        if (Strings.isNullOrEmpty(type)) {
+            throw new ConfigurationException(String.format("Invalid configuration: Class attribute not found. [node=%s]", cnode.getAbsolutePath()));
+        }
+        try {
+            Class<? extends DataStoreConfig> cls = (Class<? extends DataStoreConfig>) Class.forName(type);
+            DataStoreConfig config = TypeUtils.createInstance(cls);
+            ConfigurationAnnotationProcessor.readConfigAnnotations(cls,
+                    (ConfigPathNode) cnode, config);
+            loadDataStoreConfig(config);
         } catch (Exception ex) {
             throw new ConfigurationException(ex);
         }

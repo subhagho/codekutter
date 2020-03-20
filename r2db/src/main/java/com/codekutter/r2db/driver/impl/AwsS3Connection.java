@@ -121,6 +121,7 @@ public class AwsS3Connection extends AbstractConnection<AmazonS3> {
         if (!Strings.isNullOrEmpty(s3cfg.getProfile())) {
             profile = s3cfg.getProfile();
         }
+        name(s3cfg.getName());
         ClientConfiguration config = configBuilder((AwsS3ConnectionConfig) cfg);
         ProfileCredentialsProvider provider = new ProfileCredentialsProvider(profile);
         // Only to check a valid profile is specified.

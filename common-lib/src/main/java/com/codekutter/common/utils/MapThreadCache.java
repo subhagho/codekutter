@@ -62,6 +62,13 @@ public class MapThreadCache<K, V> {
         return null;
     }
 
+    public boolean containsKey(K key) {
+        if (containsThread()) {
+            return get().containsKey(key);
+        }
+        return false;
+    }
+
     public boolean remove(K key) {
         long threadId = Thread.currentThread().getId();
         Map<K, V> values = cache.get(threadId);

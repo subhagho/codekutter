@@ -176,6 +176,8 @@
                             <class>com.codekutter.common.stores.model.Item</class>
                             <class>com.codekutter.common.stores.model.Order</class>
                             <class>com.codekutter.common.scheduling.impl.JobAuditLog</class>
+                            <class>com.codekutter.r2db.driver.impl.AwsS3ConnectionConfig</class>
+                            <class>com.codekutter.r2db.driver.impl.S3StoreConfig</class>
                         </classes>
                         <hibernate>
                             <parameters>

@@ -26,6 +26,7 @@ import lombok.Setter;
 
 import javax.annotation.Nonnull;
 import javax.persistence.Column;
+import javax.persistence.Id;
 import javax.persistence.MappedSuperclass;
 import javax.persistence.Transient;
 import java.nio.charset.Charset;
@@ -36,6 +37,7 @@ import java.util.Set;
 @Setter
 @MappedSuperclass
 public abstract class ConnectionConfig {
+    @Id
     @Column(name = "name")
     private String name;
     @Column(name = "register_types")

@@ -34,7 +34,7 @@ import java.util.Map;
 @Getter
 @Setter
 @Entity
-@Table(name = "tb_connection_config_aws_filesystem")
+@Table(name = "tb_conn_filesystem_aws")
 public class AwsS3ConnectionConfig extends ConnectionConfig {
     public static final String DEFAULT_PROFILE = "default";
 

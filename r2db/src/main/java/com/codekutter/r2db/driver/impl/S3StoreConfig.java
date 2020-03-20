@@ -18,24 +18,52 @@
 package com.codekutter.r2db.driver.impl;
 
 import com.codekutter.common.stores.DataStoreConfig;
+import com.codekutter.zconfig.common.ConfigurationException;
 import com.codekutter.zconfig.common.model.annotations.ConfigAttribute;
 import com.codekutter.zconfig.common.model.annotations.ConfigValue;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.Table;
+
 @Getter
 @Setter
 @Accessors(fluent = true)
+@Entity
+@Table(name = "tb_ds_filesystem_aws")
 public class S3StoreConfig extends DataStoreConfig {
+    public static final int DEFAULT_MAX_CACHE_SIZE = 128;
+    public static final int DEFAULT_CACHE_EXPIRY = 5 * 60 * 1000;
+
+    @Column(name = "bucket")
     @ConfigAttribute(required = true)
     private String bucket;
+    @Column(name = "temp_directory")
     @ConfigValue
     private String tempDirectory;
+    @Column(name = "user_cache")
     @ConfigAttribute
     private boolean useCache = true;
+    @Column(name = "max_cache_size")
     @ConfigValue
-    private int maxCacheSize = 100;
+    private int maxCacheSize = DEFAULT_MAX_CACHE_SIZE;
+    @Column(name = "cache_expiry_window")
     @ConfigValue
-    private long cacheExpiryWindow = 5 * 60 * 1000;
+    private long cacheExpiryWindow = DEFAULT_CACHE_EXPIRY;
+
+    @Override
+    public void postLoad() throws ConfigurationException {
+        super.postLoad();
+        if (useCache) {
+            if (maxCacheSize <= 0) {
+                maxCacheSize = DEFAULT_MAX_CACHE_SIZE;
+            }
+            if (cacheExpiryWindow <= 0) {
+                cacheExpiryWindow = DEFAULT_CACHE_EXPIRY;
+            }
+        }
+    }
 }

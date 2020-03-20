@@ -84,14 +84,37 @@ CREATE TABLE `tb_job_audit`
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8 COMMENT ='Audit table for logging Scheduled Job execution history.';
 
-DROP TABLE IF EXISTS `tb_connection_config_aws_filesystem`;
+DROP TABLE IF EXISTS `tb_conn_filesystem_aws`;
 
-CREATE TABLE `tb_connection_config_aws_filesystem`
+CREATE TABLE `tb_conn_filesystem_aws`
 (
     `name`           varchar(256) NOT NULL,
     `region`         varchar(118) NOT NULL,
     `profile`        varchar(128) NOT NULL,
     `register_types` text DEFAULT NULL,
+    `parameter`      text DEFAULT NULL,
     PRIMARY KEY (`name`)
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8 COMMENT ='Table to store AWS S3 connection definitions.';
+
+DROP TABLE IF EXISTS `tb_ds_filesystem_aws`;
+
+CREATE TABLE `tb_ds_filesystem_aws`
+(
+    `name`                        varchar(256) NOT NULL,
+    `data_store_class`            varchar(512) NOT NULL,
+    `description`                 varchar(1024) DEFAULT NULL,
+    `connection`                  varchar(256) NOT NULL,
+    `connection_type`             varchar(512) NOT NULL,
+    `audited`                     tinyint(1)    DEFAULT 0,
+    `audit_logger_name`           varchar(256)  DEFAULT NULL,
+    `audit_context_provider_type` varchar(512)  DEFAULT NULL,
+    `bucket`                      varchar(256) NOT NULL,
+    `temp_directory`              varchar(2048) DEFAULT NULL,
+    `user_cache`                  tinyint(1)    DEFAULT 0,
+    `max_cache_size`              int(11)       DEFAULT NULL,
+    `cache_expiry_window`         int(11)       DEFAULT NULL,
+    PRIMARY KEY (`name`),
+    KEY `tb_ds_filesystem_aws_data_store_class_IDX` (`data_store_class`, `name`) USING BTREE
+) ENGINE = InnoDB
+  DEFAULT CHARSET = utf8 COMMENT ='Table to save/load AWS S3 data store configuration.';

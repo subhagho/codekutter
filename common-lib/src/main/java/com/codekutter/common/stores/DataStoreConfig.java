@@ -31,6 +31,7 @@ import lombok.experimental.Accessors;
 
 import javax.annotation.Nonnull;
 import javax.persistence.Column;
+import javax.persistence.Id;
 import javax.persistence.MappedSuperclass;
 import javax.persistence.Transient;
 import java.nio.charset.Charset;
@@ -48,6 +49,7 @@ public class DataStoreConfig {
     private Class<? extends AbstractDataStore> dataStoreClass;
     @Column(name = "data_store_class")
     private String dataStoreClassString;
+    @Id
     @ConfigAttribute(name = "name", required = true)
     @Column(name = "name")
     private String name;
