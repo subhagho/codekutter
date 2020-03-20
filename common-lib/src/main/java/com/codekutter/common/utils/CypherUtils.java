@@ -196,7 +196,7 @@ public class CypherUtils {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(password));
         Preconditions.checkArgument(!Strings.isNullOrEmpty(iv));
 
-        byte[] array = Base64.decodeBase64(data.getBytes(StandardCharsets.UTF_8));
+        byte[] array = Base64.decodeBase64(data);
         return decrypt(array, password, iv);
     }
 

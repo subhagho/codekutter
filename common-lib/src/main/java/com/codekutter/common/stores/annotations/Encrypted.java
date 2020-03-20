@@ -20,7 +20,7 @@ package com.codekutter.common.stores.annotations;
 import java.lang.annotation.*;
 
 @Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.FIELD)
+@Target({ElementType.FIELD, ElementType.TYPE})
 @Inherited
 public @interface Encrypted {
 }

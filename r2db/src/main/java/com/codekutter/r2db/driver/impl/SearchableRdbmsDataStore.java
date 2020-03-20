@@ -240,6 +240,8 @@ public class SearchableRdbmsDataStore extends RdbmsDataStore implements ISearcha
 
     @Override
     public <T extends IEntity> BaseSearchResult<T> textSearch(@Nonnull String query, int batchSize, int offset, @Nonnull Class<? extends T> type, Context context) throws DataStoreException {
+        if (batchSize <= 0) batchSize = maxResults();
+        if (offset < 0) offset = 0;
         return helper.textSearch(readConnection.connection(), query, batchSize, offset, type, context);
     }
 

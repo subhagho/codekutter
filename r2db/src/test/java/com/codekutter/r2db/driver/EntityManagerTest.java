@@ -360,6 +360,29 @@ class EntityManagerTest {
         }
     }
 
+    @Test
+    void testEncryption() {
+        try {
+            List<Product> products = TestDataHelper.createProducts(8, "TEST_ENCRYPT_");
+            List<Order> orders = TestDataHelper.createData(products, 10);
+            LogUtils.debug(getClass(), "*********************ENCRYPTION******************");
+            for(Order order : orders) {
+                entityManager.checkEncryption(order);
+                LogUtils.debug(getClass(), order);
+            }
+            LogUtils.debug(getClass(), "*********************ENCRYPTION******************");
+            LogUtils.debug(getClass(), "*********************DECRYPTION******************");
+            for(Order order : orders) {
+                entityManager.checkDecryption(order);
+                LogUtils.debug(getClass(), order);
+            }
+            LogUtils.debug(getClass(), "*********************DECRYPTION******************");
+        } catch (Exception ex) {
+            LogUtils.error(getClass(), ex);
+            fail(ex);
+        }
+    }
+
     private List<Order> createOrders(String productPrefix, int count, int orderCount) throws Exception {
         try {
             entityManager.beingTransaction(Customer.class, SearchableRdbmsDataStore.class);

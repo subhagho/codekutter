@@ -17,21 +17,21 @@
 
 package com.codekutter.common.model.annotations;
 
+import java.lang.annotation.*;
+
 /**
- * Enumeration for defining copy type
- * for entity properties to be used while copying.
+ * Annotation to mark a field as required (not NULL or Empty)
  */
-public enum ECopyType {
+@Retention(RetentionPolicy.RUNTIME)
+@Target({ElementType.FIELD})
+@Inherited
+public @interface Validate {
     /**
-     * Ignore this fields while copying.
+     * Constraint definition to validate using.
+     * <p>
+     * Default is Null/Empty check.
+     *
+     * @return - Get the validation constraint.
      */
-    Ignore,
-    /**
-     * Copy a reference of this field to the target.
-     */
-    Reference,
-    /**
-     * Default Behavior as per data type.
-     */
-    Default
+    String constraint() default "com.codekutter.grant.model.NullOrEmpty";
 }

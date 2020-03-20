@@ -263,7 +263,11 @@ public class ReflectionUtils {
      * @return - Field value.
      * @throws Exception
      */
-    public static Object getFieldValue(@Nonnull Object o, @Nonnull Field field)
+    public static Object getFieldValue(@Nonnull Object o, @Nonnull Field field) throws Exception {
+        return getFieldValue(o, field, false);
+    }
+
+    public static Object getFieldValue(@Nonnull Object o, @Nonnull Field field, boolean ignore)
             throws Exception {
         Preconditions.checkArgument(o != null);
         Preconditions.checkArgument(field != null);
@@ -285,9 +289,12 @@ public class ReflectionUtils {
         }
 
         if (m == null)
-            throw new Exception("No accessable method found for field. [field="
-                    + field.getName() + "][class="
-                    + o.getClass().getCanonicalName() + "]");
+            if (!ignore)
+                throw new Exception("No accessable method found for field. [field="
+                        + field.getName() + "][class="
+                        + o.getClass().getCanonicalName() + "]");
+            else return null;
+
         return MethodUtils.invokeMethod(o, method);
     }
 
@@ -743,6 +750,7 @@ public class ReflectionUtils {
                 type.equals(Double.class) || type.equals(double.class)
                 || type.equals(Character.class) || type.equals(char.class);
     }
+
     /**
      * Check if the parent type specified is an ancestor (inheritance) of the passed type.
      *

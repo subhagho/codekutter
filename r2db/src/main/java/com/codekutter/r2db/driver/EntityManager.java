@@ -29,6 +29,8 @@ import com.codekutter.common.stores.impl.EntitySearchResult;
 import com.codekutter.common.utils.ConfigUtils;
 import com.codekutter.common.utils.LogUtils;
 import com.codekutter.common.utils.ReflectionUtils;
+import com.codekutter.common.utils.TypeUtils;
+import com.codekutter.zconfig.common.BaseConfigEnv;
 import com.codekutter.zconfig.common.ConfigurationAnnotationProcessor;
 import com.codekutter.zconfig.common.ConfigurationException;
 import com.codekutter.zconfig.common.IConfigurable;
@@ -51,6 +53,7 @@ import javax.annotation.Nonnull;
 import javax.persistence.JoinColumn;
 import java.io.IOException;
 import java.lang.reflect.Field;
+import java.nio.charset.StandardCharsets;
 import java.security.Principal;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -287,6 +290,7 @@ public class EntityManager implements IConfigurable {
             entity.validate();
             entity = (E) formatEntity(entity, context);
             entity.validate();
+            checkEncryption(entity);
             entity = dataStore.create(entity, type, context);
             auditChange(dataStore, EAuditType.Create, entity, entity.getClass(), context, null, user);
 
@@ -424,6 +428,7 @@ public class EntityManager implements IConfigurable {
             }
             entity = (E) formatEntity(entity, context);
             entity.validate();
+            checkEncryption(entity);
             entity = dataStore.update(entity, type, context);
             String delta = null;
             if (entity instanceof IChange) {
@@ -785,9 +790,19 @@ public class EntityManager implements IConfigurable {
                                          @Nonnull AbstractDataStore<T> dataStore,
                                          Context context) throws DataStoreException {
         E value = dataStore.find(key, type, context);
-        if (value != null)
+        if (value != null) {
+            checkDecryption(value);
             findReferences(value, type, context);
+        }
         return value;
+    }
+
+    private void checkDecryption(EntitySearchResult<?> result) throws DataStoreException {
+        if (result.getEntities() != null && !result.getEntities().isEmpty()) {
+            for(IEntity entity : result.getEntities()) {
+                checkDecryption(entity);
+            }
+        }
     }
 
     public <T, E extends IEntity> BaseSearchResult<E> search(@Nonnull String query,
@@ -811,8 +826,10 @@ public class EntityManager implements IConfigurable {
                                                              Context context) throws DataStoreException {
         BaseSearchResult<E> values = dataStore.search(query, type, context);
         if (values instanceof EntitySearchResult) {
-            if (!((EntitySearchResult<E>) values).getEntities().isEmpty())
+            if (!((EntitySearchResult<E>) values).getEntities().isEmpty()) {
+                checkDecryption((EntitySearchResult<E>) values);
                 return findReferences(((EntitySearchResult<E>) values).getEntities(), type, context);
+            }
         }
         return null;
     }
@@ -833,8 +850,10 @@ public class EntityManager implements IConfigurable {
             }
             BaseSearchResult<E> values = dataStore.search(query, type, context);
             if (values instanceof EntitySearchResult) {
-                if (!((EntitySearchResult<E>) values).getEntities().isEmpty())
+                if (!((EntitySearchResult<E>) values).getEntities().isEmpty()) {
+                    checkDecryption((EntitySearchResult<E>) values);
                     return findReferences(((EntitySearchResult<E>) values).getEntities(), type, context);
+                }
             }
         } else {
             List<AbstractDataStore<T>> dataStores = dataStoreManager.getShards(storeType, (Class<? extends IShardedEntity>) type);
@@ -876,8 +895,10 @@ public class EntityManager implements IConfigurable {
                                                              Context context) throws DataStoreException {
         BaseSearchResult<E> values = dataStore.search(query, offset, maxResults, type, context);
         if (values instanceof EntitySearchResult) {
-            if (!((EntitySearchResult<E>) values).getEntities().isEmpty())
+            if (!((EntitySearchResult<E>) values).getEntities().isEmpty()) {
+                checkDecryption((EntitySearchResult<E>) values);
                 return findReferences(((EntitySearchResult<E>) values).getEntities(), type, context);
+            }
         }
         return null;
     }
@@ -900,8 +921,10 @@ public class EntityManager implements IConfigurable {
             }
             BaseSearchResult<E> values = dataStore.search(query, offset, maxResults, type, context);
             if (values instanceof EntitySearchResult) {
-                if (!((EntitySearchResult<E>) values).getEntities().isEmpty())
+                if (!((EntitySearchResult<E>) values).getEntities().isEmpty()) {
+                    checkDecryption((EntitySearchResult<E>) values);
                     return findReferences(((EntitySearchResult<E>) values).getEntities(), type, context);
+                }
             }
         } else {
             List<AbstractDataStore<T>> dataStores = dataStoreManager.getShards(storeType, (Class<? extends IShardedEntity>) type);
@@ -941,8 +964,10 @@ public class EntityManager implements IConfigurable {
         }
         BaseSearchResult<E> values = dataStore.search(query, params, type, context);
         if (values instanceof EntitySearchResult) {
-            if (!((EntitySearchResult<E>) values).getEntities().isEmpty())
+            if (!((EntitySearchResult<E>) values).getEntities().isEmpty()) {
+                checkDecryption((EntitySearchResult<E>) values);
                 return findReferences(((EntitySearchResult<E>) values).getEntities(), type, context);
+            }
         }
         return null;
     }
@@ -964,8 +989,10 @@ public class EntityManager implements IConfigurable {
             }
             BaseSearchResult<E> values = dataStore.search(query, params, type, context);
             if (values instanceof EntitySearchResult) {
-                if (!((EntitySearchResult<E>) values).getEntities().isEmpty())
+                if (!((EntitySearchResult<E>) values).getEntities().isEmpty()) {
+                    checkDecryption((EntitySearchResult<E>) values);
                     return findReferences(((EntitySearchResult<E>) values).getEntities(), type, context);
+                }
             }
         } else {
             List<AbstractDataStore<T>> dataStores = dataStoreManager.getShards(storeType, (Class<? extends IShardedEntity>) type);
@@ -1009,8 +1036,10 @@ public class EntityManager implements IConfigurable {
         }
         BaseSearchResult<E> values = dataStore.search(query, offset, maxResults, params, type, context);
         if (values instanceof EntitySearchResult) {
-            if (!((EntitySearchResult<E>) values).getEntities().isEmpty())
+            if (!((EntitySearchResult<E>) values).getEntities().isEmpty()) {
+                checkDecryption((EntitySearchResult<E>) values);
                 return findReferences(((EntitySearchResult<E>) values).getEntities(), type, context);
+            }
         }
         return null;
     }
@@ -1034,8 +1063,10 @@ public class EntityManager implements IConfigurable {
             }
             BaseSearchResult<E> values = dataStore.search(query, offset, maxResults, params, type, context);
             if (values instanceof EntitySearchResult) {
-                if (!((EntitySearchResult<E>) values).getEntities().isEmpty())
+                if (!((EntitySearchResult<E>) values).getEntities().isEmpty()) {
+                    checkDecryption((EntitySearchResult<E>) values);
                     return findReferences(((EntitySearchResult<E>) values).getEntities(), type, context);
+                }
             }
         } else {
             List<AbstractDataStore<T>> dataStores = dataStoreManager.getShards(storeType, (Class<? extends IShardedEntity>) type);
@@ -1077,6 +1108,7 @@ public class EntityManager implements IConfigurable {
                                 null, context);
                         if (result instanceof EntitySearchResult) {
                             if (((EntitySearchResult) result).getEntities() != null && !((EntitySearchResult) result).getEntities().isEmpty()) {
+                                checkDecryption((EntitySearchResult<E>) result);
                                 joinResults(parentMap, ((EntitySearchResult) result).getEntities(), f, entityType, reference);
                             }
                             if (((EntitySearchResult) result).getEntities() == null || ((EntitySearchResult) result).getEntities().size() < DEFAULT_BATCH_SIZE)
@@ -1227,6 +1259,7 @@ public class EntityManager implements IConfigurable {
             if (result instanceof EntitySearchResult) {
                 if (((EntitySearchResult) result).getEntities() != null
                         && !((EntitySearchResult) result).getEntities().isEmpty()) {
+                    checkDecryption((EntitySearchResult<E>) result);
                     entities.addAll(((EntitySearchResult) result).getEntities());
                 }
                 if (((EntitySearchResult) result).getEntities() == null
@@ -1290,6 +1323,228 @@ public class EntityManager implements IConfigurable {
             }
         }
         return dataStoreManager.getDataStore(storetype, type);
+    }
+
+    public <E extends IEntity> void checkDecryption(E entity) throws DataStoreException {
+        try {
+            Class<? extends IEntity> type = entity.getClass();
+            if (type.isAnnotationPresent(Encrypted.class)) {
+                Field[] fields = ReflectionUtils.getAllFields(type);
+                if (fields != null && fields.length > 0) {
+                    for (Field field : fields) {
+                        Object value = ReflectionUtils.getFieldValue(entity, field, true);
+                        if (value != null)
+                            checkFieldDecryption(entity, value, field);
+                    }
+                }
+            }
+        } catch (Exception ex) {
+            throw new DataStoreException(ex);
+        }
+    }
+
+    public <E extends IEntity> void checkEncryption(E entity) throws DataStoreException {
+        try {
+            Class<? extends IEntity> type = entity.getClass();
+            if (type.isAnnotationPresent(Encrypted.class)) {
+                Field[] fields = ReflectionUtils.getAllFields(type);
+                if (fields != null && fields.length > 0) {
+                    for (Field field : fields) {
+                        Object value = ReflectionUtils.getFieldValue(entity, field, true);
+                        if (value != null)
+                            checkFieldEncryption(entity, value, field);
+                    }
+                }
+            }
+        } catch (Exception ex) {
+            throw new DataStoreException(ex);
+        }
+    }
+
+    private void checkFieldDecryption(Object parent, Object entity, Field field) throws DataStoreException {
+        try {
+            if (ReflectionUtils.isPrimitiveTypeOrString(field)) {
+                if (field.isAnnotationPresent(Encrypted.class)) {
+                    if (field.getType().equals(String.class)) {
+                        String encrypted = BaseConfigEnv.env().cryptoHandler().decryptAsString((String) entity, StandardCharsets.UTF_8);
+                        ReflectionUtils.setObjectValue(parent, field, encrypted);
+                    } else if (field.getType().isArray()) {
+                        if (field.getType().getComponentType() != null && field.getType().getComponentType().equals(byte.class)) {
+                            byte[] array = (byte[]) entity;
+                            byte[] encrypted = BaseConfigEnv.env().cryptoHandler().encrypt(array);
+                            ReflectionUtils.setObjectValue(parent, field, encrypted);
+                        } else if (field.getType().getComponentType() != null && field.getType().getComponentType().equals(String.class)) {
+                            String[] array = (String[]) entity;
+                            for (int ii = 0; ii < array.length; ii++) {
+                                array[ii] = BaseConfigEnv.env().cryptoHandler().decryptAsString(array[ii], StandardCharsets.UTF_8);
+                            }
+                        } else {
+                            throw new DataStoreException(String.format("Cannot encrypt type. [type=%s]", field.getType().getComponentType().getCanonicalName()));
+                        }
+                    } else {
+                        throw new DataStoreException(String.format("Encryption not supported for type. [type=%s]", field.getType().getCanonicalName()));
+                    }
+                }
+            } else {
+                if (ReflectionUtils.implementsInterface(List.class, field.getType())) {
+                    Class<?> lt = ReflectionUtils.getGenericListType(field);
+                    if (lt.equals(String.class)) {
+                        if (field.isAnnotationPresent(Encrypted.class)) {
+                            List<String> ls = (List<String>) entity;
+                            List<String> els = (List<String>) TypeUtils.createInstance(entity.getClass());
+                            for (String v : ls) {
+                                String encrypted = BaseConfigEnv.env().cryptoHandler().decryptAsString(v, StandardCharsets.UTF_8);
+                                els.add(encrypted);
+                            }
+                            ReflectionUtils.setObjectValue(parent, field, els);
+                        }
+                    } else if (lt.isAnnotationPresent(Encrypted.class)) {
+                        List list = (List) entity;
+                        for (Object v : list) {
+                            Field[] fields = ReflectionUtils.getAllFields(lt);
+                            if (fields != null && fields.length > 0) {
+                                for (Field f : fields) {
+                                    Object vv = ReflectionUtils.getFieldValue(v, f, true);
+                                    if (vv != null) {
+                                        checkFieldDecryption(v, vv, f);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                } else if (ReflectionUtils.implementsInterface(Set.class, field.getType())) {
+                    Class<?> lt = ReflectionUtils.getGenericSetType(field);
+                    if (lt.equals(String.class)) {
+                        if (field.isAnnotationPresent(Encrypted.class)) {
+                            Set<String> ls = (Set<String>) entity;
+                            Set<String> els = (Set<String>) TypeUtils.createInstance(entity.getClass());
+                            for (String v : ls) {
+                                String encrypted = BaseConfigEnv.env().cryptoHandler().decryptAsString(v, StandardCharsets.UTF_8);
+                                els.add(encrypted);
+                            }
+                            ReflectionUtils.setObjectValue(parent, field, els);
+                        }
+                    } else if (lt.isAnnotationPresent(Encrypted.class)) {
+                        Set list = (Set) entity;
+                        for (Object v : list) {
+                            Field[] fields = ReflectionUtils.getAllFields(lt);
+                            if (fields != null && fields.length > 0) {
+                                for (Field f : fields) {
+                                    Object vv = ReflectionUtils.getFieldValue(v, f, true);
+                                    if (vv != null) {
+                                        checkFieldDecryption(v, vv, f);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    Field[] fields = ReflectionUtils.getAllFields(field.getType());
+                    if (fields != null && fields.length > 0) {
+                        for (Field f : fields) {
+                            Object value = ReflectionUtils.getFieldValue(entity, f, true);
+                            if (value != null)
+                                checkFieldDecryption(entity, value, f);
+                        }
+                    }
+                }
+            }
+        } catch (Exception ex) {
+            throw new DataStoreException(ex);
+        }
+    }
+
+    private void checkFieldEncryption(Object parent, Object entity, Field field) throws DataStoreException {
+        try {
+            if (ReflectionUtils.isPrimitiveTypeOrString(field)) {
+                if (field.isAnnotationPresent(Encrypted.class)) {
+                    if (field.getType().equals(String.class)) {
+                        String encrypted = BaseConfigEnv.env().cryptoHandler().encryptAsString((String) entity, StandardCharsets.UTF_8);
+                        ReflectionUtils.setObjectValue(parent, field, encrypted);
+                    } else if (field.getType().isArray()) {
+                        if (field.getType().getComponentType() != null && field.getType().getComponentType().equals(byte.class)) {
+                            byte[] array = (byte[]) entity;
+                            byte[] encrypted = BaseConfigEnv.env().cryptoHandler().encrypt(array);
+                            ReflectionUtils.setObjectValue(parent, field, encrypted);
+                        } else if (field.getType().getComponentType() != null && field.getType().getComponentType().equals(String.class)) {
+                            String[] array = (String[]) entity;
+                            for (int ii = 0; ii < array.length; ii++) {
+                                array[ii] = BaseConfigEnv.env().cryptoHandler().encryptAsString(array[ii], StandardCharsets.UTF_8);
+                            }
+                        } else {
+                            throw new DataStoreException(String.format("Cannot encrypt type. [type=%s]", field.getType().getComponentType().getCanonicalName()));
+                        }
+                    } else {
+                        throw new DataStoreException(String.format("Encryption not supported for type. [type=%s]", field.getType().getCanonicalName()));
+                    }
+                }
+            } else {
+                if (ReflectionUtils.implementsInterface(List.class, field.getType())) {
+                    Class<?> lt = ReflectionUtils.getGenericListType(field);
+                    if (lt.equals(String.class)) {
+                        if (field.isAnnotationPresent(Encrypted.class)) {
+                            List<String> ls = (List<String>) entity;
+                            List<String> els = (List<String>) TypeUtils.createInstance(entity.getClass());
+                            for (String v : ls) {
+                                String encrypted = BaseConfigEnv.env().cryptoHandler().encryptAsString(v, StandardCharsets.UTF_8);
+                                els.add(encrypted);
+                            }
+                            ReflectionUtils.setObjectValue(parent, field, els);
+                        }
+                    } else if (lt.isAnnotationPresent(Encrypted.class)) {
+                        List list = (List) entity;
+                        for (Object v : list) {
+                            Field[] fields = ReflectionUtils.getAllFields(lt);
+                            if (fields != null && fields.length > 0) {
+                                for (Field f : fields) {
+                                    Object vv = ReflectionUtils.getFieldValue(v, f, true);
+                                    if (vv != null) {
+                                        checkFieldEncryption(v, vv, f);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                } else if (ReflectionUtils.implementsInterface(Set.class, field.getType())) {
+                    Class<?> lt = ReflectionUtils.getGenericSetType(field);
+                    if (lt.equals(String.class)) {
+                        if (field.isAnnotationPresent(Encrypted.class)) {
+                            Set<String> ls = (Set<String>) entity;
+                            Set<String> els = (Set<String>) TypeUtils.createInstance(entity.getClass());
+                            for (String v : ls) {
+                                String encrypted = BaseConfigEnv.env().cryptoHandler().encryptAsString(v, StandardCharsets.UTF_8);
+                                els.add(encrypted);
+                            }
+                            ReflectionUtils.setObjectValue(parent, field, els);
+                        }
+                    } else if (lt.isAnnotationPresent(Encrypted.class)) {
+                        Set list = (Set) entity;
+                        for (Object v : list) {
+                            Field[] fields = ReflectionUtils.getAllFields(lt);
+                            if (fields != null && fields.length > 0) {
+                                for (Field f : fields) {
+                                    Object vv = ReflectionUtils.getFieldValue(v, f, true);
+                                    if (vv != null) {
+                                        checkFieldEncryption(v, vv, f);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    Field[] fields = ReflectionUtils.getAllFields(field.getType());
+                    if (fields != null && fields.length > 0) {
+                        for (Field f : fields) {
+                            Object value = ReflectionUtils.getFieldValue(entity, f, true);
+                            if (value != null)
+                                checkFieldEncryption(entity, value, f);
+                        }
+                    }
+                }
+            }
+        } catch (Exception ex) {
+            throw new DataStoreException(ex);
+        }
     }
 
     /**

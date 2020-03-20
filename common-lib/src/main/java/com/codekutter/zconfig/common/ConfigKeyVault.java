@@ -24,7 +24,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 
 import javax.annotation.Nonnull;
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 
 public class ConfigKeyVault {
     private static final ConfigKeyVault _instance = new ConfigKeyVault();
@@ -71,8 +71,7 @@ public class ConfigKeyVault {
 
             String iv = getIVSpec(config);
             char[] pc = vault.getPasscode(name);
-            byte[] data = CypherUtils.encrypt(value.getBytes(Charset.defaultCharset()), new String(pc), iv);
-            return new String(data);
+            return CypherUtils.encryptAsString(value, new String(pc), iv);
         } catch (Exception ex) {
             throw new SecurityException(ex);
         }
@@ -90,7 +89,7 @@ public class ConfigKeyVault {
             if (data == null || data.length <= 0) {
                 throw new SecurityException(String.format("No passcode returned for configuration. [name=%s]", name));
             }
-            return new String(data, Charset.defaultCharset());
+            return new String(data, StandardCharsets.UTF_8);
         } catch (Exception e) {
             throw new SecurityException(e);
         }
