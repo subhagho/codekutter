@@ -116,7 +116,7 @@ public class AwsS3Connection extends AbstractConnection<AmazonS3> {
         AwsS3ConnectionConfig s3cfg = (AwsS3ConnectionConfig) cfg;
         region = s3cfg.getRegion();
         if (Strings.isNullOrEmpty(region)) {
-                    throw ConfigurationException.propertyNotFoundException("region");
+            throw ConfigurationException.propertyNotFoundException("region");
         }
         if (!Strings.isNullOrEmpty(s3cfg.getProfile())) {
             profile = s3cfg.getProfile();

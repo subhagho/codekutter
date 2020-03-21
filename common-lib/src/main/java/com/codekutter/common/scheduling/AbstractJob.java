@@ -57,6 +57,7 @@ public abstract class AbstractJob implements Job {
      */
     @Setter(AccessLevel.NONE)
     protected Id callErrorCounter = null;
+
     public AbstractJob() {
         setupMonitoring();
     }

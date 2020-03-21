@@ -60,6 +60,7 @@ public abstract class AbstractDataStore<T> implements Closeable {
     private AbstractAuditLogger auditLogger;
     @Setter(AccessLevel.NONE)
     private DataStoreManager dataStoreManager;
+
     public AbstractDataStore() {
         threadId = Thread.currentThread().getId();
     }

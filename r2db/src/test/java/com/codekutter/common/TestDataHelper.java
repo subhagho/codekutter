@@ -72,7 +72,7 @@ public class TestDataHelper {
             }
             order.setCreatedOn(new Date());
             List<String> strings = new ArrayList<>();
-            for(int jj=0; jj < ii + 5; jj++) {
+            for (int jj = 0; jj < ii + 5; jj++) {
                 strings.add(UUID.randomUUID().toString());
             }
             order.setTestEncryptionList(strings);

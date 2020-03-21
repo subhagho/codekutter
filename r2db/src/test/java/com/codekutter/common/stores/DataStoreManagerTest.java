@@ -100,7 +100,7 @@ class DataStoreManagerTest {
                     .readConnections(AwsS3ConnectionConfig.class, AwsS3Connection.class, connection.connection(), null);
             assertNotNull(connections);
             assertTrue(connections.size() > 0);
-            for(AbstractConnection<AmazonS3> conn : connections) {
+            for (AbstractConnection<AmazonS3> conn : connections) {
                 LogUtils.info(getClass(), String.format("Connection: [name=%s]", conn.name()));
             }
             Set<String> dataStores = R2dbEnv.env().getEntityManager().dataStoreManager()

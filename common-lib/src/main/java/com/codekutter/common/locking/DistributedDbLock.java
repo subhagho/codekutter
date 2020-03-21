@@ -50,6 +50,7 @@ public class DistributedDbLock extends DistributedLock {
      * already acquired the lock.
      */
     private boolean locked = false;
+
     /**
      * Create Lock instance with the specified namespace/name.
      *

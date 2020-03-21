@@ -17,7 +17,10 @@
 
 package com.codekutter.common.model.utils;
 
-import com.codekutter.common.model.*;
+import com.codekutter.common.model.IValidate;
+import com.codekutter.common.model.IValidationConstraint;
+import com.codekutter.common.model.ValidationException;
+import com.codekutter.common.model.ValidationExceptions;
 import com.codekutter.common.model.annotations.Validate;
 import com.codekutter.common.utils.ReflectionUtils;
 import com.google.common.base.Preconditions;

@@ -799,7 +799,7 @@ public class EntityManager implements IConfigurable {
 
     private void checkDecryption(EntitySearchResult<?> result, Context context) throws DataStoreException {
         if (result.getEntities() != null && !result.getEntities().isEmpty()) {
-            for(IEntity entity : result.getEntities()) {
+            for (IEntity entity : result.getEntities()) {
                 checkDecryption(entity, context);
             }
         }

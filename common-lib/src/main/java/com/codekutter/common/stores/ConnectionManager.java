@@ -61,6 +61,51 @@ public class ConnectionManager implements IConfigurable, Closeable {
     @Setter(AccessLevel.NONE)
     private ObjectState state = new ObjectState();
 
+    public static EConfigSource parseConfigSource(@Nonnull ConfigPathNode node) throws ConfigurationException {
+        if (node.attributes() != null) {
+            ConfigValueNode vn = node.attributes().getKeyValues().get(CONFIG_ATTR_SOURCE);
+            if (vn != null) {
+                String value = vn.getValue();
+                return EConfigSource.valueOf(value);
+            }
+        }
+        return EConfigSource.File;
+    }
+
+    private static Class<? extends ConnectionConfig> parseConnectionConfig(@Nonnull ConfigPathNode node) throws ConfigurationException {
+        try {
+            if (node.attributes() != null) {
+                ConfigValueNode vn = node.attributes().getKeyValues().get(CONFIG_ATTR_CONN_CONFIG_TYPE);
+                if (vn != null) {
+                    String value = vn.getValue();
+                    Class<? extends ConnectionConfig> cls = (Class<? extends ConnectionConfig>) Class.forName(value);
+                    return cls;
+                }
+            }
+            return null;
+        } catch (Exception ex) {
+            throw new ConfigurationException(ex);
+        }
+    }
+
+    public static ConnectionManager get() {
+        return __instance;
+    }
+
+    public static void setup(@Nonnull AbstractConfigNode node) throws ConfigurationException {
+        if (__instance.state.getState() != EObjectState.Available) {
+            __instance.configure(node);
+        }
+    }
+
+    public static void dispose() {
+        try {
+            __instance.close();
+        } catch (Exception ex) {
+            LogUtils.error(ConnectionManager.class, ex);
+        }
+    }
+
     @SuppressWarnings("unchecked")
     public <T> AbstractConnection<T> readConnection(@Nonnull ConfigPathNode inode) throws ConfigurationException {
         try {
@@ -86,33 +131,6 @@ public class ConnectionManager implements IConfigurable, Closeable {
             connection.configure(node);
 
             return connection;
-        } catch (Exception ex) {
-            throw new ConfigurationException(ex);
-        }
-    }
-
-    public static EConfigSource parseConfigSource(@Nonnull ConfigPathNode node) throws ConfigurationException {
-        if (node.attributes() != null) {
-            ConfigValueNode vn = node.attributes().getKeyValues().get(CONFIG_ATTR_SOURCE);
-            if (vn != null) {
-                String value = vn.getValue();
-                return EConfigSource.valueOf(value);
-            }
-        }
-        return EConfigSource.File;
-    }
-
-    private static Class<? extends ConnectionConfig> parseConnectionConfig(@Nonnull ConfigPathNode node) throws ConfigurationException {
-        try {
-            if (node.attributes() != null) {
-                ConfigValueNode vn = node.attributes().getKeyValues().get(CONFIG_ATTR_CONN_CONFIG_TYPE);
-                if (vn != null) {
-                    String value = vn.getValue();
-                    Class<? extends ConnectionConfig> cls = (Class<? extends ConnectionConfig>) Class.forName(value);
-                    return cls;
-                }
-            }
-            return null;
         } catch (Exception ex) {
             throw new ConfigurationException(ex);
         }
@@ -247,24 +265,6 @@ public class ConnectionManager implements IConfigurable, Closeable {
             return null;
         } catch (Throwable t) {
             throw new ConfigurationException(t);
-        }
-    }
-
-    public static ConnectionManager get() {
-        return __instance;
-    }
-
-    public static void setup(@Nonnull AbstractConfigNode node) throws ConfigurationException {
-        if (__instance.state.getState() != EObjectState.Available) {
-            __instance.configure(node);
-        }
-    }
-
-    public static void dispose() {
-        try {
-            __instance.close();
-        } catch (Exception ex) {
-            LogUtils.error(ConnectionManager.class, ex);
         }
     }
 

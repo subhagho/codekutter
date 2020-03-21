@@ -44,6 +44,11 @@ public class ConfigKeyVault {
         return _instance;
     }
 
+    public static String getIVSpec(Configuration config) throws Exception {
+        return getIvSpec(config.getId(), config.getApplicationGroup(),
+                config.getApplication(), config.getName(), config.getEncryptionHash());
+    }
+
     public ConfigKeyVault withVault(@Nonnull IKeyVault vault) {
         this.vault = vault;
         return this;
@@ -93,10 +98,5 @@ public class ConfigKeyVault {
         } catch (Exception e) {
             throw new SecurityException(e);
         }
-    }
-
-    public static String getIVSpec(Configuration config) throws Exception {
-        return getIvSpec(config.getId(), config.getApplicationGroup(),
-                config.getApplication(), config.getName(), config.getEncryptionHash());
     }
 }

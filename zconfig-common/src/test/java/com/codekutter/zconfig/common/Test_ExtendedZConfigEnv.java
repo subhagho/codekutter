@@ -91,7 +91,7 @@ class Test_ExtendedZConfigEnv {
                             int s = r.nextInt(1000);
                             Thread.sleep(s);
                             for (int jj = 0; jj < 5; jj++) {
-                                try(DistributedLock lock = DistributedLockFactory.get().getDbLock(namespace, dbLockName)) {
+                                try (DistributedLock lock = DistributedLockFactory.get().getDbLock(namespace, dbLockName)) {
                                     assertNotNull(lock);
                                     lock.lock();
                                     try {

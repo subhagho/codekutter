@@ -33,47 +33,25 @@ import java.util.concurrent.locks.ReentrantLock;
 @Getter
 @Setter
 public abstract class BaseConfigEnv {
-    @Setter(AccessLevel.PACKAGE)
-    protected Configuration configuration;
+    /**
+     * Environment Instance Lock.
+     */
+    private static ReentrantLock _envLock = new ReentrantLock();
+    private static BaseConfigEnv __env = null;
     @Setter(AccessLevel.NONE)
     protected final EnvState state = new EnvState();
     @Setter(AccessLevel.NONE)
     protected final String configName;
     @Setter(AccessLevel.NONE)
     private final ICryptoHandler defaultCryptoHandler = new ConfigCryptoHandler();
+    @Setter(AccessLevel.PACKAGE)
+    protected Configuration configuration;
     @ConfigAttribute(name = "cryptoHandler")
     private Class<? extends ICryptoHandler> cryptoHandlerClass;
-
-    public ICryptoHandler cryptoHandler() throws CryptoException {
-        try {
-            if (cryptoHandlerClass != null) {
-                return cryptoHandlerClass.newInstance();
-            }
-            return defaultCryptoHandler;
-        } catch (Exception ex) {
-            throw new CryptoException(ex);
-        }
-    }
-
-    /**
-     * Environment Instance Lock.
-     */
-    private static ReentrantLock _envLock = new ReentrantLock();
 
     protected BaseConfigEnv(@Nonnull String configName) {
         this.configName = configName;
     }
-
-    /**
-     * Perform post-initialisation tasks if any.
-     *
-     * @throws ConfigurationException
-     */
-    public abstract void postInit() throws ConfigurationException;
-
-    protected abstract void dispose();
-
-    private static BaseConfigEnv __env = null;
 
     /**
      * Shutdown this client environment.
@@ -92,17 +70,6 @@ public abstract class BaseConfigEnv {
         } catch (Exception ex) {
             LogUtils.error(BaseConfigEnv.class, ex);
         }
-    }
-
-    /**
-     * Check the state of this instance.
-     *
-     * @param state - Expected state.
-     * @throws StateException - Exception will be raised if state is not as expected.
-     */
-    protected void checkState(@Nonnull EEnvState state) throws StateException {
-        Preconditions.checkArgument(state != null);
-        this.state.checkState(state);
     }
 
     /**
@@ -176,5 +143,36 @@ public abstract class BaseConfigEnv {
         } catch (StateException e) {
             throw new EnvException(e);
         }
+    }
+
+    public ICryptoHandler cryptoHandler() throws CryptoException {
+        try {
+            if (cryptoHandlerClass != null) {
+                return cryptoHandlerClass.newInstance();
+            }
+            return defaultCryptoHandler;
+        } catch (Exception ex) {
+            throw new CryptoException(ex);
+        }
+    }
+
+    /**
+     * Perform post-initialisation tasks if any.
+     *
+     * @throws ConfigurationException
+     */
+    public abstract void postInit() throws ConfigurationException;
+
+    protected abstract void dispose();
+
+    /**
+     * Check the state of this instance.
+     *
+     * @param state - Expected state.
+     * @throws StateException - Exception will be raised if state is not as expected.
+     */
+    protected void checkState(@Nonnull EEnvState state) throws StateException {
+        Preconditions.checkArgument(state != null);
+        this.state.checkState(state);
     }
 }

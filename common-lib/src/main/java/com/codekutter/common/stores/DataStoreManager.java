@@ -410,9 +410,9 @@ public class DataStoreManager implements IConfigurable {
     }
 
     public <T> Set<String> readDynamicDConfig(@Nonnull Session session,
-                                                         @Nonnull Class<? extends AbstractDataStore<T>> dataStoreType,
-                                                         @Nonnull Class<? extends DataStoreConfig> configType,
-                                                         String filter) throws DataStoreException {
+                                              @Nonnull Class<? extends AbstractDataStore<T>> dataStoreType,
+                                              @Nonnull Class<? extends DataStoreConfig> configType,
+                                              String filter) throws DataStoreException {
         try {
             String qstr = String.format("FROM %s", configType.getCanonicalName());
             if (!Strings.isNullOrEmpty(filter)) {
