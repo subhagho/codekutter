@@ -17,19 +17,15 @@
 
 package com.codekutter.common.model;
 
-import com.codekutter.common.utils.ICryptoHandler;
-import com.codekutter.zconfig.common.BaseConfigEnv;
 import com.codekutter.zconfig.common.ConfigurationException;
 import com.google.common.base.Strings;
 import lombok.Getter;
 import lombok.Setter;
 
-import javax.annotation.Nonnull;
 import javax.persistence.Column;
 import javax.persistence.Id;
 import javax.persistence.MappedSuperclass;
 import javax.persistence.Transient;
-import java.nio.charset.Charset;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -62,18 +58,6 @@ public abstract class ConnectionConfig {
             throw new ConfigurationException(ex);
         }
         postLoad();
-    }
-
-    public String decrypt(@Nonnull String encrypted) {
-        if (!Strings.isNullOrEmpty(encrypted)) {
-            try {
-                ICryptoHandler handler = BaseConfigEnv.env().cryptoHandler();
-                return handler.decryptAsString(encrypted, Charset.defaultCharset());
-            } catch (Exception ex) {
-                throw new RuntimeException(ex);
-            }
-        }
-        return encrypted;
     }
 
     public abstract void postLoad() throws ConfigurationException;

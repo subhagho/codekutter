@@ -17,6 +17,7 @@
 
 package com.codekutter.common.stores;
 
+import com.codekutter.common.Context;
 import com.codekutter.common.auditing.IAuditContextGenerator;
 import com.codekutter.common.utils.ICryptoHandler;
 import com.codekutter.zconfig.common.BaseConfigEnv;
@@ -76,11 +77,11 @@ public class DataStoreConfig {
     @Column(name = "audit_context_provider_type")
     private String auditContextProviderClass;
 
-    public String decrypt(@Nonnull String encrypted) {
+    public String decrypt(@Nonnull String encrypted, Context context) {
         if (!Strings.isNullOrEmpty(encrypted)) {
             try {
                 ICryptoHandler handler = BaseConfigEnv.env().cryptoHandler();
-                return handler.decryptAsString(encrypted, Charset.defaultCharset());
+                return handler.decryptAsString(encrypted, Charset.defaultCharset(), context);
             } catch (Exception ex) {
                 throw new RuntimeException(ex);
             }

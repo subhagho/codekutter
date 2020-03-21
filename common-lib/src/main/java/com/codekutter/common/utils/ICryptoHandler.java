@@ -17,18 +17,20 @@
 
 package com.codekutter.common.utils;
 
+import com.codekutter.common.Context;
+
 import java.nio.charset.Charset;
 
 public interface ICryptoHandler {
-    byte[] encrypt(String value, Charset charset) throws CryptoException;
+    byte[] encrypt(String value, Charset charset, Context context) throws CryptoException;
 
-    byte[] encrypt(byte[] value) throws CryptoException;
+    byte[] encrypt(byte[] value, Context context) throws CryptoException;
 
-    String encryptAsString(String value, Charset charset) throws CryptoException;
+    String encryptAsString(String value, Charset charset, Context context) throws CryptoException;
 
-    byte[] decrypt(String value, Charset charset) throws CryptoException;
+    byte[] decrypt(String value, Charset charset, Context context) throws CryptoException;
 
-    byte[] decrypt(byte[] value) throws CryptoException;
+    byte[] decrypt(byte[] value, Context context) throws CryptoException;
 
-    String decryptAsString(String value, Charset charset) throws CryptoException;
+    String decryptAsString(String value, Charset charset, Context context) throws CryptoException;
 }

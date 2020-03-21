@@ -367,13 +367,13 @@ class EntityManagerTest {
             List<Order> orders = TestDataHelper.createData(products, 10);
             LogUtils.debug(getClass(), "*********************ENCRYPTION******************");
             for(Order order : orders) {
-                entityManager.checkEncryption(order);
+                entityManager.checkEncryption(order, null);
                 LogUtils.debug(getClass(), order);
             }
             LogUtils.debug(getClass(), "*********************ENCRYPTION******************");
             LogUtils.debug(getClass(), "*********************DECRYPTION******************");
             for(Order order : orders) {
-                entityManager.checkDecryption(order);
+                entityManager.checkDecryption(order, null);
                 LogUtils.debug(getClass(), order);
             }
             LogUtils.debug(getClass(), "*********************DECRYPTION******************");

@@ -17,6 +17,7 @@
 
 package com.codekutter.common.utils;
 
+import com.codekutter.common.Context;
 import com.codekutter.zconfig.common.BaseConfigEnv;
 import com.codekutter.zconfig.common.ConfigKeyVault;
 import com.google.common.base.Strings;
@@ -25,26 +26,26 @@ import java.nio.charset.Charset;
 
 public class ConfigCryptoHandler implements ICryptoHandler {
     @Override
-    public byte[] encrypt(String value, Charset charset) throws CryptoException {
+    public byte[] encrypt(String value, Charset charset, Context context) throws CryptoException {
         if (!Strings.isNullOrEmpty(value)) {
-            String e = encryptAsString(value, charset);
+            String e = encryptAsString(value, charset, context);
             return e.getBytes(charset);
         }
         return null;
     }
 
     @Override
-    public byte[] encrypt(byte[] value) throws CryptoException {
+    public byte[] encrypt(byte[] value, Context context) throws CryptoException {
         if (value != null && value.length > 0) {
             String v = new String(value);
-            String e = encryptAsString(v, Charset.defaultCharset());
+            String e = encryptAsString(v, Charset.defaultCharset(), context);
             return e.getBytes(Charset.defaultCharset());
         }
         return null;
     }
 
     @Override
-    public String encryptAsString(String value, Charset charset) throws CryptoException {
+    public String encryptAsString(String value, Charset charset, Context context) throws CryptoException {
         if (!Strings.isNullOrEmpty(value)) {
             try {
                 ConfigKeyVault vault = ConfigKeyVault.getInstance();
@@ -60,7 +61,7 @@ public class ConfigCryptoHandler implements ICryptoHandler {
     }
 
     @Override
-    public byte[] decrypt(String encrypted, Charset charset) throws CryptoException {
+    public byte[] decrypt(String encrypted, Charset charset, Context context) throws CryptoException {
         if (!Strings.isNullOrEmpty(encrypted)) {
             try {
                 ConfigKeyVault vault = ConfigKeyVault.getInstance();
@@ -82,7 +83,7 @@ public class ConfigCryptoHandler implements ICryptoHandler {
     }
 
     @Override
-    public byte[] decrypt(byte[] encrypted) throws CryptoException {
+    public byte[] decrypt(byte[] encrypted, Context context) throws CryptoException {
         if (encrypted != null && encrypted.length > 0) {
             try {
                 ConfigKeyVault vault = ConfigKeyVault.getInstance();
@@ -104,7 +105,7 @@ public class ConfigCryptoHandler implements ICryptoHandler {
     }
 
     @Override
-    public String decryptAsString(String encrypted, Charset charset) throws CryptoException {
+    public String decryptAsString(String encrypted, Charset charset, Context context) throws CryptoException {
         if (!Strings.isNullOrEmpty(encrypted)) {
             try {
                 ConfigKeyVault vault = ConfigKeyVault.getInstance();
