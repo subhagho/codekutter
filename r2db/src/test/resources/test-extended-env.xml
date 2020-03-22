@@ -202,6 +202,12 @@
                             <value>I1wamaUKOAPqAX3lKkYEawBueg3pnFunxyosMgW50F7F7TImy7c4wrV/Jqd+TQfI</value>
                         </token>
                     </connection>
+                    <connection name="TEST_S3_DB"
+                                class="com.codekutter.r2db.driver.impl.AwsS3Connection"
+                                configType="com.codekutter.r2db.driver.impl.AwsS3ConnectionConfig"
+                                source="Database">
+                        <connection reference="TestDbConnection" class="com.codekutter.common.stores.impl.HibernateConnection"/>
+                    </connection>
                 </connections>
                 <dataStoreManager>
                     <dataStores>
