@@ -20,7 +20,12 @@ package com.codekutter.zconfig.common;
 import com.codekutter.common.StateException;
 import com.codekutter.common.utils.*;
 import com.codekutter.zconfig.common.model.Configuration;
+import com.codekutter.zconfig.common.model.EncryptedValue;
 import com.codekutter.zconfig.common.model.annotations.ConfigAttribute;
+import com.codekutter.zconfig.common.model.nodes.AbstractConfigNode;
+import com.codekutter.zconfig.common.model.nodes.ConfigPathNode;
+import com.codekutter.zconfig.common.model.nodes.ConfigValueNode;
+import com.codekutter.zconfig.common.model.nodes.EValueType;
 import com.google.common.base.Preconditions;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -28,11 +33,14 @@ import lombok.Setter;
 
 import javax.annotation.Nonnull;
 import java.lang.reflect.Constructor;
+import java.util.UUID;
 import java.util.concurrent.locks.ReentrantLock;
 
 @Getter
 @Setter
 public abstract class BaseConfigEnv {
+    private static final String CONFIG_PATH_NODE_TEMP = "__TMP__";
+
     /**
      * Environment Instance Lock.
      */
@@ -51,6 +59,29 @@ public abstract class BaseConfigEnv {
 
     protected BaseConfigEnv(@Nonnull String configName) {
         this.configName = configName;
+    }
+
+    public static synchronized EncryptedValue createEncryptedNode(@Nonnull String encryptedValue) throws ConfigurationException {
+        if (__env.configuration == null) {
+            throw new ConfigurationException("Configuration not initialized...");
+        }
+        AbstractConfigNode tnode = __env.configuration.getRootConfigNode().find(CONFIG_PATH_NODE_TEMP);
+        if (tnode == null) {
+            ConfigPathNode pnode = new ConfigPathNode(__env.configuration, __env.configuration.getRootConfigNode());
+            __env.configuration.getRootConfigNode().addChildNode(pnode);
+            tnode = pnode;
+        }
+        if (!(tnode instanceof ConfigPathNode)) {
+            throw new ConfigurationException(String.format("Invalid temp node. [type=%s]", tnode.getClass().getCanonicalName()));
+        }
+        ConfigValueNode vnode = new ConfigValueNode(__env.configuration, tnode);
+        vnode.setName(UUID.randomUUID().toString());
+        vnode.setValueType(EValueType.STRING);
+        vnode.setValue(encryptedValue);
+        ((ConfigPathNode) tnode).addChildNode(vnode);
+        EncryptedValue ev = new EncryptedValue(vnode);
+        LogUtils.debug(BaseConfigEnv.class, ev);
+        return ev;
     }
 
     /**

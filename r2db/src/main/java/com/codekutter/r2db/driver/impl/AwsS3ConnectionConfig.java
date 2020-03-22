@@ -42,7 +42,7 @@ public class AwsS3ConnectionConfig extends ConnectionConfig {
     private String region;
     @Column(name = "profile")
     private String profile = DEFAULT_PROFILE;
-    @Column(name = "parameter")
+    @Column(name = "parameters")
     private String parameters;
     @Transient
     private Map<String, String> params = new HashMap<>();

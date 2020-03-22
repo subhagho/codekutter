@@ -24,6 +24,7 @@ import com.codekutter.zconfig.common.IConfigurable;
 import com.codekutter.zconfig.common.model.annotations.ConfigAttribute;
 import com.codekutter.zconfig.common.model.annotations.ConfigPath;
 import com.codekutter.zconfig.common.model.annotations.ConfigValue;
+import com.codekutter.zconfig.common.model.nodes.AbstractConfigNode;
 import com.codekutter.zconfig.common.transformers.ClassSetParser;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -60,7 +61,7 @@ public abstract class AbstractConnection<T> implements IConfigurable, Closeable 
         supportedTypes.add(type);
     }
 
-    public void configure(ConnectionConfig config) throws ConfigurationException {
+    public void configure(@Nonnull ConnectionConfig config) throws ConfigurationException {
         throw new ConfigurationException("Method not supported...");
     }
 

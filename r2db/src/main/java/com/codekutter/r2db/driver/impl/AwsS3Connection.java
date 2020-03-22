@@ -111,7 +111,7 @@ public class AwsS3Connection extends AbstractConnection<AmazonS3> {
     }
 
     @Override
-    public void configure(ConnectionConfig cfg) throws ConfigurationException {
+    public void configure(@Nonnull ConnectionConfig cfg) throws ConfigurationException {
         Preconditions.checkArgument(cfg instanceof AwsS3ConnectionConfig);
         AwsS3ConnectionConfig s3cfg = (AwsS3ConnectionConfig) cfg;
         region = s3cfg.getRegion();

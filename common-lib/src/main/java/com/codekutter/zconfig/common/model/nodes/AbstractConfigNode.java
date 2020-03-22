@@ -238,7 +238,9 @@ public abstract class AbstractConfigNode {
             return this;
         } else if (path
                 .startsWith("." + ConfigurationSettings.NODE_SEARCH_SEPERATOR)) {
-            path = String.format("%s%s", getName(), path);
+            // Remove the ./ in the beginning
+            path = path.substring(2);
+            path = String.format("%s/%s", getName(), path);
         }
 
         List<String> stack =

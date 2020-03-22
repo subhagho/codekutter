@@ -92,7 +92,7 @@ CREATE TABLE `tb_conn_filesystem_aws`
     `region`         varchar(118) NOT NULL,
     `profile`        varchar(128) NOT NULL,
     `register_types` text DEFAULT NULL,
-    `parameter`      text DEFAULT NULL,
+    `parameters`     text DEFAULT NULL,
     PRIMARY KEY (`name`)
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8 COMMENT ='Table to store AWS S3 connection definitions.';

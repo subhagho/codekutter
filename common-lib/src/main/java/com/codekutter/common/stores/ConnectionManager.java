@@ -153,7 +153,9 @@ public class ConnectionManager implements IConfigurable, Closeable {
                 if (configType == null) {
                     throw ConfigurationException.propertyNotFoundException(CONFIG_ATTR_CONN_CONFIG_TYPE);
                 }
-                AbstractConfigNode cnode = ConfigUtils.getPathNode(AbstractConnection.class, node);
+                ConfigPath path = AbstractConnection.class.getAnnotation(ConfigPath.class);
+                String sp = String.format("./%s", path.path());
+                AbstractConfigNode cnode = node.find(sp);
                 if (!(cnode instanceof ConfigPathNode)) {
                     throw new ConfigurationException(
                             String.format("DB Connection definition not found. [path=%s]", node.getAbsolutePath()));
