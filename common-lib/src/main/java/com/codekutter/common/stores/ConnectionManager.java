@@ -210,9 +210,9 @@ public class ConnectionManager implements IConfigurable, Closeable {
                                                                                  @Nonnull Session session,
                                                                                  String name) throws ConfigurationException {
         try {
-            String qstr = String.format("FROM %s WHERE name = :name", configType.getCanonicalName());
+            String qstr = String.format("FROM %s WHERE name = :p_name", configType.getCanonicalName());
             Query query = session.createQuery(qstr);
-            query.setParameter("name", name);
+            query.setParameter("p_name", name);
             List<ConnectionConfig> configs = query.getResultList();
             if (configs != null && !configs.isEmpty()) {
                 ConnectionConfig config = configs.get(0);
