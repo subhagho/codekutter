@@ -678,7 +678,7 @@ public class ConfigurationAnnotationProcessor {
                     ConfigParametersNode.NODE_ABBR_PREFIX);
             if (field.getType() == EncryptedValue.class) {
                 ConfigValueNode vn = null;
-                if (node instanceof ConfigPathNode) {
+                if (nodeInfo.node instanceof ConfigPathNode) {
                     ConfigPathNode pathNode = (ConfigPathNode) nodeInfo.node;
                     ConfigParametersNode params = pathNode.parmeters();
                     if (params != null && !params.isEmpty()) {
@@ -703,7 +703,7 @@ public class ConfigurationAnnotationProcessor {
                 return;
             }
             String value = null;
-            if (node instanceof ConfigPathNode) {
+            if (nodeInfo.node instanceof ConfigPathNode) {
                 ConfigPathNode pathNode = (ConfigPathNode) nodeInfo.node;
                 ConfigParametersNode params = pathNode.parmeters();
                 if (params != null && !params.isEmpty()) {
@@ -770,7 +770,7 @@ public class ConfigurationAnnotationProcessor {
                     ConfigAttributesNode.NODE_ABBR_PREFIX);
             if (field.getType() == EncryptedValue.class) {
                 ConfigValueNode vn = null;
-                if (node instanceof ConfigPathNode) {
+                if (nodeInfo.node instanceof ConfigPathNode) {
                     ConfigPathNode pathNode = (ConfigPathNode) nodeInfo.node;
                     ConfigAttributesNode attrs = pathNode.attributes();
                     if (attrs != null && !attrs.isEmpty()) {
@@ -796,7 +796,7 @@ public class ConfigurationAnnotationProcessor {
             }
 
             String value = null;
-            if (node instanceof ConfigPathNode) {
+            if (nodeInfo.node instanceof ConfigPathNode) {
                 ConfigPathNode pathNode = (ConfigPathNode) nodeInfo.node;
                 ConfigAttributesNode attrs = pathNode.attributes();
                 if (attrs != null && !attrs.isEmpty()) {
