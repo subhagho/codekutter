@@ -269,6 +269,9 @@ public class RdbmsDataStore extends TransactionDataStore<Session, Transaction> {
             } else {
                 readSession = session;
             }
+            if (config().maxResults() > 0) {
+                maxResults(config().maxResults());
+            }
         } catch (ConnectionException | DataStoreException ex) {
             throw new ConfigurationException(ex);
         }

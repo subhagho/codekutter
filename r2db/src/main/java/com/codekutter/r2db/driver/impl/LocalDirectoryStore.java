@@ -121,6 +121,9 @@ public class LocalDirectoryStore extends AbstractDirectoryStore<File> {
                 throw new ConfigurationException(String.format("Specified directory not found. [path=%s]",
                         directory.getAbsolutePath()));
             }
+            if (config.maxResults() > 0) {
+                maxResults(config.maxResults());
+            }
         } catch (DataStoreException ex) {
             throw new ConfigurationException(ex);
         }

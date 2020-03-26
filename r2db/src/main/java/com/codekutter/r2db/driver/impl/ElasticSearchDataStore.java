@@ -49,6 +49,9 @@ public class ElasticSearchDataStore extends AbstractDataStore<RestHighLevelClien
                 throw new ConfigurationException(String.format("No connection found for name. [name=%s]", config().connectionName()));
             }
             withConnection(connection);
+            if (config().maxResults() > 0) {
+                maxResults(config().maxResults());
+            }
         } catch (Exception ex) {
             throw new ConfigurationException(ex);
         }

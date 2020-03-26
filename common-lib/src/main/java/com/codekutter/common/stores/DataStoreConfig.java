@@ -65,6 +65,9 @@ public class DataStoreConfig {
     private Class<? extends AbstractConnection> connectionType;
     @Column(name = "connection_type")
     private String connectionTypeString;
+    @ConfigValue(name = "maxResults")
+    @Column(name = "max_fetch_count")
+    private int maxResults = -1;
     @ConfigAttribute(name = "audited")
     @Column(name = "audited")
     private boolean audited = false;

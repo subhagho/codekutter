@@ -150,6 +150,9 @@ public class AwsS3DataStore extends AbstractDirectoryStore<AmazonS3> {
                         .removalListener(listener)
                         .build();
             }
+            if (config.maxResults() > 0) {
+                maxResults(config.maxResults());
+            }
         } catch (Throwable t) {
             throw new ConfigurationException(t);
         }

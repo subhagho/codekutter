@@ -42,7 +42,6 @@ import java.util.Map;
 @Setter
 @Accessors(fluent = true)
 public abstract class AbstractDataStore<T> implements Closeable {
-
     private static final int DEFAULT_MAX_RESULTS = 500;
     @Setter(AccessLevel.NONE)
     protected Metrics metrics = new Metrics();
