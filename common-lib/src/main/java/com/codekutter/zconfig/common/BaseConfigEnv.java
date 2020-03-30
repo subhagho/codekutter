@@ -33,6 +33,8 @@ import lombok.Setter;
 
 import javax.annotation.Nonnull;
 import java.lang.reflect.Constructor;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -56,6 +58,9 @@ public abstract class BaseConfigEnv {
     protected Configuration configuration;
     @ConfigAttribute(name = "cryptoHandler")
     private Class<? extends ICryptoHandler> cryptoHandlerClass;
+    @Setter(AccessLevel.NONE)
+    @Getter(AccessLevel.NONE)
+    private final Map<Long, ManagedThread> managedThreads = new HashMap<>();
 
     protected BaseConfigEnv(@Nonnull String configName) {
         this.configName = configName;
@@ -185,6 +190,25 @@ public abstract class BaseConfigEnv {
         } catch (Exception ex) {
             throw new CryptoException(ex);
         }
+    }
+
+    public synchronized ManagedThread create(@Nonnull String name, @Nonnull Runnable runnable) {
+        ManagedThread thread = new ManagedThread(runnable, name);
+        managedThreads.put(thread.getId(), thread);
+        return thread;
+    }
+
+    public synchronized ManagedThread create(@Nonnull String name, @Nonnull Runnable runnable, @Nonnull ThreadGroup group) {
+        ManagedThread thread = new ManagedThread(group, runnable, name);
+        managedThreads.put(thread.getId(), thread);
+        return thread;
+    }
+
+    public synchronized boolean remove(@Nonnull ManagedThread thread) {
+        if (managedThreads.containsKey(thread.getId())) {
+            return managedThreads.remove(thread.getId()) != null;
+        }
+        return false;
     }
 
     /**
