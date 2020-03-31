@@ -27,13 +27,13 @@ import lombok.experimental.Accessors;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.MappedSuperclass;
 import javax.persistence.Table;
 
 @Getter
 @Setter
 @Accessors(fluent = true)
-@Entity
-@Table(name = "tb_ds_filesystem_aws")
+@MappedSuperclass
 public class S3StoreConfig extends DataStoreConfig {
     public static final int DEFAULT_MAX_CACHE_SIZE = 128;
     public static final int DEFAULT_CACHE_EXPIRY = 5 * 60 * 1000;
