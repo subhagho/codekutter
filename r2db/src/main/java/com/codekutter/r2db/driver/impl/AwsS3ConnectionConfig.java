@@ -58,7 +58,7 @@ public class AwsS3ConnectionConfig extends ConnectionConfig {
                         if (parts.length == 2) {
                             String key = parts[0];
                             String v = parts[1];
-                            if (!Strings.isNullOrEmpty(key)) {
+                            if (Strings.isNullOrEmpty(key)) {
                                 LogUtils.warn(getClass(), String.format("Invalid parameter. [value=%s]", value));
                                 continue;
                             }
