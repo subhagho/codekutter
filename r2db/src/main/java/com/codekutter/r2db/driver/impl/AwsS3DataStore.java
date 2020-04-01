@@ -254,20 +254,24 @@ public class AwsS3DataStore extends AbstractDirectoryStore<AmazonS3> {
             }
             S3Object obj = connection().connection().getObject(fk.bucket(), fk.key());
             if (obj != null) {
-                String lfname = getLocalFileName(fk);
-                S3FileEntity entity = new S3FileEntity(fk.bucket(), fk.key(), lfname).
-                        withClient(connection().connection());
-                ObjectMetadata meta = obj.getObjectMetadata();
-                entity.setUpdateTimestamp(meta.getLastModified().getTime());
+                try {
+                    String lfname = getLocalFileName(fk);
+                    S3FileEntity entity = new S3FileEntity(fk.bucket(), fk.key(), lfname).
+                            withClient(connection().connection());
+                    ObjectMetadata meta = obj.getObjectMetadata();
+                    entity.setUpdateTimestamp(meta.getLastModified().getTime());
 
-                File lf = entity.copyToLocal();
-                if (!lf.exists()) {
-                    throw new DataStoreException(String.format("Local file not found. [path=%s]", lf.getAbsolutePath()));
+                    File lf = entity.copyToLocal();
+                    if (!lf.exists()) {
+                        throw new DataStoreException(String.format("Local file not found. [path=%s]", lf.getAbsolutePath()));
+                    }
+                    if (cache != null) {
+                        cache.put(entity.getKey(), entity);
+                    }
+                    return (E) entity;
+                } finally {
+                    obj.close();
                 }
-                if (cache != null) {
-                    cache.put(entity.getKey(), entity);
-                }
-                return (E) entity;
             }
             return null;
         } catch (Throwable t) {

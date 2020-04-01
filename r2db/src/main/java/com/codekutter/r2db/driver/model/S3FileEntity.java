@@ -25,6 +25,7 @@ import com.codekutter.common.Context;
 import com.codekutter.common.model.CopyException;
 import com.codekutter.common.model.IEntity;
 import com.codekutter.common.model.ValidationExceptions;
+import com.codekutter.common.utils.LogUtils;
 import com.google.common.base.Preconditions;
 
 import javax.annotation.Nonnull;
@@ -131,19 +132,26 @@ public class S3FileEntity extends RemoteFileEntity<S3FileKey, AmazonS3> {
         if (source == null) {
             throw new IOException(String.format("S3 Object not found. [bucket=%s][key=%s]", key.bucket(), key.bucket()));
         }
-        try (InputStream reader = new BufferedInputStream(
-                source.getObjectContent())) {
-            try (FileOutputStream fos = new FileOutputStream(this)) {
-                byte[] buffer = new byte[DEFAULT_BUFFER_SIZE];
-                while (true) {
-                    int size = reader.read(buffer, 0, DEFAULT_BUFFER_SIZE);
-                    if (size <= 0) break;
-                    fos.write(buffer, 0, size);
-                    if (size < DEFAULT_BUFFER_SIZE) break;
+        try {
+            try (InputStream reader = new BufferedInputStream(
+                    source.getObjectContent())) {
+                try (FileOutputStream fos = new FileOutputStream(this)) {
+                    byte[] buffer = new byte[DEFAULT_BUFFER_SIZE];
+                    while (true) {
+                        int size = reader.read(buffer, 0, DEFAULT_BUFFER_SIZE);
+                        if (size <= 0) break;
+                        fos.write(buffer, 0, size);
+                        if (size < DEFAULT_BUFFER_SIZE) break;
+                    }
                 }
             }
+        } finally {
+            source.close();
         }
-        getUrl();
+        if(getUrl() == null) {
+            LogUtils.error(getClass(),
+                    String.format("Error getting File URL. [bucket=%s][key=%s]", key.bucket(), key.key()));
+        }
         return this;
     }
 
