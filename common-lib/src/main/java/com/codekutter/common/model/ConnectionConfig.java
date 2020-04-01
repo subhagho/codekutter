@@ -17,6 +17,7 @@
 
 package com.codekutter.common.model;
 
+import com.codekutter.common.stores.AbstractConnection;
 import com.codekutter.zconfig.common.ConfigurationException;
 import com.google.common.base.Strings;
 import lombok.Getter;
@@ -32,15 +33,21 @@ import java.util.Set;
 @Getter
 @Setter
 @MappedSuperclass
+@SuppressWarnings("rawtypes")
 public abstract class ConnectionConfig {
     @Id
     @Column(name = "name")
     private String name;
+    @Column(name = "connection_type")
+    private String connectionTypeString;
+    @Transient
+    private Class<? extends AbstractConnection> connectionType;
     @Column(name = "register_types")
     private String supportedTypesList;
     @Transient
     private Set<Class<?>> supportedTypes;
 
+    @SuppressWarnings("unchecked")
     public void load() throws ConfigurationException {
         try {
             if (!Strings.isNullOrEmpty(supportedTypesList)) {
@@ -54,6 +61,10 @@ public abstract class ConnectionConfig {
                     }
                 }
             }
+            if (Strings.isNullOrEmpty(connectionTypeString)) {
+                throw ConfigurationException.propertyNotFoundException("connectionTypeString");
+            }
+            connectionType = (Class<? extends AbstractConnection>) Class.forName(connectionTypeString);
         } catch (Exception ex) {
             throw new ConfigurationException(ex);
         }

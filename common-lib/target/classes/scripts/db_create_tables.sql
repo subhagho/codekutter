@@ -15,9 +15,9 @@
  *
  */
 
-DROP TABLE IF EXISTS `tb_key_vault`;
+DROP TABLE IF EXISTS `sys_key_vault`;
 
-CREATE TABLE `tb_key_vault`
+CREATE TABLE `sys_key_vault`
 (
     `key`            varchar(256)   NOT NULL,
     `data`           mediumblob     NOT NULL,
@@ -30,9 +30,9 @@ CREATE TABLE `tb_key_vault`
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8 COMMENT ='Table used to store encrypted keys.';
 
-DROP TABLE IF EXISTS `tb_db_locks`;
+DROP TABLE IF EXISTS `sys_db_locks`;
 
-CREATE TABLE `tb_db_locks`
+CREATE TABLE `sys_db_locks`
 (
     `namespace`       varchar(128) NOT NULL,
     `name`            varchar(128) NOT NULL,
@@ -45,9 +45,9 @@ CREATE TABLE `tb_db_locks`
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8 COMMENT ='Table used for database distributed locks.';
 
-DROP TABLE IF EXISTS `tb_audit_records`;
+DROP TABLE IF EXISTS `sys_audit_records`;
 
-CREATE TABLE `tb_audit_records`
+CREATE TABLE `sys_audit_records`
 (
     `data_store_type` varchar(128)   NOT NULL,
     `data_store_name` varchar(128)   NOT NULL,
@@ -61,13 +61,13 @@ CREATE TABLE `tb_audit_records`
     `change_delta`    longblob   DEFAULT NULL,
     `change_context`  mediumblob DEFAULT NULL,
     PRIMARY KEY (`data_store_type`, `data_store_name`, `record_type`, `record_id`),
-    KEY `tb_audit_records_record_type_IDX` (`record_type`, `entity_id`) USING BTREE
+    KEY `sys_audit_records_record_type_IDX` (`record_type`, `entity_id`) USING BTREE
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8 COMMENT ='Data base table to persist audit log records';
 
-DROP TABLE IF EXISTS `tb_job_audit`;
+DROP TABLE IF EXISTS `sys_job_audit`;
 
-CREATE TABLE `tb_job_audit`
+CREATE TABLE `sys_job_audit`
 (
     `job_id`          varchar(128)   NOT NULL,
     `namespace`       varchar(128)   NOT NULL,
@@ -80,26 +80,27 @@ CREATE TABLE `tb_job_audit`
     `error`           varchar(256)   DEFAULT NULL,
     `error_trace`     longtext       DEFAULT NULL,
     PRIMARY KEY (`job_id`),
-    KEY `tb_job_audit_namespace_IDX` (`namespace`, `name`, `job_id`) USING BTREE
+    KEY `sys_job_audit_namespace_IDX` (`namespace`, `name`, `job_id`) USING BTREE
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8 COMMENT ='Audit table for logging Scheduled Job execution history.';
 
-DROP TABLE IF EXISTS `tb_conn_filesystem_aws`;
+DROP TABLE IF EXISTS `config_filesystem_aws`;
 
-CREATE TABLE `tb_conn_filesystem_aws`
+CREATE TABLE `config_filesystem_aws`
 (
-    `name`           varchar(256) NOT NULL,
-    `region`         varchar(118) NOT NULL,
-    `profile`        varchar(128) NOT NULL,
-    `register_types` text DEFAULT NULL,
-    `parameters`     text DEFAULT NULL,
+    `name`            varchar(256) NOT NULL,
+    `region`          varchar(118) NOT NULL,
+    `profile`         varchar(128) NOT NULL,
+    `connection_type` varchar(512) NOT NULL,
+    `register_types`  text DEFAULT NULL,
+    `parameters`      text DEFAULT NULL,
     PRIMARY KEY (`name`)
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8 COMMENT ='Table to store AWS S3 connection definitions.';
 
-DROP TABLE IF EXISTS `tb_ds_filesystem_aws`;
+DROP TABLE IF EXISTS `config_ds_filesystem_aws`;
 
-CREATE TABLE `tb_ds_filesystem_aws`
+CREATE TABLE `config_ds_filesystem_aws`
 (
     `name`                        varchar(256) NOT NULL,
     `data_store_class`            varchar(512) NOT NULL,
@@ -115,6 +116,6 @@ CREATE TABLE `tb_ds_filesystem_aws`
     `max_cache_size`              int(11)       DEFAULT NULL,
     `cache_expiry_window`         int(11)       DEFAULT NULL,
     PRIMARY KEY (`name`),
-    KEY `tb_ds_filesystem_aws_data_store_class_IDX` (`data_store_class`, `name`) USING BTREE
+    KEY `config_ds_filesystem_aws_data_store_class_IDX` (`data_store_class`, `name`) USING BTREE
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8 COMMENT ='Table to save/load AWS S3 data store configuration.';

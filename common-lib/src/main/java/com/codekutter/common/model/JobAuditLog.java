@@ -15,7 +15,7 @@
  *
  */
 
-package com.codekutter.common.scheduling.impl;
+package com.codekutter.common.model;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -28,7 +28,7 @@ import javax.persistence.Table;
 @Getter
 @Setter
 @Entity
-@Table(name = "tb_job_audit")
+@Table(name = "sys_job_audit")
 public class JobAuditLog {
     @Id
     @Column(name = "job_id")

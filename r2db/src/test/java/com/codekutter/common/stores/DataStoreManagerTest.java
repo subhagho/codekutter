@@ -23,7 +23,6 @@ import com.codekutter.common.auditing.AuditManager;
 import com.codekutter.common.stores.model.User;
 import com.codekutter.common.utils.LogUtils;
 import com.codekutter.r2db.driver.EntityManager;
-import com.codekutter.r2db.driver.impl.AwsS3Connection;
 import com.codekutter.r2db.driver.impl.AwsS3ConnectionConfig;
 import com.codekutter.r2db.driver.impl.AwsS3DataStore;
 import com.codekutter.r2db.driver.impl.S3StoreConfig;
@@ -97,7 +96,7 @@ class DataStoreManagerTest {
             AbstractConnection<Session> connection = ConnectionManager.get().connection(dbConnection, Session.class);
             assertNotNull(connection);
             List<AbstractConnection<AmazonS3>> connections = ConnectionManager.get()
-                    .readConnections(AwsS3ConnectionConfig.class, AwsS3Connection.class, connection.connection(), null);
+                    .readConnections(AwsS3ConnectionConfig.class, connection.connection(), null);
             assertNotNull(connections);
             assertTrue(connections.size() > 0);
             for (AbstractConnection<AmazonS3> conn : connections) {

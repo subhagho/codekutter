@@ -29,7 +29,7 @@ import java.util.UUID;
 
 @Data
 @Entity
-@Table(name = "tb_key_vault")
+@Table(name = "sys_key_vault")
 public class VaultRecord implements IEntity<StringKey> {
     @EmbeddedId
     private StringKey key;

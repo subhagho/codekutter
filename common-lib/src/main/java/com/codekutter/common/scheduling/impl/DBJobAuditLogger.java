@@ -19,6 +19,7 @@ package com.codekutter.common.scheduling.impl;
 
 import com.codekutter.common.GlobalConstants;
 import com.codekutter.common.auditing.AuditException;
+import com.codekutter.common.model.JobAuditLog;
 import com.codekutter.common.scheduling.AbstractJob;
 import com.codekutter.common.scheduling.IJobAuditLogger;
 import com.codekutter.common.scheduling.JobConfig;

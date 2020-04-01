@@ -234,8 +234,8 @@ public class ConnectionManager implements IConfigurable, Closeable {
         }
     }
 
+    @SuppressWarnings("unchecked")
     public <T, C extends ConnectionConfig> List<AbstractConnection<T>> readConnections(@Nonnull Class<? extends C> configType,
-                                                                                       @Nonnull Class<? extends AbstractConnection<T>> connectionType,
                                                                                        @Nonnull Session session,
                                                                                        String filter) throws ConfigurationException {
         try {
@@ -251,7 +251,7 @@ public class ConnectionManager implements IConfigurable, Closeable {
                     for (ConnectionConfig config : configs) {
                         config.load();
 
-                        AbstractConnection<T> connection = TypeUtils.createInstance(connectionType);
+                        AbstractConnection<T> connection = TypeUtils.createInstance(config.getConnectionType());
                         connection.configure(config);
                         if (connection.supportedTypes() == null)
                             connection.supportedTypes(config.getSupportedTypes());

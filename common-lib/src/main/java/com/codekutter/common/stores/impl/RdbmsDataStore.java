@@ -96,6 +96,7 @@ public class RdbmsDataStore extends TransactionDataStore<Session, Transaction> {
                                 ((BaseEntity) entity).getState().getState().name(), entity.getKey().stringKey()));
             }
         }
+        IDGenerator.process(entity, session);
         Object result = session.save(entity);
         if (result == null) {
             throw new DataStoreException(String.format("Error saving entity. [type=%s][key=%s]", type.getCanonicalName(), entity.getKey()));

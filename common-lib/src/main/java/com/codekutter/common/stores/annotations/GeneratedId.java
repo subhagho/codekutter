@@ -15,12 +15,17 @@
  *
  */
 
-package com.codekutter.r2db.driver.impl;
+package com.codekutter.common.stores.annotations;
 
-import javax.persistence.Entity;
-import javax.persistence.Table;
+import org.apache.commons.lang3.StringUtils;
 
-@Entity
-@Table(name = "config_ds_filesystem_aws")
-public class BaseS3StoreConfig extends S3StoreConfig {
+import java.lang.annotation.*;
+
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.FIELD)
+@Inherited
+public @interface GeneratedId {
+    EGeneratedType type() default EGeneratedType.UUID;
+
+    String sequence() default StringUtils.EMPTY;
 }

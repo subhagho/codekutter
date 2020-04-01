@@ -15,12 +15,8 @@
  *
  */
 
-package com.codekutter.r2db.driver.impl;
+package com.codekutter.common.stores.annotations;
 
-import javax.persistence.Entity;
-import javax.persistence.Table;
-
-@Entity
-@Table(name = "config_ds_filesystem_aws")
-public class BaseS3StoreConfig extends S3StoreConfig {
+public enum EGeneratedType {
+    UUID, SEQUENCE
 }

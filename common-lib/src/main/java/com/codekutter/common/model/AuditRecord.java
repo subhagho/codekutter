@@ -29,7 +29,7 @@ import java.util.UUID;
 @Getter
 @Setter
 @Entity
-@Table(name = "tb_audit_records")
+@Table(name = "sys_audit_records")
 public class AuditRecord implements IEntity<AuditRecordId> {
     @EmbeddedId
     private AuditRecordId id;

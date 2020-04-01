@@ -153,7 +153,7 @@
                             <value>iyGiHwGIT2JDgk01E/xjUw==</value>
                         </password>
                         <classes>
-                            <class>com.codekutter.common.scheduling.impl.JobAuditLog</class>
+                            <class>com.codekutter.common.model.JobAuditLog</class>
                             <class>com.codekutter.common.model.AuditRecord</class>
                         </classes>
                         <hibernate>
@@ -175,7 +175,7 @@
                             <class>com.codekutter.common.stores.model.Product</class>
                             <class>com.codekutter.common.stores.model.Item</class>
                             <class>com.codekutter.common.stores.model.Order</class>
-                            <class>com.codekutter.common.scheduling.impl.JobAuditLog</class>
+                            <class>com.codekutter.common.model.JobAuditLog</class>
                             <class>com.codekutter.r2db.driver.impl.AwsS3ConnectionConfig</class>
                             <class>com.codekutter.r2db.driver.impl.S3StoreConfig</class>
                         </classes>
