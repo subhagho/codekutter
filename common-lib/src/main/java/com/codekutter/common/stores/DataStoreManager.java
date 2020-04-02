@@ -450,14 +450,7 @@ public class DataStoreManager implements IConfigurable {
             if (connection == null) {
                 throw new ConfigurationException(String.format("No connection found. [store=%s][connection=%s]", config.name(), config.connectionName()));
             }
-            if (connections.containsKey(connection.name())) {
-                AbstractConnection<?> conn = connections.get(connection.name());
-                if (!conn.equals(connection)) {
-                    throw new ConfigurationException(String.format("Duplicate connection definition. [name=%s][data store=%s]", conn.name(), config.name()));
-                }
-            } else {
-                connections.put(connection.name(), connection);
-            }
+            connections.put(connection.name(), connection);
             if (connection.supportedTypes() != null && !connection.supportedTypes().isEmpty()) {
                 for (Class<?> t : connection.supportedTypes()) {
                     if (ReflectionUtils.implementsInterface(IEntity.class, t)) {
