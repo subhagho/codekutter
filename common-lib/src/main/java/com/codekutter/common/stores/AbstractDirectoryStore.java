@@ -18,9 +18,19 @@
 package com.codekutter.common.stores;
 
 import com.codekutter.common.Context;
+import com.codekutter.common.model.IEntity;
+import com.codekutter.common.model.IKey;
+
+import javax.annotation.Nonnull;
 
 public abstract class AbstractDirectoryStore<C> extends AbstractDataStore<C> {
-    public abstract <S, T> void copy(S source, T target, Context context) throws DataStoreException;
+    public abstract <S, T> void copy(@Nonnull S source, @Nonnull T target, Context context) throws DataStoreException;
 
-    public abstract <S, T> void move(S source, T target, Context context) throws DataStoreException;
+    public abstract <S, T> void move(@Nonnull S source, @Nonnull T target, Context context) throws DataStoreException;
+
+    public abstract <K extends IKey, T extends IEntity<K>> T changeGroup(@Nonnull K key, @Nonnull String group, Context context) throws DataStoreException;
+
+    public abstract <K extends IKey, T extends IEntity<K>> T changeOwner(@Nonnull K key, @Nonnull String owner, Context context) throws DataStoreException;
+
+    public abstract <K extends IKey, T extends IEntity<K>> T changePermission(@Nonnull K key, String permission, Context context) throws DataStoreException;
 }

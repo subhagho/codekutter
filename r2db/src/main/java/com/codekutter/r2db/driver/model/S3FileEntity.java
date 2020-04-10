@@ -120,6 +120,7 @@ public class S3FileEntity extends RemoteFileEntity<S3FileKey, AmazonS3> {
 
         File dir = getParentFile();
         if (!dir.exists()) {
+            LogUtils.debug(getClass(), String.format("Creating folder. [path=%s]", dir.getAbsolutePath()));
             if (!dir.mkdirs()) {
                 throw new IOException(String.format("Error creating parent folder. [path=%s]", dir.getAbsolutePath()));
             }
@@ -141,7 +142,6 @@ public class S3FileEntity extends RemoteFileEntity<S3FileKey, AmazonS3> {
                         int size = reader.read(buffer, 0, DEFAULT_BUFFER_SIZE);
                         if (size <= 0) break;
                         fos.write(buffer, 0, size);
-                        if (size < DEFAULT_BUFFER_SIZE) break;
                     }
                 }
             }

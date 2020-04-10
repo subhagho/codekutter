@@ -248,9 +248,9 @@ public class RdbmsDataStore extends TransactionDataStore<Session, Transaction> {
 
         try {
             AbstractConnection<Session> connection =
-                    dataStoreManager.getConnection(config().connectionName(), Session.class);
+                    dataStoreManager.getConnection(config().getConnectionName(), Session.class);
             if (!(connection instanceof HibernateConnection)) {
-                throw new ConfigurationException(String.format("No connection found for name. [name=%s]", config().connectionName()));
+                throw new ConfigurationException(String.format("No connection found for name. [name=%s]", config().getConnectionName()));
             }
             withConnection(connection);
             HibernateConnection hibernateConnection = (HibernateConnection) connection;
@@ -270,8 +270,8 @@ public class RdbmsDataStore extends TransactionDataStore<Session, Transaction> {
             } else {
                 readSession = session;
             }
-            if (config().maxResults() > 0) {
-                maxResults(config().maxResults());
+            if (config().getMaxResults() > 0) {
+                maxResults(config().getMaxResults());
             }
         } catch (ConnectionException | DataStoreException ex) {
             throw new ConfigurationException(ex);

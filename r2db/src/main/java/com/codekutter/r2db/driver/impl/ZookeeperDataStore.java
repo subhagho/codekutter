@@ -53,10 +53,10 @@ public class ZookeeperDataStore extends AbstractDataStore<CuratorFramework> {
     public void configureDataStore(@Nonnull DataStoreManager dataStoreManager) throws ConfigurationException {
         Preconditions.checkState(config() instanceof ZookeeperDataStoreConfig);
         try {
-            AbstractConnection<CuratorFramework> connection = dataStoreManager.getConnection(config().connectionName(), CuratorFramework.class);
+            AbstractConnection<CuratorFramework> connection = dataStoreManager.getConnection(config().getConnectionName(), CuratorFramework.class);
             if (!(connection instanceof ZookeeperConnection)) {
                 throw new ConfigurationException(String.format("Invalid/NULL connection specified. [name=%s][type=%s]",
-                        config().connectionName(), CuratorFramework.class.getCanonicalName()));
+                        config().getConnectionName(), CuratorFramework.class.getCanonicalName()));
             }
             withConnection(connection);
         } catch (Exception ex) {

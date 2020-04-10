@@ -681,13 +681,13 @@ public class EntityManager implements IConfigurable {
                                                                     String changeDelta,
                                                                     Principal user) throws DataStoreException {
         try {
-            if (dataStore.config().audited() || entityType.isAnnotationPresent(Audited.class)) {
+            if (dataStore.config().isAudited() || entityType.isAnnotationPresent(Audited.class)) {
                 String changeContext = null;
-                if (dataStore.config().auditContextProvider() != null) {
-                    IAuditContextGenerator provider = AuditManager.get().getContextGenerator(dataStore.config().auditContextProvider());
+                if (dataStore.config().getAuditContextProvider() != null) {
+                    IAuditContextGenerator provider = AuditManager.get().getContextGenerator(dataStore.config().getAuditContextProvider());
                     if (provider == null) {
                         throw new DataStoreException(String.format("Audit Context generator not found. [type=%s]",
-                                dataStore.config().auditContextProvider().getCanonicalName()));
+                                dataStore.config().getAuditContextProvider().getCanonicalName()));
                     }
                     AbstractAuditContext ctx = provider.generate(dataStore, entity, context, user);
                     if (ctx != null) {
@@ -695,7 +695,7 @@ public class EntityManager implements IConfigurable {
                     }
                 }
                 if (dataStore.auditLogger() == null) {
-                    String logger = dataStore.config().auditLogger();
+                    String logger = dataStore.config().getAuditLogger();
                     AbstractAuditLogger auditLogger = AuditManager.get().getLogger(logger);
                     if (auditLogger == null) {
                         throw new DataStoreException(String.format("Error getting audit logger instance. [data store=%s:%s][entity type=%s]",

@@ -44,13 +44,13 @@ public class ElasticSearchDataStore extends AbstractDataStore<RestHighLevelClien
         Preconditions.checkState(config() instanceof ElasticSearchConfig);
         try {
             AbstractConnection<RestHighLevelClient> connection =
-                    dataStoreManager.getConnection(config().connectionName(), RestHighLevelClient.class);
+                    dataStoreManager.getConnection(config().getConnectionName(), RestHighLevelClient.class);
             if (!(connection instanceof ElasticSearchConnection)) {
-                throw new ConfigurationException(String.format("No connection found for name. [name=%s]", config().connectionName()));
+                throw new ConfigurationException(String.format("No connection found for name. [name=%s]", config().getConnectionName()));
             }
             withConnection(connection);
-            if (config().maxResults() > 0) {
-                maxResults(config().maxResults());
+            if (config().getMaxResults() > 0) {
+                maxResults(config().getMaxResults());
             }
         } catch (Exception ex) {
             throw new ConfigurationException(ex);

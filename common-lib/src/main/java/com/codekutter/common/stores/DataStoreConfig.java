@@ -39,7 +39,6 @@ import java.nio.charset.Charset;
 
 @Getter
 @Setter
-@Accessors(fluent = true)
 @ConfigPath(path = "dataStore")
 @SuppressWarnings("rawtypes")
 @MappedSuperclass

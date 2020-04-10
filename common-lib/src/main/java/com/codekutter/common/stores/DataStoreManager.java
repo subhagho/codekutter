@@ -110,8 +110,8 @@ public class DataStoreManager implements IConfigurable {
             if (config == null) {
                 throw new DataStoreException(String.format("No configuration found for data store type. [type=%s]", storeType.getCanonicalName()));
             }
-            if (!config.dataStoreClass().equals(storeType)) {
-                throw new DataStoreException(String.format("Invalid Data Store class. [store=%s][expected=%s][configured=%s]", name, storeType.getCanonicalName(), config.dataStoreClass().getCanonicalName()));
+            if (!config.getDataStoreClass().equals(storeType)) {
+                throw new DataStoreException(String.format("Invalid Data Store class. [store=%s][expected=%s][configured=%s]", name, storeType.getCanonicalName(), config.getDataStoreClass().getCanonicalName()));
             }
             return getDataStore(config, storeType, add);
         } catch (Exception ex) {
@@ -151,8 +151,8 @@ public class DataStoreManager implements IConfigurable {
         Map<String, AbstractDataStore> stores = null;
         if (openedStores.containsThread()) {
             stores = openedStores.get();
-            if (stores.containsKey(config.name())) {
-                return stores.get(config.name());
+            if (stores.containsKey(config.getName())) {
+                return stores.get(config.getName());
             }
         } else if (!add) {
             return null;
@@ -160,7 +160,7 @@ public class DataStoreManager implements IConfigurable {
 
         try {
             AbstractDataStore<T> store = TypeUtils.createInstance(storeType);
-            store.name(config.name());
+            store.name(config.getName());
             store.withConfig(config).configure(this);
             openedStores.put(store.name(), store);
 
@@ -424,14 +424,14 @@ public class DataStoreManager implements IConfigurable {
                 Set<String> dataStores = new HashSet<>();
                 synchronized (dataStoreConfigs) {
                     for (DataStoreConfig config : configs) {
-                        if (openedStores.containsKey(config.name())) {
+                        if (openedStores.containsKey(config.getName())) {
                             throw new DataStoreException(
                                     String.format("Store already opened by current thread. [name=%s][type=%s]",
-                                            config.name(), dataStoreType.getCanonicalName()));
+                                            config.getName(), dataStoreType.getCanonicalName()));
                         }
                         config.postLoad();
                         loadDataStoreConfig(config);
-                        dataStores.add(config.name());
+                        dataStores.add(config.getName());
                     }
                 }
                 return dataStores;
@@ -445,10 +445,10 @@ public class DataStoreManager implements IConfigurable {
     private void loadDataStoreConfig(DataStoreConfig config) throws ConfigurationException {
         try {
             dataStoreConfigs.put(
-                    config.name(), config);
-            AbstractConnection<?> connection = ConnectionManager.get().connection(config.connectionName(), config.connectionType());
+                    config.getName(), config);
+            AbstractConnection<?> connection = ConnectionManager.get().connection(config.getConnectionName(), config.getConnectionType());
             if (connection == null) {
-                throw new ConfigurationException(String.format("No connection found. [store=%s][connection=%s]", config.name(), config.connectionName()));
+                throw new ConfigurationException(String.format("No connection found. [store=%s][connection=%s]", config.getName(), config.getConnectionName()));
             }
             connections.put(connection.name(), connection);
             if (connection.supportedTypes() != null && !connection.supportedTypes().isEmpty()) {
@@ -459,7 +459,7 @@ public class DataStoreManager implements IConfigurable {
                             ec = new HashMap<>();
                             entityIndex.put((Class<? extends IEntity>) t, ec);
                         }
-                        ec.put(config.dataStoreClass(), config);
+                        ec.put(config.getDataStoreClass(), config);
                     }
                 }
             }

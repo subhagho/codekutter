@@ -308,9 +308,9 @@ public class SearchableRdbmsDataStore extends RdbmsDataStore implements ISearcha
         Preconditions.checkArgument(config() instanceof RdbmsConfig);
         try {
             AbstractConnection<Session> connection =
-                    dataStoreManager.getConnection(config().connectionName(), Session.class);
+                    dataStoreManager.getConnection(config().getConnectionName(), Session.class);
             if (!(connection instanceof HibernateConnection)) {
-                throw new ConfigurationException(String.format("No connection found for name. [name=%s]", config().connectionName()));
+                throw new ConfigurationException(String.format("No connection found for name. [name=%s]", config().getConnectionName()));
             }
             withConnection(connection);
             session = connection.connection();

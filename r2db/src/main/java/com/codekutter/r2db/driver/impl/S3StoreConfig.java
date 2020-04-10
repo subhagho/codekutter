@@ -32,7 +32,6 @@ import javax.persistence.Table;
 
 @Getter
 @Setter
-@Accessors(fluent = true)
 @MappedSuperclass
 public class S3StoreConfig extends DataStoreConfig {
     public static final int DEFAULT_MAX_CACHE_SIZE = 128;
