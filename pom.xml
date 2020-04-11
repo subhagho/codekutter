@@ -50,14 +50,14 @@
             <name>Temporary Staging Repository</name>
             <url>file://${zconfig.common.target}/</url>
         </repository -->
-        <!--snapshotRepository>
+        <snapshotRepository>
             <id>ossrh</id>
             <url>https://oss.sonatype.org/content/repositories/snapshots</url>
-        </snapshotRepository-->
-        <snapshotRepository>
+        </snapshotRepository>
+        <!--snapshotRepository>
             <id>release</id>
             <url>https://pkgs.dev.azure.com/codekutter/codekutter/_packaging/release/maven/v1</url>
-        </snapshotRepository>
+        </snapshotRepository-->
         <repository>
             <id>release</id>
             <url>https://pkgs.dev.azure.com/codekutter/codekutter/_packaging/release/maven/v1</url>
@@ -203,6 +203,18 @@
                 <configuration>
                     <argLine>-Xms128m -Xmx3072m</argLine>
                 </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>attach-sources</id>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>
