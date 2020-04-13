@@ -18,7 +18,10 @@
 package com.codekutter.r2db.driver.impl;
 
 import com.amazonaws.ClientConfiguration;
+import com.amazonaws.auth.AWSStaticCredentialsProvider;
+import com.amazonaws.auth.AnonymousAWSCredentials;
 import com.amazonaws.auth.profile.ProfileCredentialsProvider;
+import com.amazonaws.client.builder.AwsClientBuilder;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.codekutter.common.messaging.AwsSQSConnection;
@@ -32,6 +35,7 @@ import com.codekutter.common.utils.ReflectionUtils;
 import com.codekutter.zconfig.common.ConfigurationAnnotationProcessor;
 import com.codekutter.zconfig.common.ConfigurationException;
 import com.codekutter.zconfig.common.model.annotations.ConfigAttribute;
+import com.codekutter.zconfig.common.model.annotations.ConfigValue;
 import com.codekutter.zconfig.common.model.nodes.AbstractConfigNode;
 import com.codekutter.zconfig.common.model.nodes.ConfigParametersNode;
 import com.codekutter.zconfig.common.model.nodes.ConfigPathNode;
@@ -55,6 +59,8 @@ public class AwsS3Connection extends AbstractConnection<AmazonS3> {
 
     @ConfigAttribute(required = true)
     private String region;
+    @ConfigValue
+    private String endpoint;
     @ConfigAttribute
     private String profile = DEFAULT_PROFILE;
     @Getter(AccessLevel.NONE)
@@ -95,14 +101,25 @@ public class AwsS3Connection extends AbstractConnection<AmazonS3> {
             if (!(cnode instanceof ConfigPathNode)) {
                 throw new ConfigurationException(String.format("Invalid connection configuration. [node=%s]", node.getAbsolutePath()));
             }
-            ClientConfiguration config = configBuilder((ConfigPathNode) cnode);
-            ProfileCredentialsProvider provider = new ProfileCredentialsProvider(profile);
-            // Only to check a valid profile is specified.
-            provider.getCredentials();
-            client = AmazonS3ClientBuilder.standard()
-                    .withRegion(region)
-                    .withClientConfiguration(config)
-                    .withCredentials(provider).build();
+            if (Strings.isNullOrEmpty(endpoint)) {
+                ClientConfiguration config = configBuilder((ConfigPathNode) cnode);
+                ProfileCredentialsProvider provider = new ProfileCredentialsProvider(profile);
+                // Only to check a valid profile is specified.
+                provider.getCredentials();
+                client = AmazonS3ClientBuilder.standard()
+                        .withRegion(region)
+                        .withClientConfiguration(config)
+                        .withCredentials(provider).build();
+            } else {
+                // Note: Only used for mock S3 testing.
+                AwsClientBuilder.EndpointConfiguration config = new AwsClientBuilder.EndpointConfiguration(endpoint, region);
+                client = AmazonS3ClientBuilder
+                        .standard()
+                        .withPathStyleAccessEnabled(true)
+                        .withEndpointConfiguration(config)
+                        .withCredentials(new AWSStaticCredentialsProvider(new AnonymousAWSCredentials()))
+                        .build();
+            }
             state().setState(EConnectionState.Open);
         } catch (Throwable t) {
             state().setError(t);
