@@ -22,6 +22,7 @@ import com.codekutter.common.stores.ConnectionException;
 import com.codekutter.common.stores.EConnectionState;
 import com.codekutter.common.utils.ConfigUtils;
 import com.codekutter.common.utils.LogUtils;
+import com.codekutter.common.utils.ThreadCache;
 import com.codekutter.zconfig.common.ConfigurationAnnotationProcessor;
 import com.codekutter.zconfig.common.ConfigurationException;
 import com.codekutter.zconfig.common.model.EncryptedValue;
@@ -60,6 +61,9 @@ public class HibernateConnection extends AbstractConnection<Session> {
     private String hibernateConfigSource;
     @ConfigValue(name = "password", required = true)
     private EncryptedValue dbPassword;
+    @Getter(AccessLevel.NONE)
+    @Setter(AccessLevel.NONE)
+    private final ThreadCache<Session> threadCache = new ThreadCache<>();
 
     public HibernateConnection withSessionFactory(@Nonnull SessionFactory sessionFactory) {
         this.sessionFactory = sessionFactory;
@@ -76,13 +80,27 @@ public class HibernateConnection extends AbstractConnection<Session> {
         if (connection.isOpen()) {
             connection.close();
         }
+        Session cs = threadCache.remove();
+        if (cs == null) {
+            throw new ConnectionException("Connection not created via connection manager...", HibernateConnection.class);
+        }
+        if (!cs.equals(connection)) {
+            throw new ConnectionException("Connection handle passed doesn't match cached connection.", HibernateConnection.class);
+        }
     }
 
     @Override
     public Session connection() throws ConnectionException {
         try {
             state().checkOpened();
-            return sessionFactory.openSession();
+            if (threadCache.contains()) {
+                return threadCache.get();
+            } else {
+                synchronized (threadCache) {
+                    Session session = sessionFactory.openSession();
+                    return threadCache.put(session);
+                }
+            }
         } catch (Throwable t) {
             throw new ConnectionException(t, getClass());
         }
@@ -182,6 +200,7 @@ public class HibernateConnection extends AbstractConnection<Session> {
     public void close() throws IOException {
         if (state().isOpen())
             state().setState(EConnectionState.Closed);
+        threadCache.close();
         if (sessionFactory != null) {
             sessionFactory.close();
             sessionFactory = null;

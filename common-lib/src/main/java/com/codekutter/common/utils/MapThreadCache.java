@@ -20,11 +20,13 @@ package com.codekutter.common.utils;
 import com.google.common.base.Preconditions;
 
 import javax.annotation.Nonnull;
+import java.io.Closeable;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.locks.ReentrantLock;
 
-public class MapThreadCache<K, V> {
+public class MapThreadCache<K, V> implements Closeable {
     private Map<Long, Map<K, V>> cache = new HashMap<>();
     private ReentrantLock cacheLock = new ReentrantLock();
 
@@ -111,5 +113,29 @@ public class MapThreadCache<K, V> {
 
     public boolean containsThread() {
         return cache.containsKey(Thread.currentThread().getId());
+    }
+
+    @Override
+    public void close() throws IOException {
+        cacheLock.lock();
+        try {
+            if (!cache.isEmpty()) {
+                for(long id : cache.keySet()) {
+                    Map<K, V> map = cache.get(id);
+                    if (!map.isEmpty()) {
+                        for(K key : map.keySet()) {
+                            V value = map.get(key);
+                            if (value instanceof Closeable) {
+                                ((Closeable) value).close();;
+                            }
+                        }
+                        map.clear();
+                    }
+                }
+                cache.clear();
+            }
+        } finally {
+            cacheLock.unlock();
+        }
     }
 }

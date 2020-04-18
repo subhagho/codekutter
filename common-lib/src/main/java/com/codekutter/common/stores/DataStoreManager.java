@@ -44,7 +44,6 @@ import java.util.*;
 public class DataStoreManager implements IConfigurable {
     public static final String CONFIG_NODE_DATA_STORES = "dataStores";
     public static final String CONFIG_NODE_SHARDED_ENTITIES = "shardedEntities";
-    private final Map<String, AbstractConnection<?>> connections = new HashMap<>();
     private final Map<Class<? extends IEntity>, Map<Class<? extends AbstractDataStore>, DataStoreConfig>> entityIndex = new HashMap<>();
     private final Map<String, DataStoreConfig> dataStoreConfigs = new HashMap<>();
     private final Map<Class<? extends IShardedEntity>, ShardConfig> shardConfigs = new HashMap<>();
@@ -59,16 +58,7 @@ public class DataStoreManager implements IConfigurable {
 
     @SuppressWarnings("unchecked")
     public <T> AbstractConnection<T> getConnection(@Nonnull String name, Class<? extends T> type) throws DataStoreException {
-        AbstractConnection<T> connection = (AbstractConnection<T>) connections.get(name);
-        if (connection == null) {
-            synchronized (connections) {
-                connection = ConnectionManager.get().connection(name, type);
-                if (connection != null) {
-                    connections.put(connection.name(), connection);
-                }
-            }
-        }
-        return connection;
+        return ConnectionManager.get().connection(name, type);
     }
 
     @SuppressWarnings("rawtypes")
@@ -450,7 +440,6 @@ public class DataStoreManager implements IConfigurable {
             if (connection == null) {
                 throw new ConfigurationException(String.format("No connection found. [store=%s][connection=%s]", config.getName(), config.getConnectionName()));
             }
-            connections.put(connection.name(), connection);
             if (connection.supportedTypes() != null && !connection.supportedTypes().isEmpty()) {
                 for (Class<?> t : connection.supportedTypes()) {
                     if (ReflectionUtils.implementsInterface(IEntity.class, t)) {

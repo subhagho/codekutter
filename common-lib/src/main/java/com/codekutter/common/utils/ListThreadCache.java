@@ -18,13 +18,15 @@
 package com.codekutter.common.utils;
 
 import javax.annotation.Nonnull;
+import java.io.Closeable;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.locks.ReentrantLock;
 
-public class ListThreadCache<T> {
+public class ListThreadCache<T> implements Closeable {
     private Map<Long, List<T>> cache = new HashMap<>();
     private ReentrantLock cacheLock = new ReentrantLock();
 
@@ -106,5 +108,28 @@ public class ListThreadCache<T> {
 
     public boolean containsThread() {
         return cache.containsKey(Thread.currentThread().getId());
+    }
+
+    @Override
+    public void close() throws IOException {
+        cacheLock.lock();
+        try {
+            if (!cache.isEmpty()) {
+                for(long id : cache.keySet()) {
+                    List<T> values = cache.get(id);
+                    if (!values.isEmpty()) {
+                        for(T value : values) {
+                            if (value instanceof Closeable) {
+                                ((Closeable) value).close();
+                            }
+                        }
+                        values.clear();
+                    }
+                }
+                cache.clear();
+            }
+        } finally {
+            cacheLock.unlock();
+        }
     }
 }
