@@ -280,14 +280,17 @@ public class RdbmsDataStore extends TransactionDataStore<Session, Transaction> {
 
     @Override
     public void close() throws IOException {
-        if (session != null)
-            session.close();
-        if (readConnection != null) {
-            readSession.close();
-            readConnection = null;
+        try {
+            if (session != null)
+                connection().close(session);
+            if (readConnection != null && readSession != null) {
+                readConnection.close(readSession);
+            }
+            session = null;
+            readSession = null;
+            super.close();
+        } catch (Exception ex) {
+            throw new IOException(ex);
         }
-        session = null;
-        readSession = null;
-        super.close();
     }
 }

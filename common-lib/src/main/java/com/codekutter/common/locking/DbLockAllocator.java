@@ -21,6 +21,7 @@ import com.codekutter.common.model.EObjectState;
 import com.codekutter.common.model.LockId;
 import com.codekutter.common.stores.AbstractConnection;
 import com.codekutter.common.stores.ConnectionManager;
+import com.codekutter.common.stores.impl.HibernateConnection;
 import com.codekutter.common.utils.ConfigUtils;
 import com.codekutter.common.utils.LogUtils;
 import com.codekutter.zconfig.common.ConfigurationAnnotationProcessor;
@@ -52,11 +53,7 @@ public class DbLockAllocator extends AbstractLockAllocator<Session> {
     @Override
     protected DistributedLock createInstance(@Nonnull LockId id) throws LockException {
         try {
-            Session session = connection.connection();
-            if (session == null) {
-                throw new LockException("Error getting DB session.");
-            }
-            return new DistributedDbLock(id, this).withSession(session).
+            return new DistributedDbLock(id, this).withConnection((HibernateConnection) connection()).
                     withLockExpiryTimeout(lockExpiryTimeout()).withLockGetTimeout(lockTimeout());
         } catch (Exception ex) {
             throw new LockException(ex);
