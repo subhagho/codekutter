@@ -298,7 +298,7 @@ public class DistributedDbLock extends DistributedLock {
      */
     @Override
     public boolean isValid() {
-        return (session != null && session.isOpen());
+        return (connection != null && session != null && session.isOpen());
     }
 
     private DbLockRecord checkExpiry(DbLockRecord record) {

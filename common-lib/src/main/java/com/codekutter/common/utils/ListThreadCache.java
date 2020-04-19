@@ -17,6 +17,8 @@
 
 package com.codekutter.common.utils;
 
+import com.codekutter.common.ICloseDelegate;
+
 import javax.annotation.Nonnull;
 import java.io.Closeable;
 import java.io.IOException;
@@ -115,10 +117,10 @@ public class ListThreadCache<T> implements Closeable {
         cacheLock.lock();
         try {
             if (!cache.isEmpty()) {
-                for(long id : cache.keySet()) {
+                for (long id : cache.keySet()) {
                     List<T> values = cache.get(id);
                     if (!values.isEmpty()) {
-                        for(T value : values) {
+                        for (T value : values) {
                             if (value instanceof Closeable) {
                                 ((Closeable) value).close();
                             }
@@ -128,6 +130,28 @@ public class ListThreadCache<T> implements Closeable {
                 }
                 cache.clear();
             }
+        } finally {
+            cacheLock.unlock();
+        }
+    }
+
+    public void close(ICloseDelegate<T> delegate) throws IOException {
+        cacheLock.lock();
+        try {
+            if (!cache.isEmpty()) {
+                for (long id : cache.keySet()) {
+                    List<T> values = cache.get(id);
+                    if (!values.isEmpty()) {
+                        for (T value : values) {
+                            delegate.close(value);
+                        }
+                        values.clear();
+                    }
+                }
+                cache.clear();
+            }
+        } catch (Exception ex) {
+            throw new IOException(ex);
         } finally {
             cacheLock.unlock();
         }

@@ -28,7 +28,6 @@ import com.codekutter.zconfig.common.model.annotations.ConfigValue;
 import com.google.common.base.Strings;
 import lombok.Getter;
 import lombok.Setter;
-import lombok.experimental.Accessors;
 
 import javax.annotation.Nonnull;
 import javax.persistence.Column;

@@ -21,6 +21,7 @@ import com.codekutter.common.model.EObjectState;
 import com.codekutter.common.model.LockId;
 import com.codekutter.common.model.ObjectState;
 import com.codekutter.common.stores.AbstractConnection;
+import com.codekutter.common.utils.LogUtils;
 import com.codekutter.common.utils.MapThreadCache;
 import com.codekutter.zconfig.common.IConfigurable;
 import com.codekutter.zconfig.common.model.annotations.ConfigAttribute;
@@ -160,9 +161,20 @@ public abstract class AbstractLockAllocator<T> implements IConfigurable, Closeab
         }
     }
 
-    private DistributedLock checkThreadCache(@Nonnull LockId id) {
+    private DistributedLock checkThreadCache(@Nonnull LockId id) throws IOException {
         if (threadLocks.containsThread()) {
-            return threadLocks.get(id);
+            DistributedLock lock = threadLocks.get(id);
+            if (lock != null) {
+                if (!lock.isValid()) {
+                    LogUtils.warn(getClass(),
+                            String.format("Removing corrupted lock instance. [thread id=%d][lock id=%s]",
+                                    Thread.currentThread().getId(), lock.id().stringKey()));
+                    lock.remove();
+                    threadLocks.remove(id);
+                } else {
+                    return lock;
+                }
+            }
         }
         return null;
     }

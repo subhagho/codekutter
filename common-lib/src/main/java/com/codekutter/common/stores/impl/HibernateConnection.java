@@ -40,6 +40,7 @@ import lombok.Setter;
 import lombok.experimental.Accessors;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
+import org.hibernate.Transaction;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 import org.hibernate.cfg.Configuration;
 import org.hibernate.cfg.Environment;
@@ -94,12 +95,12 @@ public class HibernateConnection extends AbstractConnection<Session> {
         try {
             state().checkOpened();
             if (threadCache.contains()) {
-                return threadCache.get();
-            } else {
-                synchronized (threadCache) {
-                    Session session = sessionFactory.openSession();
-                    return threadCache.put(session);
-                }
+                Session session = threadCache.get();
+                if (session.isOpen()) return session;
+            }
+            synchronized (threadCache) {
+                Session session = sessionFactory.openSession();
+                return threadCache.put(session);
             }
         } catch (Throwable t) {
             throw new ConnectionException(t, getClass());
@@ -205,6 +206,17 @@ public class HibernateConnection extends AbstractConnection<Session> {
             sessionFactory.close();
             sessionFactory = null;
         }
+    }
+
+    public Transaction startTransaction() throws ConnectionException {
+        Session session = connection();
+        Transaction tx = null;
+        if (session.isJoinedToTransaction()) {
+            tx = session.getTransaction();
+        } else {
+            tx = session.beginTransaction();
+        }
+        return tx;
     }
 
     @Getter

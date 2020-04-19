@@ -17,6 +17,8 @@
 
 package com.codekutter.common.utils;
 
+import com.codekutter.common.ICloseDelegate;
+
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.HashMap;
@@ -66,7 +68,7 @@ public class ThreadCache<T> implements Closeable {
         cacheLock.lock();
         try {
             if (!cache.isEmpty()) {
-                for(long id : cache.keySet()) {
+                for (long id : cache.keySet()) {
                     T value = cache.get(id);
                     if (value instanceof Closeable) {
                         ((Closeable) value).close();
@@ -74,6 +76,23 @@ public class ThreadCache<T> implements Closeable {
                 }
                 cache.clear();
             }
+        } finally {
+            cacheLock.unlock();
+        }
+    }
+
+    public void close(ICloseDelegate<T> delegate) throws IOException {
+        cacheLock.lock();
+        try {
+            if (!cache.isEmpty()) {
+                for (long id : cache.keySet()) {
+                    T value = cache.get(id);
+                    delegate.close(value);
+                }
+                cache.clear();
+            }
+        } catch (Exception ex) {
+            throw new IOException(ex);
         } finally {
             cacheLock.unlock();
         }
