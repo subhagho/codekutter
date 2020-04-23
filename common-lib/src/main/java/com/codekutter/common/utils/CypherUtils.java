@@ -17,11 +17,12 @@
 
 package com.codekutter.common.utils;
 
+import com.beust.jcommander.JCommander;
+import com.beust.jcommander.Parameter;
+import com.beust.jcommander.ParameterException;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import org.apache.commons.codec.binary.Base64;
-import org.kohsuke.args4j.*;
-import org.kohsuke.args4j.spi.BooleanOptionHandler;
 
 import javax.annotation.Nonnull;
 import javax.crypto.Cipher;
@@ -38,25 +39,19 @@ public class CypherUtils {
     private static final String HASH_ALGO = "MD5";
     private static final String CIPHER_ALGO = "AES/CBC/PKCS5Padding";
     private static final String CIPHER_TYPE = "AES";
-    @Option(name = "-h", usage = "Get the MD5 Hash",
-            handler = BooleanOptionHandler.class,
-            aliases = {"--hash"})
+    @Parameter(names = {"-h", "--hash"}, description = "Get the MD5 Hash")
     private boolean doHash = false;
-    @Option(name = "-e", usage = "Encrypt the passed String",
-            handler = BooleanOptionHandler.class,
-            aliases = {"--encrypt"})
+    @Parameter(names = {"-e", "--encrypt"}, description = "Encrypt the passed String")
     private boolean encrypt = false;
-    @Option(name = "-d", usage = "Decrypt the passed String",
-            handler = BooleanOptionHandler.class,
-            aliases = {"--decrypt"})
+    @Parameter(names = {"-d", "--decrypt"}, description = "Decrypt the passed String")
     private boolean decrypt = false;
-    @Option(name = "-p", usage = "Password used to encrypt/decrypt",
-            aliases = {"--password"})
+    @Parameter(names = {"-p", "--password"}, description = "Password used to encrypt/decrypt")
     private String password;
-    @Option(name = "-i", usage = "IV Spec used to encrypt/decrypt",
-            aliases = {"--iv"})
+    @Parameter(names = {"-i", "--IV"}, description = "IV Spec used to encrypt/decrypt")
     private String ivSpec;
-    @Argument
+    @Parameter(names = {"--help"}, help = true)
+    private boolean help = false;
+    @Parameter(description = "Other program arguments")
     private List<String> otherArgs = new ArrayList<>();
 
     /**
@@ -210,31 +205,33 @@ public class CypherUtils {
     }
 
     private void execute(String[] args) throws Exception {
-        CmdLineParser parser = new CmdLineParser(this);
+        JCommander parser = JCommander.newBuilder().addObject(this).build();
         // if you have a wider console, you could increase the value;
         // here 80 is also the default
-        parser.setUsageWidth(80);
 
         String value = null;
         try {
             // parse the arguments.
-            parser.parseArgument(args);
+            parser.parse(args);
 
+            if (help) {
+                parser.usage();
+                return;
+            }
             // you can parse additional arguments if you want.
             // parser.parseArgument("more","args");
 
             // after parsing arguments, you should check
             // if enough arguments are given.
             if (otherArgs.isEmpty())
-                throw new CmdLineException(parser, "No argument is given");
+                throw new ParameterException("No program arguments given...");
             value = otherArgs.get(0);
             if (Strings.isNullOrEmpty(value)) {
-                throw new CmdLineException(parser,
-                        "NULL/Empty value to Hash/Encrypt.");
+                throw new ParameterException("NULL/Empty value to Hash/Encrypt.");
             }
 
-        } catch (CmdLineException e) {
-            printUsage(parser, e);
+        } catch (ParameterException e) {
+            parser.usage();
             throw e;
         }
         if (encrypt) {
@@ -252,28 +249,9 @@ public class CypherUtils {
             System.out.println(String.format("MD5 Hash: %s", output));
         } else {
             Exception e = new Exception("No valid option set.");
-            printUsage(parser, e);
+            parser.usage();
             throw e;
         }
-    }
-
-    private void printUsage(CmdLineParser parser, Exception e) {
-        // if there's a problem in the command line,
-        // you'll get this exception. this will report
-        // an error message.
-        System.err.println(e.getMessage());
-        System.err.println(String.format("java %s [options...] arguments...",
-                getClass().getCanonicalName()));
-        // print the list of available options
-        parser.printUsage(System.err);
-        System.err.println();
-
-        // print option sample. This is useful some time
-        System.err.println(
-                String.format("  Example: java %s",
-                        getClass().getCanonicalName()) +
-                        parser.printExample(
-                                OptionHandlerFilter.ALL));
     }
 
     private String getPassword() {
