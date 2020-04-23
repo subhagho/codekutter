@@ -78,15 +78,22 @@ public class HibernateConnection extends AbstractConnection<Session> {
 
     @Override
     public void close(@Nonnull Session connection) throws ConnectionException {
-        if (connection.isOpen()) {
-            connection.close();
-        }
-        Session cs = threadCache.remove();
-        if (cs == null) {
-            throw new ConnectionException("Connection not created via connection manager...", HibernateConnection.class);
-        }
-        if (!cs.equals(connection)) {
-            throw new ConnectionException("Connection handle passed doesn't match cached connection.", HibernateConnection.class);
+        try {
+            if (connection.isOpen()) {
+                connection.close();
+            } else {
+                LogUtils.warn(getClass(), "Connection already closed...");
+            }
+
+            Session cs = threadCache.remove();
+            if (cs == null) {
+                throw new ConnectionException("Connection not created via connection manager...", HibernateConnection.class);
+            }
+            if (!cs.equals(connection)) {
+                throw new ConnectionException("Connection handle passed doesn't match cached connection.", HibernateConnection.class);
+            }
+        } catch (Exception ex) {
+            LogUtils.error(getClass(), ex);
         }
     }
 

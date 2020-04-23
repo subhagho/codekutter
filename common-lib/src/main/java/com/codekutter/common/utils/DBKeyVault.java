@@ -97,7 +97,7 @@ public class DBKeyVault implements IKeyVault {
                     throw t;
                 }
             } finally {
-                connection.close();
+                connection.close(session);
             }
         } catch (Exception e) {
             throw new SecurityException(e);
@@ -126,7 +126,7 @@ public class DBKeyVault implements IKeyVault {
                     throw new SecurityException(e);
                 }
             } finally {
-                connection.close();
+                connection.close(session);
             }
         } catch (Exception ex) {
             throw new SecurityException(ex);

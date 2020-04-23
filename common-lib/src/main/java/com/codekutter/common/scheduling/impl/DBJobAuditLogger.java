@@ -84,7 +84,7 @@ public class DBJobAuditLogger implements IJobAuditLogger {
             record.setContextJson(GlobalConstants.getJsonMapper().writeValueAsString(config));
 
             Session session = connection.connection().getSession();
-            Transaction tx = session.beginTransaction();
+            Transaction tx = ((HibernateConnection) connection).startTransaction();
             try {
                 Object result = session.save(record);
                 if (result == null) {
@@ -95,7 +95,7 @@ public class DBJobAuditLogger implements IJobAuditLogger {
                 tx.rollback();
                 throw t;
             } finally {
-                session.close();
+                connection.close(session);
             }
             return record.getJobId();
         } catch (Throwable t) {
@@ -119,7 +119,7 @@ public class DBJobAuditLogger implements IJobAuditLogger {
                 throw new AuditException(String.format("Error getting DB connection. [name=%s]", connectionName));
             }
 
-            Session session = connection.connection().getSession();
+            Session session = connection.connection();
             JobAuditLog record = session.find(JobAuditLog.class, id);
             if (record == null) {
                 throw new AuditException(String.format("Audit Log record not found. [id=%s]", id));
@@ -137,14 +137,15 @@ public class DBJobAuditLogger implements IJobAuditLogger {
                 String trace = LogUtils.getStackTrace(error);
                 record.setErrorTrace(trace);
             }
-            Transaction tx = session.beginTransaction();
+            Transaction tx = ((HibernateConnection) connection).startTransaction();
             try {
                 session.update(record);
                 tx.commit();
             } catch (Throwable t) {
                 tx.rollback();
+                throw t;
             } finally {
-                session.close();
+                connection.close(session);
             }
         } catch (Throwable t) {
             throw new AuditException(t);

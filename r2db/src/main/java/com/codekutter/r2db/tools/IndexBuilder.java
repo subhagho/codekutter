@@ -141,7 +141,7 @@ public class IndexBuilder {
             settings(analyzer, index, indexed, indexRequest);
             Map<String, Object> properties = new HashMap<>();
             for (Field field : fields) {
-                processField(null, analyzer, field, properties);
+                processField(null, analyzer, field, properties, new HashMap<>());
             }
             if (!properties.isEmpty()) {
                 Map<String, Object> mappings = new HashMap<>();
@@ -178,7 +178,7 @@ public class IndexBuilder {
                 .loadFromSource(analysisJson, XContentType.JSON));
     }
 
-    private void processField(String parent, String analyzer, Field field, Map<String, Object> properties) throws Exception {
+    private void processField(String parent, String analyzer, Field field, Map<String, Object> properties, Map<Class<?>, Boolean> processed) throws Exception {
         if (field.isAnnotationPresent(JsonIgnore.class)) return;
         String fname = field.getName();
         if (!Strings.isNullOrEmpty(parent)) {
@@ -213,7 +213,11 @@ public class IndexBuilder {
             Field[] fields = ReflectionUtils.getAllFields(ft);
             if (fields != null && fields.length > 0) {
                 for (Field f : fields) {
-                    processField(fname, analyzer, f, properties);
+                    if (processed.containsKey(f.getType())) {
+                        continue;
+                    }
+                    processed.put(f.getType(), true);
+                    processField(fname, analyzer, f, properties, processed);
                 }
             }
         }

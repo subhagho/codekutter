@@ -61,6 +61,8 @@ public class IndexCreateHelper {
             return Float.class.getName().toLowerCase();
         } else if (type.equals(double.class) || type.equals(Double.class)) {
             return Double.class.getName().toLowerCase();
+        } else if (type.isEnum()) {
+            return  "text";
         }
         return null;
     }

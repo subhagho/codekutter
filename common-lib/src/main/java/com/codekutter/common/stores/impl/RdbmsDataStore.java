@@ -32,13 +32,26 @@ import javax.annotation.Nonnull;
 import javax.persistence.Query;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 public class RdbmsDataStore extends TransactionDataStore<Session, Transaction> {
+
+    private static class TransactionCacheElement {
+        private Transaction tx;
+        private String key;
+        private BaseEntity<?> entity;
+
+        public static String generateKey(BaseEntity<?> entity) {
+            return String.format("%s[%s]", entity.getClass(), entity.getKey().stringKey());
+        }
+    }
+
     protected Session session;
     protected Session readSession;
     private HibernateConnection readConnection = null;
+    private Map<String, TransactionCacheElement> transactionCache = new HashMap<>();
 
     @Override
     public boolean isInTransaction() throws DataStoreException {
@@ -66,6 +79,8 @@ public class RdbmsDataStore extends TransactionDataStore<Session, Transaction> {
         Preconditions.checkState(isInTransaction());
         checkThread();
 
+        transactionCache.clear();
+
         transaction().commit();
         transaction(null);
     }
@@ -77,6 +92,8 @@ public class RdbmsDataStore extends TransactionDataStore<Session, Transaction> {
 
         if (session.isJoinedToTransaction() && transaction().isActive())
             transaction().rollback();
+        transactionCache.clear();
+
         transaction(null);
     }
 
@@ -90,10 +107,26 @@ public class RdbmsDataStore extends TransactionDataStore<Session, Transaction> {
         Preconditions.checkState(isInTransaction());
         checkThread();
         if (entity instanceof BaseEntity) {
-            if (((BaseEntity) entity).getState().getState() == EEntityState.New) {
-                throw new DataStoreException(
-                        String.format("Invalid entity state: [state=%s][id=%s]",
-                                ((BaseEntity) entity).getState().getState().name(), entity.getKey().stringKey()));
+            if (((BaseEntity) entity).getState().getState() != EEntityState.New) {
+                String key = TransactionCacheElement.generateKey((BaseEntity<?>) entity);
+                TransactionCacheElement ce = transactionCache.get(key);
+                if (ce != null) {
+                    Transaction tx = transaction();
+                    if (!tx.equals(ce.tx)) {
+                        throw new DataStoreException(
+                                String.format("Invalid transaction cache: transaction handle is stale. [entity=%s]",
+                                        entity.getKey().stringKey()));
+                    }
+                    if (((BaseEntity<?>) entity).getState().getState() != EEntityState.Synced) {
+                        throw new DataStoreException(
+                                String.format("Invalid entity state. [entity=%s][state=%s]",
+                                        entity.getKey().stringKey(), ((BaseEntity<?>) entity).getState().getState().name()));
+                    }
+                    return entity;
+                } else
+                    throw new DataStoreException(
+                            String.format("Invalid entity state: [state=%s][id=%s]",
+                                    ((BaseEntity) entity).getState().getState().name(), entity.getKey().stringKey()));
             }
         }
         IDGenerator.process(entity, session);
@@ -103,6 +136,12 @@ public class RdbmsDataStore extends TransactionDataStore<Session, Transaction> {
         }
         if (entity instanceof BaseEntity) {
             ((BaseEntity) entity).getState().setState(EEntityState.Synced);
+            TransactionCacheElement ce = new TransactionCacheElement();
+            ce.entity = (BaseEntity<?>) entity;
+            ce.key = TransactionCacheElement.generateKey((BaseEntity<?>) entity);
+            ce.tx = transaction();
+
+            transactionCache.put(ce.key, ce);
         }
         return entity;
     }
@@ -117,10 +156,26 @@ public class RdbmsDataStore extends TransactionDataStore<Session, Transaction> {
         Preconditions.checkState(isInTransaction());
         checkThread();
         if (entity instanceof BaseEntity) {
-            if (((BaseEntity) entity).getState().getState() == EEntityState.Updated) {
-                throw new DataStoreException(
-                        String.format("Invalid entity state: [state=%s][id=%s]",
-                                ((BaseEntity) entity).getState().getState().name(), entity.getKey().stringKey()));
+            if (((BaseEntity) entity).getState().getState() != EEntityState.Updated) {
+                String key = TransactionCacheElement.generateKey((BaseEntity<?>) entity);
+                TransactionCacheElement ce = transactionCache.get(key);
+                if (ce != null) {
+                    Transaction tx = transaction();
+                    if (!tx.equals(ce.tx)) {
+                        throw new DataStoreException(
+                                String.format("Invalid transaction cache: transaction handle is stale. [entity=%s]",
+                                        entity.getKey().stringKey()));
+                    }
+                    if (((BaseEntity<?>) entity).getState().getState() != EEntityState.Synced) {
+                        throw new DataStoreException(
+                                String.format("Invalid entity state. [entity=%s][state=%s]",
+                                        entity.getKey().stringKey(), ((BaseEntity<?>) entity).getState().getState().name()));
+                    }
+                    return entity;
+                } else
+                    throw new DataStoreException(
+                            String.format("Invalid entity state: [state=%s][id=%s]",
+                                    ((BaseEntity) entity).getState().getState().name(), entity.getKey().stringKey()));
             }
         }
         Object result = session.save(entity);
@@ -129,6 +184,12 @@ public class RdbmsDataStore extends TransactionDataStore<Session, Transaction> {
         }
         if (entity instanceof BaseEntity) {
             ((BaseEntity) entity).getState().setState(EEntityState.Synced);
+            TransactionCacheElement ce = new TransactionCacheElement();
+            ce.entity = (BaseEntity<?>) entity;
+            ce.key = TransactionCacheElement.generateKey((BaseEntity<?>) entity);
+            ce.tx = transaction();
+
+            transactionCache.put(ce.key, ce);
         }
         return entity;
     }
@@ -148,6 +209,12 @@ public class RdbmsDataStore extends TransactionDataStore<Session, Transaction> {
             session.delete(entity);
             if (entity instanceof BaseEntity) {
                 ((BaseEntity) entity).getState().setState(EEntityState.Deleted);
+                TransactionCacheElement ce = new TransactionCacheElement();
+                ce.entity = (BaseEntity<?>) entity;
+                ce.key = TransactionCacheElement.generateKey((BaseEntity<?>) entity);
+                ce.tx = transaction();
+
+                transactionCache.put(ce.key, ce);
             }
             return true;
         }
@@ -286,6 +353,8 @@ public class RdbmsDataStore extends TransactionDataStore<Session, Transaction> {
             if (readConnection != null && readSession != null) {
                 readConnection.close(readSession);
             }
+            transactionCache.clear();
+
             session = null;
             readSession = null;
             super.close();

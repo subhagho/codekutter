@@ -165,13 +165,16 @@ public class ConnectionManager implements IConfigurable, Closeable {
                     throw new ConfigurationException(
                             String.format("Error reading connection. [path=%s]", cnode.getAbsolutePath()));
                 }
-                try (Session session = connection.connection()) {
+                Session session = connection.connection();
+                try {
                     AbstractConnection<T> rc = readConnection(configType, type, session, name);
                     if (rc == null) {
                         throw new ConfigurationException(
                                 String.format("Error reading connection from DB. [path=%s]", node.getAbsolutePath()));
                     }
                     return rc;
+                } finally {
+                    connection.close(session);
                 }
             }
             return null;
