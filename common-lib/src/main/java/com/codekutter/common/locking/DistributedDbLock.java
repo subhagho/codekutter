@@ -56,6 +56,7 @@ public class DistributedDbLock extends DistributedLock {
      * already acquired the lock.
      */
     private boolean locked = false;
+    private long lockedTime = 0;
 
     /**
      * Create Lock instance with the specified namespace/name.
@@ -133,6 +134,7 @@ public class DistributedDbLock extends DistributedLock {
                         if (record.isLocked() && instanceId().compareTo(record.getInstanceId()) == 0) {
                             session.save(record);
                             tnx.commit();
+                            lockedTime = System.currentTimeMillis();
                             locked = true;
                         } else if (!record.isLocked()) {
                             record.setInstanceId(instanceId());
@@ -140,6 +142,7 @@ public class DistributedDbLock extends DistributedLock {
                             record.setTimestamp(System.currentTimeMillis());
                             session.update(record);
                             tnx.commit();
+                            lockedTime = System.currentTimeMillis();
                             locked = true;
                         } else
                             tnx.rollback();
@@ -184,6 +187,7 @@ public class DistributedDbLock extends DistributedLock {
                                 session.save(record);
                                 tnx.commit();
                                 locked = true;
+                                lockedTime = System.currentTimeMillis();
                                 break;
                             } else if (!record.isLocked()) {
                                 record.setLocked(true);
@@ -192,6 +196,7 @@ public class DistributedDbLock extends DistributedLock {
                                 session.update(record);
                                 tnx.commit();
                                 locked = true;
+                                lockedTime = System.currentTimeMillis();
                                 break;
                             }
                             tnx.rollback();
@@ -225,7 +230,9 @@ public class DistributedDbLock extends DistributedLock {
                     try {
                         DbLockRecord record = fetch(session, false, true);
                         if (record == null) {
-                            throw new LockException(String.format("[%s][%s][%s] Lock record not found.", id().getNamespace(), id().getName(), threadId()));
+                            throw new LockException(
+                                    String.format("[%s][%s][%s] Lock record not found.",
+                                            id().getNamespace(), id().getName(), threadId()));
                         }
                         if (record.isLocked() && instanceId().compareTo(record.getInstanceId()) == 0) {
                             record.setLocked(false);
@@ -234,7 +241,15 @@ public class DistributedDbLock extends DistributedLock {
 
                             session.save(record);
                         } else {
-                            throw new LockException(String.format("[%s][%s] Lock not held by current thread. [thread=%d]", id().getNamespace(), id().getName(), threadId()));
+                            long delta = System.currentTimeMillis() - lockedTime;
+                            if (delta > lockExpiryTimeout()) {
+                                throw new LockException(
+                                        String.format("[%s][%s] Lock expired. [thread=%d]",
+                                                id().getNamespace(), id().getName(), threadId()));
+                            }
+                            throw new LockException(
+                                    String.format("[%s][%s] Lock not held by current thread. [thread=%d]",
+                                            id().getNamespace(), id().getName(), threadId()));
                         }
                         locked = false;
                         tnx.commit();
@@ -242,13 +257,17 @@ public class DistributedDbLock extends DistributedLock {
                         tnx.rollback();
                         throw new LockException(t);
                     } finally {
+                        locked = false;
+                        lockedTime = 0;
                         super.unlock();
                     }
                 } catch (Exception ex) {
                     throw new LockException(ex);
                 }
             } else {
-                throw new LockException(String.format("[%s][%s] Lock not held by current thread. [thread=%d]", id().getNamespace(), id().getName(), threadId()));
+                throw new LockException(
+                        String.format("[%s][%s] Lock not held by current thread. [thread=%d]",
+                                id().getNamespace(), id().getName(), threadId()));
             }
         });
     }
@@ -263,9 +282,9 @@ public class DistributedDbLock extends DistributedLock {
     public boolean isLocked() {
         Preconditions.checkState(connection != null);
         try {
-            if (super.isLocked()) {
-                DbLockRecord record = fetch(session, false, false);
-                return record.isLocked();
+            if (super.isLocked() && locked) {
+                DbLockRecord record = checkExpiry(fetch(session, false, false));
+                return (record.isLocked() && instanceId().compareTo(record.getInstanceId()) == 0);
             }
             return false;
         } catch (Exception ex) {
