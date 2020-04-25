@@ -27,6 +27,7 @@ import com.codekutter.common.utils.LogUtils;
 import com.codekutter.common.utils.Monitoring;
 import com.google.common.base.Preconditions;
 import org.hibernate.Session;
+import org.hibernate.StaleObjectStateException;
 import org.hibernate.Transaction;
 
 import javax.annotation.Nonnull;
@@ -39,6 +40,7 @@ import java.util.concurrent.TimeUnit;
  * persist and synchronize lock(s) and state(s).
  */
 public class DistributedDbLock extends DistributedLock {
+    private static final int LOCK_RETRY_COUNT = 5;
     /**
      * Default Sleep interval between lock queries to check for DB lock.
      */
@@ -259,6 +261,7 @@ public class DistributedDbLock extends DistributedLock {
                     } finally {
                         locked = false;
                         lockedTime = 0;
+                        session.clear();
                         super.unlock();
                     }
                 } catch (Exception ex) {
@@ -338,9 +341,28 @@ public class DistributedDbLock extends DistributedLock {
     }
 
     private DbLockRecord fetch(Session session, boolean create, boolean lock) throws LockException {
-        LockModeType lt = LockModeType.NONE;
-        if (lock) lt = LockModeType.PESSIMISTIC_WRITE;
-        DbLockRecord record = session.find(DbLockRecord.class, id(), lt);
+        DbLockRecord record = null;
+        if (lock) {
+            int count = 0;
+            while(true) {
+                try {
+                    record = session.find(DbLockRecord.class, id(), LockModeType.PESSIMISTIC_WRITE);
+                    break;
+                } catch (StaleObjectStateException se) {
+                    LogUtils.warn(getClass(),
+                            String.format("Stale Object error [%s][id=%s]",
+                                    se.getLocalizedMessage(), id().stringKey()));
+                    session.flush();
+                    session.clear();
+                    if (count >= LOCK_RETRY_COUNT) {
+                        throw se;
+                    }
+                    count++;
+                }
+            }
+        } else {
+            record = session.find(DbLockRecord.class, id());
+        }
         if (record == null && create) {
             record = new DbLockRecord();
             record.setId(id());

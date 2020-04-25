@@ -19,6 +19,8 @@ package com.codekutter.r2db.driver.model;
 
 import com.codekutter.common.model.IKey;
 import com.codekutter.common.utils.CommonUtils;
+import com.google.common.base.Strings;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -32,6 +34,7 @@ import javax.annotation.Nonnull;
 @Accessors(fluent = true)
 public class S3FileKey implements IKey, Comparable<S3FileKey> {
     private String bucket;
+    @Setter(AccessLevel.NONE)
     private String key;
 
     public S3FileKey() {
@@ -39,7 +42,12 @@ public class S3FileKey implements IKey, Comparable<S3FileKey> {
 
     public S3FileKey(@Nonnull String bucket, @Nonnull String key) {
         this.bucket = bucket;
-        this.key = key;
+        this.key = cleanKey(key);
+    }
+
+    public S3FileKey key(@Nonnull String key) {
+        this.key = cleanKey(key);
+        return this;
     }
 
     @Override
@@ -91,5 +99,15 @@ public class S3FileKey implements IKey, Comparable<S3FileKey> {
             return compareTo((IKey) obj) == 0;
         }
         return super.equals(obj);
+    }
+
+    private String cleanKey(String key) {
+        if (!Strings.isNullOrEmpty(key)) {
+            key = key.replaceAll("/\\s*/", "/");
+            if (key.startsWith("/")) {
+                key = key.substring(1);
+            }
+        }
+        return key;
     }
 }
