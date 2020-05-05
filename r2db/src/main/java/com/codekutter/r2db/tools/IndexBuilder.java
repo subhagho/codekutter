@@ -56,6 +56,7 @@ public class IndexBuilder {
     public static final String MAPPING_TYPE = "type";
     public static final String MAPPING_ANALYZER = "analyzer";
     public static final String MAPPING_FIELD_DATA = "fielddata";
+    public static final String MAPPING_IGNORE = "enabled";
     public static final String SETTING_WRITE_SHARDS = "index.write.wait_for_active_shards";
     public static final String SETTING_NUM_SHARDS = "index.number_of_shards";
     public static final String SETTING_NUM_REPLICAS = "index.number_of_replicas";
@@ -187,6 +188,11 @@ public class IndexBuilder {
 
         if (field.isAnnotationPresent(Searchable.class)) {
             Searchable searchable = field.getAnnotation(Searchable.class);
+            if (searchable.faceted() && searchable.ignore()) {
+                throw new Exception(
+                        String.format("Invalid field definition: Faceted and Ignore set. [field=%s][type=%s]",
+                                fname, field.getType().getCanonicalName()));
+            }
             if (searchable.faceted()) {
                 if (canIndexField(field)) {
                     String dt = IndexCreateHelper.parseFieldType(field);
@@ -202,6 +208,11 @@ public class IndexBuilder {
                     throw new Exception(
                             String.format("Field type cannot be faceted. [type=%s]", field.getType().getCanonicalName()));
                 }
+            } else if (searchable.ignore()) {
+                Map<String, Object> fmap = new HashMap<>();
+                fmap.put(MAPPING_TYPE, IndexCreateHelper.FIELD_TYPE_OBJECT);
+                fmap.put(MAPPING_IGNORE, true);
+                properties.put(fname, fmap);
             }
         } else if (!canIndexField(field)) {
             Class<?> ft = field.getType();

@@ -20,6 +20,7 @@ package com.codekutter.r2db.driver.model;
 import com.codekutter.common.Context;
 import com.codekutter.common.model.CopyException;
 import com.codekutter.common.model.IEntity;
+import com.codekutter.common.model.RemoteFileEntity;
 import com.codekutter.common.model.ValidationExceptions;
 import com.codekutter.common.utils.LogUtils;
 import com.google.common.base.Preconditions;

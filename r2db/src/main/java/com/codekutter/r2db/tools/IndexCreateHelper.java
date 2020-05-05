@@ -26,6 +26,9 @@ import java.sql.Timestamp;
 import java.util.Date;
 
 public class IndexCreateHelper {
+    public static final String FIELD_TYPE_OBJECT = "object";
+    public static final String FIELD_TYPE_STRING = "text";
+
     public static String analysisSetting(String analyzer, Indexed indexed) {
         JsonNodeFactory nodeFactory = JsonNodeFactory.instance;
         ObjectNode root = nodeFactory.objectNode();
@@ -35,6 +38,19 @@ public class IndexCreateHelper {
                 .putObject(analyzer)
                 .put("type", "custom")
                 .put("tokenizer", indexed.tokenizer())
+                .put("filter", "lowercase");
+        return root.toPrettyString();
+    }
+
+    public static String analysisSetting(String analyzer, String tokenizer) {
+        JsonNodeFactory nodeFactory = JsonNodeFactory.instance;
+        ObjectNode root = nodeFactory.objectNode();
+        root
+                .putObject("analysis")
+                .putObject("analyzer")
+                .putObject(analyzer)
+                .put("type", "custom")
+                .put("tokenizer", tokenizer)
                 .put("filter", "lowercase");
         return root.toPrettyString();
     }
@@ -54,7 +70,7 @@ public class IndexCreateHelper {
         } else if (type.equals(Timestamp.class)) {
             return Long.class.getName().toLowerCase();
         } else if (type.equals(String.class)) {
-            return "text";
+            return FIELD_TYPE_STRING;
         } else if (type.equals(byte.class) || type.equals(Byte.class)) {
             return Byte.class.getName().toLowerCase();
         } else if (type.equals(float.class) || type.equals(Float.class)) {
@@ -62,8 +78,9 @@ public class IndexCreateHelper {
         } else if (type.equals(double.class) || type.equals(Double.class)) {
             return Double.class.getName().toLowerCase();
         } else if (type.isEnum()) {
-            return  "text";
+            return FIELD_TYPE_STRING;
+        } else {
+            return FIELD_TYPE_OBJECT;
         }
-        return null;
     }
 }

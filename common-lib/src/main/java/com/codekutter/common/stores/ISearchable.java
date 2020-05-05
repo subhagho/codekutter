@@ -18,7 +18,9 @@
 package com.codekutter.common.stores;
 
 import com.codekutter.common.Context;
+import com.codekutter.common.model.DocumentEntity;
 import com.codekutter.common.model.IEntity;
+import com.codekutter.common.model.IKey;
 import org.apache.lucene.search.Query;
 
 import javax.annotation.Nonnull;
@@ -49,4 +51,26 @@ public interface ISearchable {
                                                           @Nonnull Object aggregates,
                                                           @Nonnull Class<? extends T> type,
                                                           Context context) throws DataStoreException;
+
+    void indexDocument(@Nonnull String index, @Nonnull DocumentEntity entity, Context context) throws DataStoreException;
+
+    <C> DocumentEntity indexDocument(@Nonnull String index,
+                                 @Nonnull String fileDataStore,
+                                 @Nonnull Class<? extends AbstractDataStore<C>> dataStoreType,
+                                 @Nonnull IKey key,
+                                 @Nonnull Class<? extends IEntity> fileEntityType,
+                                 Context context) throws DataStoreException;
+
+    <T extends IEntity> BaseSearchResult<T> searchDocument(@Nonnull String index,
+                                                           @Nonnull String query,
+                                                           int batchSize,
+                                                           int offset,
+                                                           Context context) throws DataStoreException;
+
+    <T extends IEntity> BaseSearchResult<T> searchDocument(@Nonnull String index,
+                                                           @Nonnull Query query,
+                                                           int batchSize,
+                                                           int offset,
+                                                           @Nonnull Class<? extends T> type,
+                                                           Context context) throws DataStoreException;
 }

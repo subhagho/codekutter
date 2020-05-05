@@ -1,0 +1,30 @@
+{
+  "mappings" : {
+    "doc" : {
+      "properties" : {
+        "attachment" : {
+          "properties" : {
+            "content" : {
+              "type" : "binary"
+            },
+            "content_length" : {
+              "type" : "long"
+            },
+            "content_type" : {
+              "type" : "text"
+            },
+            "language" : {
+              "type" : "text"
+            },
+            "title" : {
+              "type" : "text"
+            }
+          }
+        },
+        "data" : {
+          "type" : "text"
+        }
+      }
+    }
+  }
+}

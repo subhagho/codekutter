@@ -18,6 +18,7 @@
 package com.codekutter.r2db.driver.impl;
 
 import com.codekutter.common.Context;
+import com.codekutter.common.model.DocumentEntity;
 import com.codekutter.common.model.EAuditType;
 import com.codekutter.common.model.IEntity;
 import com.codekutter.common.model.IKey;
@@ -287,6 +288,42 @@ public class SearchableRdbmsDataStore extends RdbmsDataStore implements ISearcha
             }
         }
         throw new DataStoreException(String.format("Query type not supported. [type=%s]", aggregates.getClass().getCanonicalName()));
+    }
+
+    @Override
+    public void indexDocument(@Nonnull String index,
+                              @Nonnull DocumentEntity entity,
+                              Context context) throws DataStoreException {
+        throw new DataStoreException("Method not implemented...");
+    }
+
+    @Override
+    public <C> DocumentEntity indexDocument(@Nonnull String index,
+                                            @Nonnull String fileDataStore,
+                                            @Nonnull Class<? extends AbstractDataStore<C>> dataStoreType,
+                                            @Nonnull IKey key,
+                                            @Nonnull Class<? extends IEntity> fileEntityType,
+                                            Context context) throws DataStoreException {
+        throw new DataStoreException("Method not implemented...");
+    }
+
+    @Override
+    public <T extends IEntity> BaseSearchResult<T> searchDocument(@Nonnull String index,
+                                                                  @Nonnull String query,
+                                                                  int batchSize,
+                                                                  int offset,
+                                                                  Context context) throws DataStoreException {
+        throw new DataStoreException("Method not implemented...");
+    }
+
+    @Override
+    public <T extends IEntity> BaseSearchResult<T> searchDocument(@Nonnull String index,
+                                                                  @Nonnull Query query,
+                                                                  int batchSize,
+                                                                  int offset,
+                                                                  @Nonnull Class<? extends T> type,
+                                                                  Context context) throws DataStoreException {
+        throw new DataStoreException("Method not implemented...");
     }
 
     public <T extends IEntity> BaseSearchResult<T> textSearch(@Nonnull QueryBuilder query,

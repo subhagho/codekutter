@@ -23,5 +23,6 @@ import java.lang.annotation.*;
 @Target({ElementType.FIELD})
 @Inherited
 public @interface Searchable {
+    boolean ignore() default false;
     boolean faceted() default false;
 }

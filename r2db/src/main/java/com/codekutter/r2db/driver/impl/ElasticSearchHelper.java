@@ -19,15 +19,23 @@ package com.codekutter.r2db.driver.impl;
 
 import com.codekutter.common.Context;
 import com.codekutter.common.GlobalConstants;
+import com.codekutter.common.model.DocumentEntity;
 import com.codekutter.common.model.IEntity;
 import com.codekutter.common.model.IKey;
+import com.codekutter.common.model.StringKey;
+import com.codekutter.common.stores.AbstractDirectoryStore;
 import com.codekutter.common.stores.BaseSearchResult;
 import com.codekutter.common.stores.DataStoreException;
 import com.codekutter.common.stores.impl.EntitySearchResult;
+import com.codekutter.common.utils.CypherUtils;
 import com.codekutter.common.utils.LogUtils;
+import com.codekutter.common.utils.MimeUtils;
 import com.codekutter.r2db.driver.impl.annotations.Indexed;
+import com.codekutter.r2db.driver.model.FileEntity;
+import com.codekutter.r2db.driver.model.S3FileEntity;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import org.apache.commons.codec.binary.Base64;
 import org.apache.http.StatusLine;
 import org.apache.http.util.EntityUtils;
 import org.elasticsearch.action.DocWriteResponse;
@@ -63,13 +71,18 @@ import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.elasticsearch.search.sort.SortBuilder;
 
 import javax.annotation.Nonnull;
+import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.nio.file.Files;
+import java.util.*;
 
 public class ElasticSearchHelper {
+    public static final String ES_FIELD_NAME = "Name";
+    public static final String ES_FIELD_DATE = "postDate";
+    public static final String ES_FIELD_DATA = "data";
+    public static final String ES_FIELD_MIME_TYPE = "mimeType";
+    public static final String ES_FIELD_TITLE = "title";
+
     public <E extends IEntity> E createEntity(@Nonnull RestHighLevelClient client,
                                               @Nonnull E entity,
                                               @Nonnull Class<? extends IEntity> type,
@@ -710,5 +723,113 @@ public class ElasticSearchHelper {
             return index;
         }
         throw new DataStoreException(String.format("Specified type is not indexed. [type=%s]", type.getCanonicalName()));
+    }
+
+    public DocumentEntity indexDocument(AbstractDirectoryStore<?> dataStore,
+                              @Nonnull RestHighLevelClient client,
+                              @Nonnull String index,
+                              @Nonnull IKey fileKey,
+                              @Nonnull Class<? extends IEntity> entityType,
+                              @Nonnull String pipeline,
+                              Context context) throws DataStoreException {
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(index));
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(pipeline));
+        try {
+            IEntity<?> entity = dataStore.find(fileKey, entityType, context);
+            if (entity == null) {
+                throw new DataStoreException(String.format("File Entity not found. [key=%s]", fileKey.stringKey()));
+            }
+            DocumentEntity de = new DocumentEntity();
+            if (entity instanceof FileEntity) {
+                FileEntity fe = (FileEntity) entity;
+                String id = CypherUtils.getKeyHash(fe.getAbsolutePath());
+                String title = fe.getName();
+                de.setId(new StringKey(id));
+                de.setTitle(title);
+                de.setSource(fe);
+                MimeUtils.FileMetaData metaData = MimeUtils.getMetadata(fe);
+                if (metaData != null) {
+                    de.setMimeType(metaData.mimeType());
+                    de.setLanguage(metaData.language());
+                }
+            } else if (entity instanceof S3FileEntity) {
+                S3FileEntity fe = (S3FileEntity) entity;
+                String id = CypherUtils.getKeyHash(fe.getKey().stringKey());
+                String title = fe.getName();
+                de.setId(new StringKey(id));
+                de.setTitle(title);
+                de.setSource(fe);
+                MimeUtils.FileMetaData metaData = MimeUtils.getMetadata(fe);
+                if (metaData != null) {
+                    de.setMimeType(metaData.mimeType());
+                    de.setLanguage(metaData.language());
+                }
+            } else {
+                throw new DataStoreException(
+                        String.format("Unsupported entity type. [type=%s]",
+                                entity.getClass().getCanonicalName()));
+            }
+            indexDocument(client, index, de, pipeline);
+            return de;
+        } catch (Exception ex) {
+            throw new DataStoreException(ex);
+        }
+    }
+
+    public void indexDocument(@Nonnull RestHighLevelClient client,
+                              @Nonnull String index,
+                              @Nonnull DocumentEntity entity,
+                              @Nonnull String pipeline) throws DataStoreException {
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(index));
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(pipeline));
+        try {
+            String data = readFileData(entity.getSource());
+            if (Strings.isNullOrEmpty(data)) {
+                throw new DataStoreException(String.format("NULL/Empty file content. [path=%s]", entity.getSource().getAbsolutePath()));
+            }
+            Map<String, Object> requestMap = new HashMap<>();
+            requestMap.put(ES_FIELD_NAME, index);
+            requestMap.put(ES_FIELD_DATE, new Date());
+            requestMap.put(ES_FIELD_MIME_TYPE, entity.getMimeType());
+            requestMap.put(ES_FIELD_TITLE, entity.getTitle());
+            requestMap.put(ES_FIELD_DATA, data);
+
+            IndexRequest request = new IndexRequest(index);
+            request.id(entity.getKey().stringKey());
+            request.source(requestMap, XContentType.JSON).setPipeline(pipeline);
+            IndexResponse response = client.index(request, RequestOptions.DEFAULT);
+            if (response.getResult() == DocWriteResponse.Result.CREATED) {
+                LogUtils.debug(getClass(), requestMap);
+            } else if (response.getResult() == DocWriteResponse.Result.UPDATED) {
+                LogUtils.debug(getClass(), requestMap);
+            }
+            ReplicationResponse.ShardInfo shardInfo = response.getShardInfo();
+            /*
+            if (shardInfo.getTotal() != shardInfo.getSuccessful()) {
+                throw new DataStoreException(String.format("Error replicating to shards. [total=%d][count=%d][index=%s]",
+                        shardInfo.getTotal(), shardInfo.getSuccessful(), index));
+            }
+             */
+            if (shardInfo.getFailed() > 0) {
+                StringBuffer buffer = new StringBuffer();
+                for (ReplicationResponse.ShardInfo.Failure failure :
+                        shardInfo.getFailures()) {
+                    String reason = failure.reason();
+                    buffer.append(String.format("[%s] Shard failed : %s\n", index, reason));
+                }
+                throw new DataStoreException(buffer.toString());
+            }
+        } catch (Exception ex) {
+            throw new DataStoreException(ex);
+        }
+    }
+
+    private String readFileData(File source) throws IOException {
+        byte[] data = Files.readAllBytes(source.toPath());
+        if (data != null && data.length > 0) {
+            byte[] encoded = Base64.encodeBase64(data);
+            return new String(encoded);
+        }
+        return null;
     }
 }

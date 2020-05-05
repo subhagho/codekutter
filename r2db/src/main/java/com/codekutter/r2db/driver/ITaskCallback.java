@@ -15,18 +15,13 @@
  *
  */
 
-package com.codekutter.r2db.driver.impl;
+package com.codekutter.r2db.driver;
 
-import com.codekutter.common.stores.DataStoreConfig;
-import com.codekutter.zconfig.common.model.annotations.ConfigValue;
-import lombok.Getter;
-import lombok.Setter;
-import lombok.experimental.Accessors;
+import com.codekutter.common.Context;
+import com.codekutter.common.model.IEntity;
 
-@Getter
-@Setter
-@Accessors(fluent = true)
-public class ElasticSearchConfig extends DataStoreConfig {
-    @ConfigValue(name = "pipeline")
-    private String pipeline;
+public interface ITaskCallback<T extends IEntity> {
+    void onCSuccess(T entity, Context context);
+
+    void onError(T entity, Context context, Throwable error);
 }

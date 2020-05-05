@@ -18,12 +18,18 @@
 package com.codekutter.r2db.driver.impl;
 
 import com.codekutter.common.Context;
+import com.codekutter.common.model.DocumentEntity;
 import com.codekutter.common.model.IEntity;
+import com.codekutter.common.model.IKey;
 import com.codekutter.common.stores.*;
 import com.codekutter.common.stores.impl.DataStoreAuditContext;
 import com.codekutter.zconfig.common.ConfigurationException;
+import com.codekutter.zconfig.common.model.annotations.ConfigValue;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.experimental.Accessors;
 import org.apache.lucene.search.Query;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.index.query.QueryBuilder;
@@ -38,6 +44,7 @@ import java.util.Map;
 @SuppressWarnings("rawtypes")
 public class ElasticSearchDataStore extends AbstractDataStore<RestHighLevelClient> implements ISearchable {
     private final ElasticSearchHelper helper = new ElasticSearchHelper();
+    private String pipeline;
 
     @Override
     public void configureDataStore(@Nonnull DataStoreManager dataStoreManager) throws ConfigurationException {
@@ -52,6 +59,7 @@ public class ElasticSearchDataStore extends AbstractDataStore<RestHighLevelClien
             if (config().getMaxResults() > 0) {
                 maxResults(config().getMaxResults());
             }
+            pipeline = ((ElasticSearchConfig)config()).pipeline();
         } catch (Exception ex) {
             throw new ConfigurationException(ex);
         }
@@ -210,6 +218,63 @@ public class ElasticSearchDataStore extends AbstractDataStore<RestHighLevelClien
             throw new DataStoreException(ex);
         }
         throw new DataStoreException(String.format("Query type not supported. [type=%s]", query.getClass().getCanonicalName()));
+    }
+
+    @Override
+    public void indexDocument(@Nonnull String index,
+                              @Nonnull DocumentEntity entity,
+                              Context context) throws DataStoreException {
+        if (Strings.isNullOrEmpty(pipeline)) {
+            throw new DataStoreException("Index ingestion pipeline not set...");
+        }
+        try {
+            helper.indexDocument(connection().connection(), index, entity, pipeline);
+        } catch (ConnectionException ex) {
+            throw new DataStoreException(ex);
+        }
+    }
+
+    @Override
+    public <C> DocumentEntity indexDocument(@Nonnull String index,
+                                        @Nonnull String fileDataStore,
+                                        @Nonnull Class<? extends AbstractDataStore<C>> dataStoreType,
+                                        @Nonnull IKey key,
+                                        @Nonnull Class<? extends IEntity> fileEntityType,
+                                        Context context) throws DataStoreException {
+        if (Strings.isNullOrEmpty(pipeline)) {
+            throw new DataStoreException("Index ingestion pipeline not set...");
+        }
+        AbstractDirectoryStore<C> dataStore
+                = (AbstractDirectoryStore<C>) dataStoreManager().getDataStore(fileDataStore, dataStoreType);
+        if (dataStore == null) {
+            throw new DataStoreException(
+                    String.format("Directory Data Store not found. [name=%s][type=%s]",
+                            fileDataStore, dataStoreType.getCanonicalName()));
+        }
+        try {
+            return helper.indexDocument(dataStore, connection().connection(), index, key, fileEntityType, pipeline, context);
+        } catch (ConnectionException ex) {
+            throw new DataStoreException(ex);
+        }
+    }
+
+    @Override
+    public <T extends IEntity> BaseSearchResult<T> searchDocument(@Nonnull String index,
+                                                                  @Nonnull String query,
+                                                                  int batchSize,
+                                                                  int offset,
+                                                                  Context context) throws DataStoreException {
+        return null;
+    }
+
+    @Override
+    public <T extends IEntity> BaseSearchResult<T> searchDocument(@Nonnull String index,
+                                                                  @Nonnull Query query,
+                                                                  int batchSize,
+                                                                  int offset,
+                                                                  @Nonnull Class<? extends T> type,
+                                                                  Context context) throws DataStoreException {
+        return null;
     }
 
     public <T extends IEntity> BaseSearchResult<T> textSearch(@Nonnull QueryBuilder query,
