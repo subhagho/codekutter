@@ -60,6 +60,42 @@ public class ValidationExceptions extends Exception
     }
 
     /**
+     * Add a error instance to the Errors handle. Will check and create a errors
+     * instance if required.
+     *
+     * @param error  - Error handle.
+     * @param errors - Errors collection instance.
+     * @return - Errors Collection.
+     */
+    public static ValidationExceptions add(@Nonnull ValidationException error,
+                                           ValidationExceptions errors) {
+        Preconditions.checkArgument(error != null);
+        if (errors == null) {
+            errors = new ValidationExceptions();
+        }
+        errors.add(error);
+        return errors;
+    }
+
+    /**
+     * Copy all the validation errors from the source to the target.
+     *
+     * @param source - Source Error Collection.
+     * @param target - Target Error Collection.
+     * @return - Error Collection.
+     */
+    public static ValidationExceptions copy(@Nonnull ValidationExceptions source,
+                                            ValidationExceptions target) {
+        if (target == null) {
+            return source;
+        }
+        if (source.errors != null && !source.errors.isEmpty()) {
+            target = target.addAll(source.errors);
+        }
+        return target;
+    }
+
+    /**
      * Add a validation error.
      *
      * @param error - Validation Error
@@ -110,13 +146,15 @@ public class ValidationExceptions extends Exception
     }
 
     @Override
-    public @Nonnull Iterator<ValidationException> iterator() {
+    public @Nonnull
+    Iterator<ValidationException> iterator() {
         Preconditions.checkState(errors != null);
         return errors.iterator();
     }
 
     @Override
-    public @Nonnull Object[] toArray() {
+    public @Nonnull
+    Object[] toArray() {
         if (errors != null) {
             return errors.toArray();
         }
@@ -174,41 +212,5 @@ public class ValidationExceptions extends Exception
         if (errors != null) {
             errors.clear();
         }
-    }
-
-    /**
-     * Add a error instance to the Errors handle. Will check and create a errors
-     * instance if required.
-     *
-     * @param error  - Error handle.
-     * @param errors - Errors collection instance.
-     * @return - Errors Collection.
-     */
-    public static ValidationExceptions add(@Nonnull ValidationException error,
-                                           ValidationExceptions errors) {
-        Preconditions.checkArgument(error != null);
-        if (errors == null) {
-            errors = new ValidationExceptions();
-        }
-        errors.add(error);
-        return errors;
-    }
-
-    /**
-     * Copy all the validation errors from the source to the target.
-     *
-     * @param source - Source Error Collection.
-     * @param target - Target Error Collection.
-     * @return - Error Collection.
-     */
-    public static ValidationExceptions copy(@Nonnull ValidationExceptions source,
-                                            ValidationExceptions target) {
-        if (target == null) {
-            return source;
-        }
-        if (source.errors != null && !source.errors.isEmpty()) {
-            target = target.addAll(source.errors);
-        }
-        return target;
     }
 }

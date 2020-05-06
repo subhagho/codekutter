@@ -19,6 +19,7 @@ package com.codekutter.common.stores.model;
 
 import com.codekutter.common.model.IKey;
 import com.codekutter.common.utils.CommonUtils;
+import com.codekutter.r2db.driver.model.Searchable;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -30,6 +31,7 @@ import javax.persistence.Embeddable;
 @Setter
 @Embeddable
 public class CustomerKey implements IKey {
+    @Searchable(faceted = true)
     @Column(name = "customer_id")
     private String key;
 

@@ -28,8 +28,6 @@ import com.codekutter.common.StateException;
 import com.codekutter.common.utils.KeyStoreVault;
 import com.codekutter.common.utils.LogUtils;
 import com.codekutter.common.utils.NetUtils;
-import com.codekutter.common.utils.ReflectionUtils;
-import com.codekutter.zconfig.common.model.Configuration;
 import com.codekutter.zconfig.common.model.Version;
 import com.codekutter.zconfig.common.model.nodes.ConfigPathNode;
 import com.codekutter.zconfig.common.parsers.AbstractConfigParser;
@@ -38,34 +36,17 @@ import com.google.common.base.Strings;
 import org.joda.time.DateTime;
 
 import javax.annotation.Nonnull;
-import java.lang.reflect.Constructor;
 import java.net.InetAddress;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.UUID;
-import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Abstract base class for defining the operating environment.
  */
-public abstract class ZConfigEnv {
-    /**
-     * Name of this configuration instance.
-     */
-    private String configName;
-    /**
-     * Parsed configuration handle.
-     */
-    private Configuration configuration;
-
-    /**
-     * Client instance state.
-     */
-    private EnvState state = new EnvState();
-
+public abstract class ZConfigEnv extends BaseConfigEnv {
     protected ZConfigEnv(@Nonnull String configName) {
-        Preconditions.checkArgument(!Strings.isNullOrEmpty(configName));
-        this.configName = configName;
+        super(configName);
     }
 
     /**
@@ -225,135 +206,6 @@ public abstract class ZConfigEnv {
     protected void dispose() {
         if (state.getState() == EEnvState.Initialized) {
             state.dispose();
-        }
-    }
-
-    /**
-     * Get the state of this client environment.
-     *
-     * @return - Current state.
-     */
-    public EEnvState getState() {
-        return state.getState();
-    }
-
-    /**
-     * Get configuration loaded for this client environment.
-     *
-     * @return - Configuration handle.
-     */
-    public Configuration getConfiguration() {
-        return configuration;
-    }
-
-    /**
-     * Perform post-initialisation tasks if any.
-     *
-     * @throws ConfigurationException
-     */
-    public abstract void postInit() throws ConfigurationException;
-
-    /**
-     * Client environment singleton.
-     */
-    private static ZConfigEnv __env = null;
-
-    /**
-     * Environment Instance Lock.
-     */
-    private static ReentrantLock _envLock = new ReentrantLock();
-
-
-    /**
-     * Shutdown this client environment.
-     */
-    public static void shutdown() {
-        try {
-            if (__env != null) {
-                getEnvLock();
-                try {
-                    __env.dispose();
-                    __env = null;
-                } finally {
-                    releaseEnvLock();
-                }
-            }
-        } catch (Exception ex) {
-            LogUtils.error(ZConfigEnv.class, ex);
-        }
-    }
-
-
-    /**
-     * Get a handle to the client environment singleton.
-     *
-     * @return - Environment handle.
-     * @throws EnvException
-     */
-    public static ZConfigEnv env() throws EnvException {
-        try {
-            if (__env != null)
-                __env.checkState(EEnvState.Initialized);
-            return __env;
-        } catch (StateException e) {
-            throw new EnvException(e);
-        }
-    }
-
-    /**
-     * Initialize the ENV handle.
-     *
-     * @param type - Type of the env instance.
-     * @return - Created Env handle.
-     * @throws EnvException - Exception raised if initialization lock not acquired by current thread.
-     */
-    @SuppressWarnings("unchecked")
-    protected static ZConfigEnv initialize(@Nonnull Class<? extends ZConfigEnv> type, @Nonnull String configName)
-            throws EnvException {
-        if (!_envLock.isLocked() || !_envLock.isHeldByCurrentThread()) {
-            throw new EnvException("Environment not locked for initialisation.");
-        }
-        try {
-            if (__env == null) {
-                Constructor<? extends ZConfigEnv> ctor = (Constructor<? extends ZConfigEnv>) ReflectionUtils.getConstructor(type, String.class);
-                __env = ctor.newInstance(configName);
-                LogUtils.info(ZConfigEnv.class,
-                        String.format("Created ENV instance with type [%s]...",
-                                type.getCanonicalName()));
-            }
-            return __env;
-        } catch (Exception ex) {
-            throw new EnvException(ex);
-        }
-    }
-
-    /**
-     * Get the env initialization lock.
-     *
-     * @throws EnvException - Exception raised if Env has already been disposed.
-     */
-    protected static void getEnvLock() throws EnvException {
-        if (__env != null && __env.state.getState() == EEnvState.Disposed) {
-            throw new EnvException("Environment has already been disposed.");
-        }
-        _envLock.lock();
-    }
-
-    /**
-     * Release the env initialization lock.
-     *
-     * @throws EnvException - Exception raised if current thread doesn't hold the lock.
-     */
-    protected static void releaseEnvLock() throws EnvException {
-        if (__env != null && __env.state.getState() == EEnvState.Disposed) {
-            throw new EnvException("Environment has already been disposed.");
-        }
-        if (_envLock.isLocked() && _envLock.isHeldByCurrentThread()) {
-            _envLock.unlock();
-        } else {
-            throw new EnvException(String.format(
-                    "Lock not acquired or held by another thread. [thread id=%d]",
-                    Thread.currentThread().getId()));
         }
     }
 }

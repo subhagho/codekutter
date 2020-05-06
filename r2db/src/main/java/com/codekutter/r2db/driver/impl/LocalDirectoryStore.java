@@ -19,6 +19,7 @@ package com.codekutter.r2db.driver.impl;
 
 import com.codekutter.common.Context;
 import com.codekutter.common.model.IEntity;
+import com.codekutter.common.model.IKey;
 import com.codekutter.common.model.StringEntity;
 import com.codekutter.common.stores.*;
 import com.codekutter.common.stores.impl.DataStoreAuditContext;
@@ -39,10 +40,15 @@ import javax.annotation.Nonnull;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.LinkOption;
 import java.nio.file.Paths;
+import java.nio.file.attribute.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @Getter
 @Setter
@@ -107,12 +113,71 @@ public class LocalDirectoryStore extends AbstractDirectoryStore<File> {
     }
 
     @Override
+    public <K extends IKey, T extends IEntity<K>> T changeGroup(@Nonnull K key, @Nonnull String group, Context context) throws DataStoreException {
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(group));
+        FileEntity entity = findEntity(key, FileEntity.class, context);
+        if (entity == null) {
+            throw new DataStoreException(String.format("File not found. [key=%s]", key.stringKey()));
+        }
+        try {
+            GroupPrincipal grp = Files.readAttributes(entity.toPath(), PosixFileAttributes.class, LinkOption.NOFOLLOW_LINKS).group();
+            if (grp.getName().compareTo(group) != 0) {
+                UserPrincipalLookupService lookupService = FileSystems.getDefault()
+                        .getUserPrincipalLookupService();
+                GroupPrincipal ngrp = lookupService.lookupPrincipalByGroupName(group);
+                Files.getFileAttributeView(entity.toPath(), PosixFileAttributeView.class, LinkOption.NOFOLLOW_LINKS).setGroup(ngrp);
+            }
+            return (T) entity;
+        } catch (Exception ex) {
+            throw new DataStoreException(ex);
+        }
+    }
+
+    @Override
+    public <K extends IKey, T extends IEntity<K>> T changeOwner(@Nonnull K key, @Nonnull String owner, Context context) throws DataStoreException {
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(owner));
+        FileEntity entity = findEntity(key, FileEntity.class, context);
+        if (entity == null) {
+            throw new DataStoreException(String.format("File not found. [key=%s]", key.stringKey()));
+        }
+        try {
+            UserPrincipal cu = Files.getOwner(entity.toPath());
+            if (cu.getName().compareTo(owner) != 0) {
+                UserPrincipalLookupService lookupService = FileSystems.getDefault()
+                        .getUserPrincipalLookupService();
+                UserPrincipal user = lookupService.lookupPrincipalByName(owner);
+                Files.setOwner(entity.toPath(), user);
+            }
+            return (T) entity;
+        } catch (Exception ex) {
+            throw new DataStoreException(ex);
+        }
+    }
+
+    @Override
+    public <K extends IKey, T extends IEntity<K>> T changePermission(@Nonnull K key, String permission, Context context) throws DataStoreException {
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(permission));
+        FileEntity entity = findEntity(key, FileEntity.class, context);
+        if (entity == null) {
+            throw new DataStoreException(String.format("File not found. [key=%s]", key.stringKey()));
+        }
+        try {
+            Set<PosixFilePermission> perms = PosixFilePermissions.fromString(permission);
+            Files.setPosixFilePermissions(entity.toPath(), perms);
+
+            return (T) entity;
+        } catch (Exception ex) {
+            throw new DataStoreException(ex);
+        }
+    }
+
+    @Override
     public void configureDataStore(@Nonnull DataStoreManager dataStoreManager) throws ConfigurationException {
         try {
             Preconditions.checkArgument(config() instanceof LocalDirStoreConfig);
-            AbstractConnection<File> connection = dataStoreManager.getConnection(config().connectionName(), File.class);
+            AbstractConnection<File> connection = dataStoreManager.getConnection(config().getConnectionName(), File.class);
             if (!(connection instanceof LocalDirectoryConnection)) {
-                throw new ConfigurationException(String.format("No connection found for name. [name=%s]", config().connectionName()));
+                throw new ConfigurationException(String.format("No connection found for name. [name=%s]", config().getConnectionName()));
             }
             withConnection(connection);
             LocalDirStoreConfig config = (LocalDirStoreConfig) config();
@@ -120,6 +185,9 @@ public class LocalDirectoryStore extends AbstractDirectoryStore<File> {
             if (!directory.exists() || !directory.isDirectory()) {
                 throw new ConfigurationException(String.format("Specified directory not found. [path=%s]",
                         directory.getAbsolutePath()));
+            }
+            if (config.getMaxResults() > 0) {
+                maxResults(config.getMaxResults());
             }
         } catch (DataStoreException ex) {
             throw new ConfigurationException(ex);

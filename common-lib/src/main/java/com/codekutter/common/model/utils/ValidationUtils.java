@@ -17,7 +17,11 @@
 
 package com.codekutter.common.model.utils;
 
-import com.codekutter.common.model.*;
+import com.codekutter.common.model.IValidate;
+import com.codekutter.common.model.IValidationConstraint;
+import com.codekutter.common.model.ValidationException;
+import com.codekutter.common.model.ValidationExceptions;
+import com.codekutter.common.model.annotations.Validate;
 import com.codekutter.common.utils.ReflectionUtils;
 import com.google.common.base.Preconditions;
 
@@ -35,9 +39,9 @@ public class ValidationUtils {
     /**
      * Validate the passed object instance.
      *
-     * @param type - Type
+     * @param type  - Type
      * @param value - Value
-     * @param <T> - Object Type to validate.
+     * @param <T>   - Object Type to validate.
      * @throws ValidationExceptions
      */
     public static <T> void validate(@Nonnull Class<? extends T> type, T value) throws ValidationExceptions {
@@ -55,7 +59,7 @@ public class ValidationUtils {
                     if (field.isAnnotationPresent(Validate.class)) {
                         Validate validate = field.getAnnotation(Validate.class);
                         IValidationConstraint constraint = getConstraint(validate.constraint());
-                       try {
+                        try {
                             constraint.validate(field.getName(), type, v);
                         } catch (ValidationException ve) {
                             addError(ve, errors);

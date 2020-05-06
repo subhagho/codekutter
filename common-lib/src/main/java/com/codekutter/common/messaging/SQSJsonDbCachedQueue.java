@@ -27,7 +27,7 @@ import java.security.Principal;
 
 public class SQSJsonDbCachedQueue extends AbstractSQSDbCachedQueue<DefaultStringMessage> {
     @Override
-    public Message message(DefaultStringMessage message) throws  JMSException {
+    public Message message(DefaultStringMessage message) throws JMSException {
         try {
             return DefaultStringMessageUtils.message(session(), queue(), message);
         } catch (Exception ex) {

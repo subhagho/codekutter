@@ -248,11 +248,15 @@ public abstract class AbstractAuditLogger<C> implements IConfigurable, Closeable
             if (dataStore == null) {
                 throw new AuditException(String.format("Data Store not found. [type=%s][name=%s]", dataStoreType().getCanonicalName(), dataStoreName()));
             }
-            if (dataStore.connection().hasTransactionSupport()) {
-                TransactionDataStore ts = (TransactionDataStore) dataStore;
-                if (ts.isInTransaction()) {
-                    ts.rollback();
+            try {
+                if (dataStore.connection().hasTransactionSupport()) {
+                    TransactionDataStore ts = (TransactionDataStore) dataStore;
+                    if (ts.isInTransaction()) {
+                        ts.rollback();
+                    }
                 }
+            } finally {
+                dataStore.close();
             }
         } catch (Throwable t) {
             throw new AuditException(t);
@@ -281,13 +285,17 @@ public abstract class AbstractAuditLogger<C> implements IConfigurable, Closeable
             if (dataStore == null) {
                 throw new AuditException(String.format("Data Store not found. [type=%s][name=%s]", dataStoreType().getCanonicalName(), dataStoreName()));
             }
-            if (dataStore.connection().hasTransactionSupport()) {
-                TransactionDataStore ts = (TransactionDataStore) dataStore;
-                if (ts.isInTransaction()) {
-                    ts.commit();
+            try {
+                if (dataStore.connection().hasTransactionSupport()) {
+                    TransactionDataStore ts = (TransactionDataStore) dataStore;
+                    if (ts.isInTransaction()) {
+                        ts.commit();
+                    }
                 }
+                return size;
+            } finally {
+                dataStore.close();
             }
-            return size;
         } catch (Throwable t) {
             throw new AuditException(t);
         }

@@ -39,41 +39,12 @@ import java.util.regex.Pattern;
 @ConfigPath(path = "*.configurationSettings")
 public class ConfigurationSettings {
     /**
-     * Enum to specify startup action options.
-     */
-    public static enum EStartupOptions {
-        /**
-         * Perform action on StartUp
-         */
-        OnStartUp,
-        /**
-         * Perform action on demand.
-         */
-        OnDemand
-    }
-
-    /**
-     * Enum to specify shutdown action options.
-     */
-    public static enum EShutdownOptions {
-        /**
-         * Clear data on shutdown.
-         */
-        ClearOnShutdown,
-        /**
-         * Don't clear data on shutdown, will be reused on next startup.
-         */
-        ReuseData
-    }
-
-    /**
      * Wildcard for node search.
      */
     public static final String NODE_SEARCH_WILDCARD = "*";
     public static final String NODE_SEARCH_RECURSIVE_WILDCARD = "**";
     public static final String NODE_PARENT_TERM = "..";
     public static final String NODE_SEARCH_SEPERATOR = "/";
-
     public static final String DEFAULT_PROPS_NAME = "properties";
     public static final String DEFAULT_ATTR_NAME = "@";
     public static final String DEFAULT_PARAMS_NAME = "parameters";
@@ -83,7 +54,6 @@ public class ConfigurationSettings {
     public static final String PROP_NODE_CHAR = "$";
     public static final String ATTR_NODE_CHAR = "@";
     public static final Pattern INDEX_PATTERN = Pattern.compile(ARRAY_INDEX_REGEX);
-
     @ConfigValue(name = "propertiesTag")
     private String propertiesNodeName = DEFAULT_PROPS_NAME;
     @ConfigValue(name = "parametersTag")
@@ -96,6 +66,32 @@ public class ConfigurationSettings {
     private EStartupOptions downloadRemoteFiles = EStartupOptions.OnStartUp;
     @ConfigValue(name = "shutdownOption")
     private EShutdownOptions clearTempFolder = EShutdownOptions.ReuseData;
+
+    /**
+     * Check if this name is a wildcard.
+     *
+     * @param name - Node name.
+     * @return - Is Wildcard?
+     */
+    public static boolean isWildcard(String name) {
+        if (!Strings.isNullOrEmpty(name)) {
+            return (NODE_SEARCH_WILDCARD.compareTo(name.trim()) == 0);
+        }
+        return false;
+    }
+
+    /**
+     * Check if this name is a wildcard.
+     *
+     * @param name - Node name.
+     * @return - Is Wildcard?
+     */
+    public static boolean isRecursiveWildcard(String name) {
+        if (!Strings.isNullOrEmpty(name)) {
+            return (NODE_SEARCH_RECURSIVE_WILDCARD.compareTo(name.trim()) == 0);
+        }
+        return false;
+    }
 
     /**
      * Get the Properties Node name.
@@ -225,35 +221,37 @@ public class ConfigurationSettings {
             if (!df.mkdirs()) {
                 throw new IOException(
                         String.format("Error creating temp directory : [path=%s]",
-                                      df.getAbsolutePath()));
+                                df.getAbsolutePath()));
             }
         }
         return df.getAbsolutePath();
     }
 
     /**
-     * Check if this name is a wildcard.
-     *
-     * @param name - Node name.
-     * @return - Is Wildcard?
+     * Enum to specify startup action options.
      */
-    public static boolean isWildcard(String name) {
-        if (!Strings.isNullOrEmpty(name)) {
-            return (NODE_SEARCH_WILDCARD.compareTo(name.trim()) == 0);
-        }
-        return false;
+    public static enum EStartupOptions {
+        /**
+         * Perform action on StartUp
+         */
+        OnStartUp,
+        /**
+         * Perform action on demand.
+         */
+        OnDemand
     }
 
     /**
-     * Check if this name is a wildcard.
-     *
-     * @param name - Node name.
-     * @return - Is Wildcard?
+     * Enum to specify shutdown action options.
      */
-    public static boolean isRecursiveWildcard(String name) {
-        if (!Strings.isNullOrEmpty(name)) {
-            return (NODE_SEARCH_RECURSIVE_WILDCARD.compareTo(name.trim()) == 0);
-        }
-        return false;
+    public static enum EShutdownOptions {
+        /**
+         * Clear data on shutdown.
+         */
+        ClearOnShutdown,
+        /**
+         * Don't clear data on shutdown, will be reused on next startup.
+         */
+        ReuseData
     }
 }

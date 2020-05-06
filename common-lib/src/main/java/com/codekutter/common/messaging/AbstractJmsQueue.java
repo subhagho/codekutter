@@ -131,7 +131,7 @@ public abstract class AbstractJmsQueue<M extends IKeyed> extends AbstractQueue<S
             Message m = consumer.receive(timeout);
             if (m != null) {
                 Monitoring.increment(receiveCounter.name(), (KeyValuePair<String, String>[]) null);
-                if (!((AbstractJmsConnection)connection()).autoAck()) {
+                if (!((AbstractJmsConnection) connection()).autoAck()) {
                     messageCache.put(m.getJMSMessageID(), m);
                 }
                 M message = message((TextMessage) m, user);
@@ -150,7 +150,7 @@ public abstract class AbstractJmsQueue<M extends IKeyed> extends AbstractQueue<S
 
     @Override
     public boolean ack(@Nonnull String messageId, @Nonnull Principal user) throws JMSException {
-        if (!((AbstractJmsConnection)connection()).autoAck()) {
+        if (!((AbstractJmsConnection) connection()).autoAck()) {
             if (messageCache.containsKey(messageId)) {
                 Message message = messageCache.remove(messageId);
                 message.acknowledge();

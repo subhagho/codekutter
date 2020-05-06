@@ -38,6 +38,10 @@ public class LuceneQueryBuilder<T extends IEntity> {
         this.type = type;
     }
 
+    public static <E extends IEntity> LuceneQueryBuilder<E> builder(Class<? extends E> type) {
+        return new LuceneQueryBuilder<>(type);
+    }
+
     private void addQuery(Query query, boolean not) {
         if (this.query == null) {
             if (not) {
@@ -175,9 +179,5 @@ public class LuceneQueryBuilder<T extends IEntity> {
 
     public Query build() {
         return query;
-    }
-
-    public static <E extends IEntity> LuceneQueryBuilder<E> builder(Class<? extends E> type) {
-        return new LuceneQueryBuilder<>(type);
     }
 }

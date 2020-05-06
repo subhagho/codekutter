@@ -23,6 +23,7 @@ import com.codekutter.common.model.CopyException;
 import com.codekutter.common.model.IEntity;
 import com.codekutter.common.model.ValidationExceptions;
 import com.codekutter.common.stores.annotations.EJoinType;
+import com.codekutter.common.stores.annotations.Encrypted;
 import com.codekutter.common.stores.annotations.Reference;
 import com.codekutter.r2db.driver.impl.annotations.Indexed;
 import lombok.Getter;
@@ -33,6 +34,7 @@ import javax.persistence.*;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 
 @Getter
 @Setter
@@ -40,6 +42,7 @@ import java.util.List;
 @Table(name = "tb_orders")
 @Audited
 @Indexed(index = "order_index")
+@Encrypted
 public class Order implements IEntity<OrderKey> {
     @EmbeddedId
     private OrderKey id;
@@ -57,6 +60,12 @@ public class Order implements IEntity<OrderKey> {
     private double amount = 0;
     @Column(name = "created_date")
     private Date createdOn;
+    @Transient
+    @Encrypted
+    private List<String> testEncryptionList;
+    @Encrypted
+    @Transient
+    private Set<Customer> testSetEmbedded;
 
     public void addItem(@Nonnull Item item) {
         if (items == null) {

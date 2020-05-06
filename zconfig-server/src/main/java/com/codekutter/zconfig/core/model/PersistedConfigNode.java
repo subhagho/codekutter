@@ -43,7 +43,7 @@ import javax.annotation.Nonnull;
  * ZooKeeper node object for Configuration instance.
  */
 @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, include = JsonTypeInfo.As.PROPERTY,
-              property = "@class")
+        property = "@class")
 public class PersistedConfigNode extends BaseEntity<StringKey, PersistedConfigNode>
         implements IZkNode {
     /**
@@ -203,7 +203,7 @@ public class PersistedConfigNode extends BaseEntity<StringKey, PersistedConfigNo
     @JsonIgnore
     public String getAbsolutePath() {
         return String.format("%s/%s/%d", application.getAbsolutePath(), getPath(),
-                             currentVersion.getMajorVersion());
+                currentVersion.getMajorVersion());
     }
 
     /**

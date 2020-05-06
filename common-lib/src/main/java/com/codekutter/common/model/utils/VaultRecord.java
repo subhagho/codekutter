@@ -29,7 +29,7 @@ import java.util.UUID;
 
 @Data
 @Entity
-@Table(name = "tb_key_vault")
+@Table(name = "sys_key_vault")
 public class VaultRecord implements IEntity<StringKey> {
     @EmbeddedId
     private StringKey key;
@@ -91,13 +91,14 @@ public class VaultRecord implements IEntity<StringKey> {
     @Override
     public IEntity<StringKey> copyChanges(IEntity<StringKey> source, Context context) throws CopyException {
         Preconditions.checkArgument(source instanceof VaultRecord);
-        VaultRecord r = (VaultRecord)source;
+        VaultRecord r = (VaultRecord) source;
         this.data = r.data;
         this.createdBy = r.createdBy;
         this.modifiedBy = r.modifiedBy;
 
         return this;
     }
+
     /**
      * Clone this instance of Entity.
      *

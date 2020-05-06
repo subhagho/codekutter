@@ -17,7 +17,7 @@
 
 package com.codekutter.common.messaging;
 
-public enum ESendState  {
+public enum ESendState {
     /**
      * Message is new, pending send.
      */

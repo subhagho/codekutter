@@ -57,7 +57,7 @@ class Test_VariableRegexParser {
             assertNotNull(vars);
             assertTrue(vars.size() == 3);
 
-            for(String var : vars) {
+            for (String var : vars) {
                 info(getClass(), String.format("Variable : %s", var));
             }
         } catch (Throwable t) {

@@ -72,10 +72,10 @@ public interface IConfigDAO {
     /**
      * Create/Update the header for the specified configuration.
      *
-     * @param client - Curator Client handle.
+     * @param client        - Curator Client handle.
      * @param configuration - Configuration to save header for
-     * @param version - Updated Version
-     * @param user - Invoking User
+     * @param version       - Updated Version
+     * @param user          - Invoking User
      * @return - Persisted Configuration node.
      * @throws PersistenceException
      */

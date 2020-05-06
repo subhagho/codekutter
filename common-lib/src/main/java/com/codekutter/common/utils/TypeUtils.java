@@ -15,23 +15,18 @@
  *
  */
 
-package com.codekutter.common.model.annotations;
+package com.codekutter.common.utils;
 
-/**
- * Enumeration for defining copy type
- * for entity properties to be used while copying.
- */
-public enum ECopyType {
-    /**
-     * Ignore this fields while copying.
-     */
-    Ignore,
-    /**
-     * Copy a reference of this field to the target.
-     */
-    Reference,
-    /**
-     * Default Behavior as per data type.
-     */
-    Default
+import java.lang.reflect.Constructor;
+
+public class TypeUtils {
+    public static <T> T createInstance(Class<T> type) throws Exception {
+        Constructor<T> constructor = type.getConstructor();
+        if (constructor == null) {
+            throw new Exception(
+                    String.format("No argument constructor not found. [type=%s]",
+                            type.getCanonicalName()));
+        }
+        return constructor.newInstance();
+    }
 }

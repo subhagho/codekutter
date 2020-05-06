@@ -56,6 +56,10 @@ public class JobConfig implements IConfigurable {
     @JsonIgnore
     private ScheduleManager manager;
 
+    public static String key(@Nonnull String namespace, @Nonnull String name) {
+        return String.format("%s.%s", namespace, name);
+    }
+
     public JobConfig withScheduleManager(@Nonnull ScheduleManager manager) {
         this.manager = manager;
         return this;
@@ -63,10 +67,6 @@ public class JobConfig implements IConfigurable {
 
     public String jobKey() {
         return key(namespace, name);
-    }
-
-    public static String key(@Nonnull String namespace, @Nonnull String name) {
-        return String.format("%s.%s", namespace, name);
     }
 
     /**

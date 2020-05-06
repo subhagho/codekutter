@@ -40,10 +40,10 @@ class AwsS3DataStoreTest {
 
     private static final String BASE_PROPS_FILE =
             "src/test/resources/test-extended-env.properties";
+    private static final User user = new User(UUID.randomUUID().toString());
     private static String encryptionKey = "21947a50-6755-47";
     private static String IV = "/NK/c+NKGUwMm0RF";
     private static EntityManager entityManager = null;
-    private static final User user = new User(UUID.randomUUID().toString());
 
     @BeforeAll
     static void setup() throws Exception {
@@ -78,6 +78,7 @@ class AwsS3DataStoreTest {
             throw t;
         }
     }
+
     @Test
     void move() {
     }

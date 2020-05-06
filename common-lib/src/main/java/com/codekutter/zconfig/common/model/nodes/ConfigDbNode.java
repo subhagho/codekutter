@@ -77,21 +77,21 @@ public class ConfigDbNode extends ConfigPathNode {
             }
             if (properties() != null && !properties().isEmpty()) {
                 Map<String, ConfigValueNode> props = properties().getKeyValues();
-                for(String key : props.keySet()) {
+                for (String key : props.keySet()) {
                     ConfigValueNode vn = props.get(key);
                     records.add(getValueRecord(vn, -1));
                 }
             }
             if (parmeters() != null && !parmeters().isEmpty()) {
                 Map<String, ConfigValueNode> props = parmeters().getKeyValues();
-                for(String key : props.keySet()) {
+                for (String key : props.keySet()) {
                     ConfigValueNode vn = props.get(key);
                     records.add(getValueRecord(vn, -1));
                 }
             }
             if (attributes() != null && !attributes().isEmpty()) {
                 Map<String, ConfigValueNode> props = attributes().getKeyValues();
-                for(String key : props.keySet()) {
+                for (String key : props.keySet()) {
                     ConfigValueNode vn = props.get(key);
                     records.add(getValueRecord(vn, -1));
                 }

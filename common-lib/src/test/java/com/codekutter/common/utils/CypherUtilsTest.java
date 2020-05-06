@@ -66,7 +66,7 @@ class CypherUtilsTest {
             assertTrue(encrypted.length() > 0);
 
             LogUtils.debug(getClass(),
-                           String.format("Encrypted Data: [%s]", encrypted));
+                    String.format("Encrypted Data: [%s]", encrypted));
 
             byte[] decrypted = CypherUtils.decrypt(
                     encrypted, passcode, iv);

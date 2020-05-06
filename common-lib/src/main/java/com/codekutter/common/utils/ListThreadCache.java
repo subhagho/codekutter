@@ -17,14 +17,18 @@
 
 package com.codekutter.common.utils;
 
+import com.codekutter.common.ICloseDelegate;
+
 import javax.annotation.Nonnull;
+import java.io.Closeable;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.locks.ReentrantLock;
 
-public class ListThreadCache<T> {
+public class ListThreadCache<T> implements Closeable {
     private Map<Long, List<T>> cache = new HashMap<>();
     private ReentrantLock cacheLock = new ReentrantLock();
 
@@ -49,7 +53,7 @@ public class ListThreadCache<T> {
     public List<T> get() {
         long threadId = Thread.currentThread().getId();
         if (cache.containsKey(threadId)) {
-            return cache.get(threadId);
+            return new ArrayList<>(cache.get(threadId));
         }
         return null;
     }
@@ -63,7 +67,8 @@ public class ListThreadCache<T> {
     }
 
     public boolean remove(T value) {
-        List<T> values = get();
+        long threadId = Thread.currentThread().getId();
+        List<T> values = cache.get(threadId);
         if (values != null && !values.isEmpty()) {
             return values.remove(value);
         }
@@ -71,11 +76,12 @@ public class ListThreadCache<T> {
     }
 
     public boolean remove(int index) {
-        List<T> values = get();
+        long threadId = Thread.currentThread().getId();
+        List<T> values = cache.get(threadId);
         if (values != null && !values.isEmpty()) {
             if (index < values.size()) {
-                values.remove(index);
-                return true;
+                T value = values.remove(index);
+                return value != null;
             }
         }
         return false;
@@ -104,5 +110,50 @@ public class ListThreadCache<T> {
 
     public boolean containsThread() {
         return cache.containsKey(Thread.currentThread().getId());
+    }
+
+    @Override
+    public void close() throws IOException {
+        cacheLock.lock();
+        try {
+            if (!cache.isEmpty()) {
+                for (long id : cache.keySet()) {
+                    List<T> values = cache.get(id);
+                    if (!values.isEmpty()) {
+                        for (T value : values) {
+                            if (value instanceof Closeable) {
+                                ((Closeable) value).close();
+                            }
+                        }
+                        values.clear();
+                    }
+                }
+                cache.clear();
+            }
+        } finally {
+            cacheLock.unlock();
+        }
+    }
+
+    public void close(ICloseDelegate<T> delegate) throws IOException {
+        cacheLock.lock();
+        try {
+            if (!cache.isEmpty()) {
+                for (long id : cache.keySet()) {
+                    List<T> values = cache.get(id);
+                    if (!values.isEmpty()) {
+                        for (T value : values) {
+                            delegate.close(value);
+                        }
+                        values.clear();
+                    }
+                }
+                cache.clear();
+            }
+        } catch (Exception ex) {
+            throw new IOException(ex);
+        } finally {
+            cacheLock.unlock();
+        }
     }
 }

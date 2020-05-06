@@ -17,10 +17,12 @@
 
 package com.codekutter.zconfig.common.utils;
 
+import com.beust.jcommander.JCommander;
+import com.beust.jcommander.Parameter;
+import com.beust.jcommander.ParameterException;
 import com.codekutter.common.utils.CypherUtils;
 import com.codekutter.zconfig.common.ConfigKeyVault;
 import com.google.common.base.Strings;
-import org.kohsuke.args4j.*;
 
 import java.io.Console;
 import java.nio.charset.StandardCharsets;
@@ -28,40 +30,49 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ConfigSetupUtils {
-    public enum EOperation {
-        IV, encrypt, decrypt, hash
-    }
-
-    @Option(name = "-o", usage = "Operation to perform", aliases = {"--op"})
+    @Parameter(names = {"-o", "--op"}, description = "Operation to perform")
     private String op;
-    @Option(name = "-i", usage = "Configuration ID", aliases = {"--id"})
+    @Parameter(names = {"-i", "--id"}, description = "Configuration ID")
     private String id;
-    @Option(name = "-g", usage = "Configuration Application Group", aliases = {"--group"})
+    @Parameter(names = {"-g", "--group"}, description = "Configuration Application Group")
     private String group;
-    @Option(name = "-a", usage = "Configuration Application Name", aliases = {"--application"})
+    @Parameter(names = {"-a", "--application"}, description = "Configuration Application Name")
     private String app;
-    @Option(name = "-n", usage = "Configuration Name", aliases = {"--name"})
+    @Parameter(names = {"-n", "--name"}, description = "Configuration Name")
     private String name;
-    @Option(name = "-h", usage = "Configuration Key Hash", aliases = {"--hash"})
+    @Parameter(names = {"-h", "--hash"}, description = "Configuration Key Hash")
     private String hash;
-    @Option(name = "-k", usage = "Key to encrypt/decrypt with.", aliases = {"--key"})
+    @Parameter(names = {"-k", "--key"}, description = "Key to encrypt/decrypt with.")
     private String key;
-    @Option(name = "-s", usage = "IV Spec to use to encryption/decryption.", aliases = {"--iv"})
+    @Parameter(names = {"-s", "--iv"}, description = "IV Spec to use to encryption/decryption.")
     private String iv;
-    @Argument
+    @Parameter(names = {"--help"}, help = true)
+    private boolean help = false;
+    @Parameter(description = "Other program arguments...")
     private List<String> otherArgs = new ArrayList<>();
-
     private String input;
     private EOperation operation;
 
+    public static void main(String[] args) {
+        try {
+            new ConfigSetupUtils().execute(args);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
+
     private void execute(String[] args) throws Exception {
-        ParserProperties props = ParserProperties.defaults().withUsageWidth(256);
-        CmdLineParser parser = new CmdLineParser(this, props);
+        JCommander parser = JCommander.newBuilder().addObject(this).build();
 
         String value = null;
         try {
             // parse the arguments.
-            parser.parseArgument(args);
+            parser.parse(args);
+
+            if (help) {
+                parser.usage();
+                return;
+            }
 
             if (Strings.isNullOrEmpty(op)) {
                 op = getValue("Operation");
@@ -120,8 +131,8 @@ public class ConfigSetupUtils {
             }
             String output = String.format("%s: [%s]\n", text, value);
             System.out.println(output);
-        } catch (CmdLineException e) {
-            printUsage(parser, e);
+        } catch (ParameterException e) {
+            parser.usage();
             throw e;
         }
     }
@@ -163,30 +174,7 @@ public class ConfigSetupUtils {
         return value;
     }
 
-    private void printUsage(CmdLineParser parser, Exception e) {
-        // if there's a problem in the command line,
-        // you'll get this exception. this will report
-        // an error message.
-        System.err.println(e.getMessage());
-        System.err.println(String.format("java %s [options...] arguments...",
-                getClass().getCanonicalName()));
-        // print the list of available options
-        parser.printUsage(System.err);
-        System.err.println();
-
-        // print option sample. This is useful some time
-        System.err.println(
-                String.format("  Example: java %s",
-                        getClass().getCanonicalName()) +
-                        parser.printExample(
-                                OptionHandlerFilter.ALL));
-    }
-
-    public static void main(String[] args) {
-        try {
-            new ConfigSetupUtils().execute(args);
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
+    public enum EOperation {
+        IV, encrypt, decrypt, hash
     }
 }

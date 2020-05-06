@@ -22,6 +22,7 @@ import com.codekutter.common.stores.ConnectionException;
 import com.codekutter.common.stores.EConnectionState;
 import com.codekutter.common.utils.ConfigUtils;
 import com.codekutter.common.utils.LogUtils;
+import com.codekutter.common.utils.ThreadCache;
 import com.codekutter.zconfig.common.ConfigurationAnnotationProcessor;
 import com.codekutter.zconfig.common.ConfigurationException;
 import com.codekutter.zconfig.common.model.EncryptedValue;
@@ -39,6 +40,7 @@ import lombok.Setter;
 import lombok.experimental.Accessors;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
+import org.hibernate.Transaction;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 import org.hibernate.cfg.Configuration;
 import org.hibernate.cfg.Environment;
@@ -54,40 +56,15 @@ import java.util.Properties;
 @Setter
 @Accessors(fluent = true)
 public class HibernateConnection extends AbstractConnection<Session> {
-    @Getter
-    @Setter
-    @Accessors(fluent = true)
-    @ConfigPath(path = "connection")
-    public static class HibernateConfig {
-        public static final String CACHE_FACTORY_CLASS = "org.hibernate.cache.ehcache.EhCacheRegionFactory";
-        public static final String CACHE_CONFIG_FILE = "net.sf.ehcache.configurationResourceName";
-        public static final String CONFIG_HIBERNATE_PATH = "hibernate";
-
-        @ConfigValue(name = "url", required = true)
-        private String dbUrl;
-        @ConfigValue(name = "username", required = true)
-        private String dbUser;
-        @ConfigValue(name = "dbname")
-        private String dbName;
-        @ConfigAttribute(name = "driver", required = true)
-        private String driver;
-        @ConfigAttribute(name = "dialect", required = true)
-        private String dialect;
-        @ConfigValue(name = "enableCaching")
-        private boolean enableCaching = false;
-        @ConfigValue(name = "enableQueryCaching")
-        private boolean enableQueryCaching = false;
-        @ConfigValue(name = "cacheConfig")
-        private String cacheConfig;
-    }
-
     @Setter(AccessLevel.NONE)
     private SessionFactory sessionFactory = null;
-
     @ConfigValue(name = "config")
     private String hibernateConfigSource;
     @ConfigValue(name = "password", required = true)
     private EncryptedValue dbPassword;
+    @Getter(AccessLevel.NONE)
+    @Setter(AccessLevel.NONE)
+    private final ThreadCache<Session> threadCache = new ThreadCache<>();
 
     public HibernateConnection withSessionFactory(@Nonnull SessionFactory sessionFactory) {
         this.sessionFactory = sessionFactory;
@@ -101,8 +78,22 @@ public class HibernateConnection extends AbstractConnection<Session> {
 
     @Override
     public void close(@Nonnull Session connection) throws ConnectionException {
-        if (connection.isOpen()) {
-            connection.close();
+        try {
+            if (connection.isOpen()) {
+                connection.close();
+            } else {
+                LogUtils.warn(getClass(), "Connection already closed...");
+            }
+
+            Session cs = threadCache.remove();
+            if (cs == null) {
+                throw new ConnectionException("Connection not created via connection manager...", HibernateConnection.class);
+            }
+            if (!cs.equals(connection)) {
+                throw new ConnectionException("Connection handle passed doesn't match cached connection.", HibernateConnection.class);
+            }
+        } catch (Exception ex) {
+            LogUtils.error(getClass(), ex);
         }
     }
 
@@ -110,7 +101,14 @@ public class HibernateConnection extends AbstractConnection<Session> {
     public Session connection() throws ConnectionException {
         try {
             state().checkOpened();
-            return sessionFactory.openSession();
+            if (threadCache.contains()) {
+                Session session = threadCache.get();
+                if (session.isOpen()) return session;
+            }
+            synchronized (threadCache) {
+                Session session = sessionFactory.openSession();
+                return threadCache.put(session);
+            }
         } catch (Throwable t) {
             throw new ConnectionException(t, getClass());
         }
@@ -176,7 +174,7 @@ public class HibernateConnection extends AbstractConnection<Session> {
                 configuration.setProperties(settings);
 
                 if (supportedTypes() != null && !supportedTypes().isEmpty()) {
-                    for(Class<?> cls : supportedTypes()) {
+                    for (Class<?> cls : supportedTypes()) {
                         configuration.addAnnotatedClass(cls);
                     }
                 }
@@ -210,10 +208,49 @@ public class HibernateConnection extends AbstractConnection<Session> {
     public void close() throws IOException {
         if (state().isOpen())
             state().setState(EConnectionState.Closed);
+        threadCache.close();
         if (sessionFactory != null) {
             sessionFactory.close();
             sessionFactory = null;
         }
+    }
+
+    public Transaction startTransaction() throws ConnectionException {
+        Session session = connection();
+        Transaction tx = null;
+        if (session.isJoinedToTransaction()) {
+            tx = session.getTransaction();
+        } else {
+            tx = session.beginTransaction();
+        }
+        return tx;
+    }
+
+    @Getter
+    @Setter
+    @Accessors(fluent = true)
+    @ConfigPath(path = "connection")
+    public static class HibernateConfig {
+        public static final String CACHE_FACTORY_CLASS = "org.hibernate.cache.ehcache.EhCacheRegionFactory";
+        public static final String CACHE_CONFIG_FILE = "net.sf.ehcache.configurationResourceName";
+        public static final String CONFIG_HIBERNATE_PATH = "hibernate";
+
+        @ConfigValue(name = "url", required = true)
+        private String dbUrl;
+        @ConfigValue(name = "username", required = true)
+        private String dbUser;
+        @ConfigValue(name = "dbname")
+        private String dbName;
+        @ConfigAttribute(name = "driver", required = true)
+        private String driver;
+        @ConfigAttribute(name = "dialect", required = true)
+        private String dialect;
+        @ConfigValue(name = "enableCaching")
+        private boolean enableCaching = false;
+        @ConfigValue(name = "enableQueryCaching")
+        private boolean enableQueryCaching = false;
+        @ConfigValue(name = "cacheConfig")
+        private String cacheConfig;
     }
 
 }

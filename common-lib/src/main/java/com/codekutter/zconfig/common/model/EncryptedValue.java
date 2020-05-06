@@ -25,14 +25,6 @@ import javax.annotation.Nonnull;
 public class EncryptedValue extends ConfigValueNode {
     private String path;
 
-    public String getPath() {
-        return path;
-    }
-
-    public void setPath(String path) {
-        this.path = path;
-    }
-
     public EncryptedValue(@Nonnull ConfigValueNode node) {
         Preconditions.checkArgument(node != null);
         setValue(node.getValue());
@@ -41,5 +33,13 @@ public class EncryptedValue extends ConfigValueNode {
         setParent(node.getParent());
 
         setEncrypted(true);
+    }
+
+    public String getPath() {
+        return path;
+    }
+
+    public void setPath(String path) {
+        this.path = path;
     }
 }

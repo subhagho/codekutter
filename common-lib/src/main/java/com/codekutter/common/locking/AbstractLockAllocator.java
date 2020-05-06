@@ -21,6 +21,7 @@ import com.codekutter.common.model.EObjectState;
 import com.codekutter.common.model.LockId;
 import com.codekutter.common.model.ObjectState;
 import com.codekutter.common.stores.AbstractConnection;
+import com.codekutter.common.utils.LogUtils;
 import com.codekutter.common.utils.MapThreadCache;
 import com.codekutter.zconfig.common.IConfigurable;
 import com.codekutter.zconfig.common.model.annotations.ConfigAttribute;
@@ -47,7 +48,17 @@ import java.io.IOException;
 @ConfigPath(path = "lock-allocator")
 public abstract class AbstractLockAllocator<T> implements IConfigurable, Closeable {
     private static final long DEFAULT_LOCK_TIMEOUT = 60 * 60 * 1000; // 1 Hr.
-
+    /**
+     * Map containing the thread instances of this lock.
+     */
+    @Setter(AccessLevel.NONE)
+    @Getter(AccessLevel.NONE)
+    private final MapThreadCache<LockId, DistributedLock> threadLocks = new MapThreadCache<>();
+    /**
+     * Connection instance used to persist the lock.
+     */
+    @Setter(AccessLevel.NONE)
+    protected AbstractConnection<T> connection;
     /**
      * Timeout for expiring locks - used to prevent lock starvation
      * due to lock instances that haven't been released.
@@ -64,18 +75,6 @@ public abstract class AbstractLockAllocator<T> implements IConfigurable, Closeab
      */
     @ConfigAttribute(name = "lockType", required = true)
     private Class<? extends DistributedLock> lockType;
-    /**
-     * Connection instance used to persist the lock.
-     */
-    @Setter(AccessLevel.NONE)
-    protected AbstractConnection<T> connection;
-    /**
-     * Map containing the thread instances of this lock.
-     */
-    @Setter(AccessLevel.NONE)
-    @Getter(AccessLevel.NONE)
-    private MapThreadCache<LockId, DistributedLock> threadLocks = new MapThreadCache<>();
-
     /**
      * State of this lock instance.
      */
@@ -99,15 +98,41 @@ public abstract class AbstractLockAllocator<T> implements IConfigurable, Closeab
             id.setNamespace(namespace);
             id.setName(name);
 
-            DistributedLock lock = checkThreadCache(id);
-            if (lock == null) {
-                lock = createInstance(id);
+            synchronized (threadLocks) {
+                DistributedLock lock = checkThreadCache(id);
                 if (lock == null) {
-                    throw new LockException(String.format("Error creating lock instance. [id=%s]", id.stringKey()));
+                    lock = createInstance(id);
+                    if (lock == null) {
+                        throw new LockException(String.format("Error creating lock instance. [id=%s]", id.stringKey()));
+                    }
+                    threadLocks.put(id, lock);
                 }
-                threadLocks.put(id, lock);
+                if (!lock.isValid()) {
+                    throw new LockException(
+                            String.format("Invalid lock instance. [thread=%d][lock id=%s]",
+                                    Thread.currentThread().getId(), lock.id().stringKey()));
+                }
+                return lock;
             }
-            return lock;
+        } catch (Throwable t) {
+            throw new LockException(t);
+        }
+    }
+
+    public void remove(@Nonnull LockId id) {
+        try {
+            state.check(EObjectState.Available, getClass());
+            if (threadLocks.containsThread()) {
+                synchronized (threadLocks) {
+                    DistributedLock lock = checkThreadCache(id);
+                    if (lock != null) {
+                        if (!threadLocks.remove(id)) {
+                            throw new LockException(String.format("Error removing lock from cache. [lock id=%s]", id.stringKey()));
+                        }
+                        lock.remove();
+                    }
+                }
+            }
         } catch (Throwable t) {
             throw new LockException(t);
         }
@@ -129,7 +154,6 @@ public abstract class AbstractLockAllocator<T> implements IConfigurable, Closeab
                 if (lock.isLocked()) {
                     lock.unlock();
                 }
-
             }
             return ret;
         } catch (Throwable t) {
@@ -137,9 +161,20 @@ public abstract class AbstractLockAllocator<T> implements IConfigurable, Closeab
         }
     }
 
-    private DistributedLock checkThreadCache(@Nonnull LockId id) {
+    private DistributedLock checkThreadCache(@Nonnull LockId id) throws IOException {
         if (threadLocks.containsThread()) {
-            return threadLocks.get(id);
+            DistributedLock lock = threadLocks.get(id);
+            if (lock != null) {
+                if (!lock.isValid()) {
+                    LogUtils.warn(getClass(),
+                            String.format("Removing corrupted lock instance. [thread id=%d][lock id=%s]",
+                                    Thread.currentThread().getId(), lock.id().stringKey()));
+                    lock.remove();
+                    threadLocks.remove(id);
+                } else {
+                    return lock;
+                }
+            }
         }
         return null;
     }

@@ -132,7 +132,7 @@ public abstract class AbstractDbCachedJmsQueue<M extends IKeyed> extends DbCache
             if (m != null) {
                 Monitoring.increment(receiveCounter.name(), (KeyValuePair<String, String>[]) null);
                 if (m instanceof TextMessage) {
-                    if (!((AbstractJmsConnection)connection()).autoAck()) {
+                    if (!((AbstractJmsConnection) connection()).autoAck()) {
                         messageCache.put(m.getJMSMessageID(), m);
                     }
                     M message = message((TextMessage) m, user);
@@ -154,7 +154,7 @@ public abstract class AbstractDbCachedJmsQueue<M extends IKeyed> extends DbCache
 
     @Override
     public boolean ack(@Nonnull String messageId, @Nonnull Principal user) throws JMSException {
-        if (!((AbstractJmsConnection)connection()).autoAck()) {
+        if (!((AbstractJmsConnection) connection()).autoAck()) {
             if (messageCache.containsKey(messageId)) {
                 Message message = messageCache.remove(messageId);
                 message.acknowledge();

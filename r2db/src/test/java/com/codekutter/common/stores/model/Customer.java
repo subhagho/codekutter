@@ -21,7 +21,9 @@ import com.codekutter.common.Context;
 import com.codekutter.common.model.CopyException;
 import com.codekutter.common.model.IEntity;
 import com.codekutter.common.model.ValidationExceptions;
+import com.codekutter.common.stores.annotations.Encrypted;
 import com.codekutter.r2db.driver.impl.annotations.Indexed;
+import com.codekutter.r2db.driver.model.Searchable;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -36,17 +38,22 @@ import java.util.Date;
 @Entity
 @Table(name = "tb_customer")
 @Indexed(index = "customer_index")
+@Encrypted
 public class Customer implements IEntity<CustomerKey> {
     @EmbeddedId
     private CustomerKey id;
+    @Searchable(faceted = true)
     @Column(name = "first_name")
     private String firstName;
     @Column(name = "last_name")
     private String lastName;
     @Column(name = "date_of_birth")
     private Date dateOfBirth;
+    @Encrypted
     @Column(name = "email_id")
     private String emailId;
+    @Encrypted
+    @Searchable(faceted = true)
     @Column(name = "phone_no")
     private String phoneNumber;
 

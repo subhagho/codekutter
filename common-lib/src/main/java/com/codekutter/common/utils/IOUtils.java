@@ -29,12 +29,11 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 
 import javax.annotation.Nonnull;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.net.URI;
 import java.nio.channels.FileChannel;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 
 /**
@@ -208,5 +207,19 @@ public class IOUtils {
             sourceChannel.close();
             destChannel.close();
         }
+    }
+
+    public static String readContent(@Nonnull File file) throws IOException {
+        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+            String line = null;
+            StringBuilder builder = new StringBuilder();
+            while((line = reader.readLine()) != null) {
+                builder.append(line).append("\n");
+            }
+            if (builder.length() > 0) {
+                return builder.toString();
+            }
+        }
+        return null;
     }
 }

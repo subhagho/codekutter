@@ -17,12 +17,14 @@
 
 package com.codekutter.common.stores;
 
+import com.codekutter.common.model.ConnectionConfig;
 import com.codekutter.common.model.IEntity;
+import com.codekutter.zconfig.common.ConfigurationException;
 import com.codekutter.zconfig.common.IConfigurable;
 import com.codekutter.zconfig.common.model.annotations.ConfigAttribute;
 import com.codekutter.zconfig.common.model.annotations.ConfigPath;
 import com.codekutter.zconfig.common.model.annotations.ConfigValue;
-import com.codekutter.zconfig.common.transformers.ClassListParser;
+import com.codekutter.zconfig.common.transformers.ClassSetParser;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
@@ -30,8 +32,8 @@ import lombok.experimental.Accessors;
 
 import javax.annotation.Nonnull;
 import java.io.Closeable;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 @Getter
 @Setter
@@ -39,16 +41,16 @@ import java.util.List;
 @ConfigPath(path = "connection")
 @SuppressWarnings("rawtypes")
 public abstract class AbstractConnection<T> implements IConfigurable, Closeable {
+    @Setter(AccessLevel.NONE)
+    private final ConnectionState state = new ConnectionState();
     @ConfigAttribute(name = "name")
     private String name;
     @ConfigAttribute(name = "class")
     private Class<? extends AbstractConnection> type;
     @ConfigAttribute(name = "source")
     private EConfigSource configSource = EConfigSource.File;
-    @Setter(AccessLevel.NONE)
-    private final ConnectionState state = new ConnectionState();
-    @ConfigValue(name = "classes", parser = ClassListParser.class)
-    private List<Class<?>> supportedTypes = new ArrayList<>();
+    @ConfigValue(name = "classes", parser = ClassSetParser.class)
+    private Set<Class<?>> supportedTypes = new HashSet<>();
 
     public AbstractConnection() {
 
@@ -56,6 +58,10 @@ public abstract class AbstractConnection<T> implements IConfigurable, Closeable 
 
     public void addSupportedType(@Nonnull Class<? extends IEntity> type) {
         supportedTypes.add(type);
+    }
+
+    public void configure(@Nonnull ConnectionConfig config) throws ConfigurationException {
+        throw new ConfigurationException("Method not supported...");
     }
 
     public abstract T connection() throws ConnectionException;

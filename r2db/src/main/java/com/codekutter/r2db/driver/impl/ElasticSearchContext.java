@@ -19,13 +19,17 @@ package com.codekutter.r2db.driver.impl;
 
 import com.codekutter.common.Context;
 import org.elasticsearch.common.unit.Fuzziness;
+import org.elasticsearch.search.sort.SortBuilder;
 
 import javax.annotation.Nonnull;
+import java.util.ArrayList;
+import java.util.List;
 
 public class ElasticSearchContext extends Context {
     public static final String CONTEXT_ES_SCROLL_ID = "context.es.scroll.id";
-    public static final String CONTEXT_ES_SCROLL= "context.es.scroll";
-    public static final String CONTEXT_ES_FUZZINESS = "context.ex.fuzziness";
+    public static final String CONTEXT_ES_SCROLL = "context.es.scroll";
+    public static final String CONTEXT_ES_FUZZINESS = "context.es.fuzziness";
+    public static final String CONTEXT_ES_SORT = "context.es.sort";
 
     public ElasticSearchContext doScroll(boolean scroll) {
         setParam(CONTEXT_ES_SCROLL, scroll);
@@ -52,5 +56,19 @@ public class ElasticSearchContext extends Context {
 
     public Fuzziness fuzziness() {
         return (Fuzziness) getParam(CONTEXT_ES_FUZZINESS);
+    }
+
+    public ElasticSearchContext sort(@Nonnull SortBuilder<?> builder) {
+        List<SortBuilder<?>> builders = (List<SortBuilder<?>>) getParam(CONTEXT_ES_SORT);
+        if (builders == null) {
+            builders = new ArrayList<>();
+            setParam(CONTEXT_ES_SORT, builders);
+        }
+        builders.add(builder);
+        return this;
+    }
+
+    public List<SortBuilder<?>> sort() {
+        return (List<SortBuilder<?>>) getParam(CONTEXT_ES_SORT);
     }
 }

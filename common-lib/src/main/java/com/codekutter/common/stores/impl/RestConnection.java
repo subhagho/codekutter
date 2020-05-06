@@ -24,6 +24,7 @@ import com.codekutter.common.stores.EConnectionState;
 import com.codekutter.zconfig.common.ConfigurationAnnotationProcessor;
 import com.codekutter.zconfig.common.ConfigurationException;
 import com.codekutter.zconfig.common.model.annotations.ConfigAttribute;
+import com.codekutter.zconfig.common.model.annotations.ConfigValue;
 import com.codekutter.zconfig.common.model.nodes.AbstractConfigNode;
 import com.codekutter.zconfig.common.model.nodes.ConfigAttributesNode;
 import com.codekutter.zconfig.common.model.nodes.ConfigPathNode;
@@ -43,17 +44,24 @@ import javax.ws.rs.client.Invocation;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 @Getter
 @Setter
 @Accessors(fluent = true)
 public class RestConnection extends AbstractConnection<Client> {
     public static final String CONFIG_PATH_CONFIG = "configuration";
+    private static final int DEFAULT_READ_TIMEOUT = 5 * 60 * 1000;
+    private static final int DEFAULT_CONN_TIMEOUT = 60 * 1000;
 
-    @ConfigAttribute
-    private boolean useSSL = false;
     @Setter(AccessLevel.NONE)
     protected Client client;
+    @ConfigAttribute
+    private boolean useSSL = false;
+    @ConfigValue
+    private int readTimeout = DEFAULT_READ_TIMEOUT;
+    @ConfigValue
+    private int connectionTimeout = DEFAULT_CONN_TIMEOUT;
 
     @Override
     public Client connection() throws ConnectionException {
@@ -91,6 +99,9 @@ public class RestConnection extends AbstractConnection<Client> {
                     builder.property(key, config.get(key));
                 }
             }
+            builder.connectTimeout(connectionTimeout, TimeUnit.MILLISECONDS);
+            builder.readTimeout(readTimeout, TimeUnit.MILLISECONDS);
+
             if (useSSL) {
                 builder.sslContext(SSLContext.getDefault());
             }
@@ -124,7 +135,7 @@ public class RestConnection extends AbstractConnection<Client> {
         return null;
     }
 
-    public Invocation.Builder target(@Nonnull String url) throws ConnectionException{
+    public Invocation.Builder target(@Nonnull String url) throws ConnectionException {
         state().checkOpened();
         return client.target(url).request();
     }

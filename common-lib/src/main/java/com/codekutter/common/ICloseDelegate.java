@@ -15,22 +15,8 @@
  *
  */
 
-package com.codekutter.common.model.annotations;
+package com.codekutter.common;
 
-import java.lang.annotation.*;
-
-/**
- * Annotation used to define permission check hierarchy.
- */
-@Target(ElementType.FIELD)
-@Retention(RetentionPolicy.RUNTIME)
-@Inherited
-public @interface Heirarchy {
-    /**
-     * Permission check policy.
-     *
-     * Default is Override.
-     * @return - Check Policy.
-     */
-    EPermissionPolicy policy() default EPermissionPolicy.Override;
+public interface ICloseDelegate<T> {
+    void close(T source) throws Exception;
 }

@@ -27,5 +27,6 @@ import java.lang.annotation.*;
 @SuppressWarnings("rawtypes")
 public @interface TableShardSpec {
     int shard();
+
     Class<? extends IShardedEntity> mappedEntity();
 }

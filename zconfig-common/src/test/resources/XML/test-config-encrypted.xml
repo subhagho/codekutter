@@ -23,7 +23,8 @@
   ~
   -->
 <root>
-    <header ID="UNIQUE-99918239012" group="TEST-APP-GROUP" application="TEST-APPLICATION" name="test-config" version="0.2"
+    <header ID="UNIQUE-99918239012" group="TEST-APP-GROUP" application="TEST-APPLICATION" name="test-config"
+            version="0.2"
             passwordHash="2ff9irI7zQgaWmitmRK1Yg==">
         <description>This is a test JSON configuration file.</description>
         <createdBy user="subho" tiemstamp="1552835141000"/>

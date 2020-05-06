@@ -80,9 +80,9 @@ public class KeyStoreVault implements IKeyVault {
             SecretKeyFactory factory = SecretKeyFactory.getInstance(SK_FACTORY_ALGO);
             KeyStore.PasswordProtection keyStorePP = new KeyStore.PasswordProtection(array);
             KeyStore.SecretKeyEntry ske =
-                    (KeyStore.SecretKeyEntry)keyStore.getEntry(name, keyStorePP);
+                    (KeyStore.SecretKeyEntry) keyStore.getEntry(name, keyStorePP);
 
-            PBEKeySpec keySpec = (PBEKeySpec)factory.getKeySpec(
+            PBEKeySpec keySpec = (PBEKeySpec) factory.getKeySpec(
                     ske.getSecretKey(),
                     PBEKeySpec.class);
             return keySpec.getPassword();

@@ -17,7 +17,6 @@
 
 package com.codekutter.r2db.driver.model;
 
-import com.amazonaws.AmazonServiceException;
 import com.amazonaws.SdkClientException;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.PutObjectRequest;
@@ -25,12 +24,16 @@ import com.amazonaws.services.s3.model.S3Object;
 import com.codekutter.common.Context;
 import com.codekutter.common.model.CopyException;
 import com.codekutter.common.model.IEntity;
+import com.codekutter.common.model.RemoteFileEntity;
 import com.codekutter.common.model.ValidationExceptions;
+import com.codekutter.common.utils.LogUtils;
 import com.google.common.base.Preconditions;
 
 import javax.annotation.Nonnull;
 import java.io.*;
 import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
 
 public class S3FileEntity extends RemoteFileEntity<S3FileKey, AmazonS3> {
     private static final int DEFAULT_BUFFER_SIZE = 8 * 1024;
@@ -81,6 +84,7 @@ public class S3FileEntity extends RemoteFileEntity<S3FileKey, AmazonS3> {
             throw new IOException("AWS S3 Client not set.");
         }
         client.deleteObject(key.bucket(), key.key());
+        setRemoteUri(null);
         return true;
     }
 
@@ -117,6 +121,7 @@ public class S3FileEntity extends RemoteFileEntity<S3FileKey, AmazonS3> {
 
         File dir = getParentFile();
         if (!dir.exists()) {
+            LogUtils.debug(getClass(), String.format("Creating folder. [path=%s]", dir.getAbsolutePath()));
             if (!dir.mkdirs()) {
                 throw new IOException(String.format("Error creating parent folder. [path=%s]", dir.getAbsolutePath()));
             }
@@ -129,17 +134,24 @@ public class S3FileEntity extends RemoteFileEntity<S3FileKey, AmazonS3> {
         if (source == null) {
             throw new IOException(String.format("S3 Object not found. [bucket=%s][key=%s]", key.bucket(), key.bucket()));
         }
-        try (InputStream reader = new BufferedInputStream(
-                source.getObjectContent())) {
-            try (FileOutputStream fos = new FileOutputStream(this)) {
-                byte[] buffer = new byte[DEFAULT_BUFFER_SIZE];
-                while (true) {
-                    int size = reader.read(buffer, 0, DEFAULT_BUFFER_SIZE);
-                    if (size <= 0) break;
-                    fos.write(buffer, 0, size);
-                    if (size < DEFAULT_BUFFER_SIZE) break;
+        try {
+            try (InputStream reader = new BufferedInputStream(
+                    source.getObjectContent())) {
+                try (FileOutputStream fos = new FileOutputStream(this)) {
+                    byte[] buffer = new byte[DEFAULT_BUFFER_SIZE];
+                    while (true) {
+                        int size = reader.read(buffer, 0, DEFAULT_BUFFER_SIZE);
+                        if (size <= 0) break;
+                        fos.write(buffer, 0, size);
+                    }
                 }
             }
+        } finally {
+            source.close();
+        }
+        if(getUrl() == null) {
+            LogUtils.error(getClass(),
+                    String.format("Error getting File URL. [bucket=%s][key=%s]", key.bucket(), key.key()));
         }
         return this;
     }
@@ -155,9 +167,7 @@ public class S3FileEntity extends RemoteFileEntity<S3FileKey, AmazonS3> {
         try {
             PutObjectRequest request = new PutObjectRequest(key.bucket(), key.key(), this);
             client.putObject(request);
-            return key.stringKey();
-        } catch (AmazonServiceException ex) {
-            throw new IOException(ex);
+            return getUrl().toString();
         } catch (SdkClientException ex) {
             throw new IOException(ex);
         }
@@ -265,5 +275,18 @@ public class S3FileEntity extends RemoteFileEntity<S3FileKey, AmazonS3> {
     @Override
     public void validate() throws ValidationExceptions {
 
+    }
+
+    public URL getUrl() throws IOException {
+        try {
+            URL remoteUrl = client.getUrl(key.bucket(), key.key());
+            if (remoteUrl == null) {
+                throw new IOException(String.format("Error getting uploaded URL. [bucket=%s][key=%s]", key.bucket(), key.key()));
+            }
+            setRemoteUri(remoteUrl.toURI());
+            return remoteUrl;
+        } catch (URISyntaxException ex) {
+            throw new IOException(ex);
+        }
     }
 }

@@ -54,7 +54,8 @@ public class AuditRecordId implements IKey, Serializable {
     @Column(name = "record_id")
     private String recordId;
 
-    public AuditRecordId() {}
+    public AuditRecordId() {
+    }
 
     public AuditRecordId(@Nonnull String dataStoreType,
                          @Nonnull String dataStoreName,
@@ -99,7 +100,7 @@ public class AuditRecordId implements IKey, Serializable {
     @Override
     public int compareTo(IKey key) {
         if (key instanceof AuditRecordId) {
-            AuditRecordId k = (AuditRecordId)key;
+            AuditRecordId k = (AuditRecordId) key;
             return compareTo(k);
         }
         return -1;

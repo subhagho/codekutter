@@ -68,7 +68,6 @@ public class ZkLockAllocator extends AbstractLockAllocator<CuratorFramework> {
      * Create a new instance of the specified ZooKeeper backed lock.
      *
      * @param id - Unique Lock ID to Create/Get instance.
-     *
      * @return - Lock instance.
      * @throws LockException
      */

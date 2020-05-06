@@ -91,15 +91,6 @@ public abstract class AbstractConfigNode {
     }
 
     /**
-     * Set the node state.
-     *
-     * @param state - Node State.
-     */
-    public void setState(NodeState state) {
-        this.state = state;
-    }
-
-    /**
      * Get the state handle for this node.
      *
      * @return - Node state handle.
@@ -109,39 +100,21 @@ public abstract class AbstractConfigNode {
     }
 
     /**
+     * Set the node state.
+     *
+     * @param state - Node State.
+     */
+    public void setState(NodeState state) {
+        this.state = state;
+    }
+
+    /**
      * Get the name of this configuration node.
      *
      * @return - Node name.
      */
     public String getName() {
         return name;
-    }
-
-    /**
-     * Get the parent configuration instance.
-     *
-     * @return - Parent configuration.
-     */
-    public Configuration getConfiguration() {
-        return configuration;
-    }
-
-    public ENodeSource getNodeSource() {
-        return nodeSource;
-    }
-
-    public void setNodeSource(ENodeSource nodeSource) {
-        this.nodeSource = nodeSource;
-    }
-
-    /**
-     * Set the parent configuration instance.
-     *
-     * @param configuration - Parent configuration.
-     */
-    public void setConfiguration(
-            Configuration configuration) {
-        this.configuration = configuration;
     }
 
     /**
@@ -157,6 +130,33 @@ public abstract class AbstractConfigNode {
                         "Invalid name string. Name cannot contain (.) or (/)");
             }
         this.name = name;
+    }
+
+    /**
+     * Get the parent configuration instance.
+     *
+     * @return - Parent configuration.
+     */
+    public Configuration getConfiguration() {
+        return configuration;
+    }
+
+    /**
+     * Set the parent configuration instance.
+     *
+     * @param configuration - Parent configuration.
+     */
+    public void setConfiguration(
+            Configuration configuration) {
+        this.configuration = configuration;
+    }
+
+    public ENodeSource getNodeSource() {
+        return nodeSource;
+    }
+
+    public void setNodeSource(ENodeSource nodeSource) {
+        this.nodeSource = nodeSource;
     }
 
     /**
@@ -238,7 +238,9 @@ public abstract class AbstractConfigNode {
             return this;
         } else if (path
                 .startsWith("." + ConfigurationSettings.NODE_SEARCH_SEPERATOR)) {
-            path = String.format("%s%s", getName(), path);
+            // Remove the ./ in the beginning
+            path = path.substring(2);
+            path = String.format("%s/%s", getName(), path);
         }
 
         List<String> stack =

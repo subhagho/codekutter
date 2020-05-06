@@ -21,7 +21,6 @@ import java.io.Serializable;
 
 /**
  * Define an entity Key type.
- *
  */
 public interface IKey extends Serializable {
     /**

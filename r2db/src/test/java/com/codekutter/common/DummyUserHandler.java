@@ -38,7 +38,8 @@ public class DummyUserHandler implements IRestResponseHandler {
      * @throws JobExecutionException
      */
     @Override
-    public @Nonnull Object handle(@Nonnull Response response) throws JobExecutionException {
+    public @Nonnull
+    Object handle(@Nonnull Response response) throws JobExecutionException {
         DemoResponse<List<DemoUser>> users = response.readEntity(new GenericType<DemoResponse<List<DemoUser>>>() {
         });
         LogUtils.debug(getClass(), users);

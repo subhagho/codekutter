@@ -29,7 +29,8 @@ public class OneDriveFileKey implements IKey, Comparable<OneDriveFileKey> {
     private String id;
     private String path;
 
-    public OneDriveFileKey() {}
+    public OneDriveFileKey() {
+    }
 
     public OneDriveFileKey(String id, String path) {
         this.id = id;

@@ -73,7 +73,7 @@ public class ConfigSearchListNode extends ConfigListNode<AbstractConfigNode> {
      */
     @Override
     public AbstractConfigNode find(List<String> path, int index)
-    throws ConfigurationException {
+            throws ConfigurationException {
         List<AbstractConfigNode> values = getValues();
         if (values != null && !values.isEmpty()) {
             List<AbstractConfigNode> result = new ArrayList<>();
@@ -87,7 +87,7 @@ public class ConfigSearchListNode extends ConfigListNode<AbstractConfigNode> {
                 if (result.size() > 1) {
                     ConfigSearchListNode nodeList =
                             new ConfigSearchListNode(getConfiguration(),
-                                                     null);
+                                    null);
                     for (AbstractConfigNode nn : result) {
                         nodeList.addValue(nn);
                     }
@@ -108,7 +108,7 @@ public class ConfigSearchListNode extends ConfigListNode<AbstractConfigNode> {
      */
     @Override
     public AbstractConfigNode find(@Nonnull String path)
-    throws ConfigurationException {
+            throws ConfigurationException {
         ConfigSearchListNode result = new ConfigSearchListNode();
         List<AbstractConfigNode> nodes = getValues();
         if (nodes != null && !nodes.isEmpty()) {

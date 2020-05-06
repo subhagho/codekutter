@@ -24,7 +24,7 @@ import javax.persistence.Version;
 import javax.persistence.*;
 
 @Entity
-@Table(name = "tb_db_locks")
+@Table(name = "sys_db_locks")
 @Getter
 @Setter
 public class DbLockRecord {

@@ -34,8 +34,8 @@ import java.nio.charset.StandardCharsets;
 public class DefaultStringMessageUtils {
 
     public static Message message(@Nonnull Session session,
-                               @Nonnull String queue,
-                               @Nonnull DefaultStringMessage message) throws Exception {
+                                  @Nonnull String queue,
+                                  @Nonnull DefaultStringMessage message) throws Exception {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(queue));
         message.setQueue(queue);
         message.setTimestamp(System.currentTimeMillis());

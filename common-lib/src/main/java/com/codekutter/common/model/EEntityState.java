@@ -40,6 +40,10 @@ public enum EEntityState implements IState<EEntityState> {
      */
     Synced,
     /**
+     * Entity is being synced.
+     */
+    Syncing,
+    /**
      * Entity record has been deleted.
      */
     Deleted,

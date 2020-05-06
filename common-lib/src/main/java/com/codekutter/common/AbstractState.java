@@ -32,13 +32,13 @@ package com.codekutter.common;
  */
 public abstract class AbstractState<T extends IState<T>> {
     /**
-     * State of the instance type.
-     */
-    private T state;
-    /**
      * Error handle in case of error state.
      */
     protected Throwable error;
+    /**
+     * State of the instance type.
+     */
+    private T state;
 
     /**
      * Get the current state.

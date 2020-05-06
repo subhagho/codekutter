@@ -56,4 +56,5 @@ public enum EReaderState implements IState<EReaderState> {
     @Override
     public EReaderState getErrorState() {
         return Error;
-    }}
+    }
+}

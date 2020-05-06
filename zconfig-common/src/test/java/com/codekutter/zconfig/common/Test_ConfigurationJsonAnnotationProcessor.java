@@ -56,6 +56,55 @@ class Test_ConfigurationJsonAnnotationProcessor {
     private static Configuration configuration = null;
     private static String encryptionKey = "21947a50-6755-47";
 
+    @BeforeAll
+    static void init() throws Exception {
+        JSONConfigParser parser =
+                (JSONConfigParser) ConfigProviderFactory.parser(
+                        ConfigProviderFactory.EConfigType.JSON);
+        assertNotNull(parser);
+
+        Properties properties = new Properties();
+        properties.load(new FileInputStream(BASE_PROPS_FILE));
+
+        String filename = properties.getProperty(
+                ConfigTestConstants.PROP_CONFIG_FILE);
+        assertFalse(Strings.isNullOrEmpty(filename));
+        String vs = properties.getProperty(ConfigTestConstants.PROP_CONFIG_VERSION);
+        assertFalse(Strings.isNullOrEmpty(vs));
+        Version version = Version.parse(vs);
+        assertNotNull(version);
+
+        try (ConfigFileReader reader = new ConfigFileReader(filename)) {
+            parser.parse("test-config", reader, null, version, encryptionKey);
+            configuration = parser.getConfiguration();
+            assertNotNull(configuration);
+        }
+    }
+
+    @Test
+    void readConfigAnnotations() {
+        try {
+            assertNotNull(configuration);
+            ConfigAnnotationsTest value = ConfigurationAnnotationProcessor
+                    .readConfigAnnotations(ConfigAnnotationsTest.class,
+                            configuration);
+            assertNotNull(value);
+            assertFalse(Strings.isNullOrEmpty(value.paramValue));
+            assertTrue(value.paramLong > 0);
+            assertEquals(ETestValue.EValue3, value.paramEnum);
+            assertNotNull(value.password);
+            assertNotNull(value.encryptedValue);
+            String password = value.password.getDecryptedValue();
+            assertFalse(Strings.isNullOrEmpty(password));
+
+            LogUtils.debug(getClass(), String.format("PASSWORD=%s", password));
+            LogUtils.debug(getClass(), value);
+        } catch (Throwable t) {
+            LogUtils.error(getClass(), t);
+            fail(t.getLocalizedMessage());
+        }
+    }
+
     public enum ETestValue {
         EValue1, EValue2, EValue3
     }
@@ -113,7 +162,7 @@ class Test_ConfigurationJsonAnnotationProcessor {
         public void printConfig(@ConfigParam AbstractConfigNode node) {
             Preconditions.checkArgument(node != null);
             LogUtils.debug(getClass(),
-                           String.format("[path=%s]", node.getSearchPath()));
+                    String.format("[path=%s]", node.getSearchPath()));
         }
 
         @MethodInvoke
@@ -121,57 +170,8 @@ class Test_ConfigurationJsonAnnotationProcessor {
                 @ConfigParam(name = "node_3") AbstractConfigNode node) {
             Preconditions.checkArgument(node != null);
             LogUtils.debug(getClass(),
-                           String.format("[path=%s]", node.getSearchPath()));
+                    String.format("[path=%s]", node.getSearchPath()));
         }
 
-    }
-
-    @BeforeAll
-    static void init() throws Exception {
-        JSONConfigParser parser =
-                (JSONConfigParser) ConfigProviderFactory.parser(
-                        ConfigProviderFactory.EConfigType.JSON);
-        assertNotNull(parser);
-
-        Properties properties = new Properties();
-        properties.load(new FileInputStream(BASE_PROPS_FILE));
-
-        String filename = properties.getProperty(
-                ConfigTestConstants.PROP_CONFIG_FILE);
-        assertFalse(Strings.isNullOrEmpty(filename));
-        String vs = properties.getProperty(ConfigTestConstants.PROP_CONFIG_VERSION);
-        assertFalse(Strings.isNullOrEmpty(vs));
-        Version version = Version.parse(vs);
-        assertNotNull(version);
-
-        try (ConfigFileReader reader = new ConfigFileReader(filename)) {
-            parser.parse("test-config", reader, null, version, encryptionKey);
-            configuration = parser.getConfiguration();
-            assertNotNull(configuration);
-        }
-    }
-
-    @Test
-    void readConfigAnnotations() {
-        try {
-            assertNotNull(configuration);
-            ConfigAnnotationsTest value = ConfigurationAnnotationProcessor
-                    .readConfigAnnotations(ConfigAnnotationsTest.class,
-                                           configuration);
-            assertNotNull(value);
-            assertFalse(Strings.isNullOrEmpty(value.paramValue));
-            assertTrue(value.paramLong > 0);
-            assertEquals(ETestValue.EValue3, value.paramEnum);
-            assertNotNull(value.password);
-            assertNotNull(value.encryptedValue);
-            String password = value.password.getDecryptedValue();
-            assertFalse(Strings.isNullOrEmpty(password));
-
-            LogUtils.debug(getClass(), String.format("PASSWORD=%s", password));
-            LogUtils.debug(getClass(), value);
-        } catch (Throwable t) {
-            LogUtils.error(getClass(), t);
-            fail(t.getLocalizedMessage());
-        }
     }
 }

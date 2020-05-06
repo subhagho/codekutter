@@ -22,7 +22,7 @@ import java.util.Map;
 
 public class UrlUtils {
     public static String replaceParams(@Nonnull String url, @Nonnull Map<String, String> params) throws Exception {
-        for(String key : params.keySet()) {
+        for (String key : params.keySet()) {
             String k = String.format("\\{%s\\}", key);
             String v = params.get(key);
             url = url.replaceAll(k, v);

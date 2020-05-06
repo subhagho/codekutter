@@ -64,7 +64,7 @@ public abstract class AbstractSQSQueue<M extends IKeyed> extends AbstractJmsQueu
             if (!(conn instanceof AwsSQSConnection)) {
                 throw new ConfigurationException(String.format("Invalid SQS connection returned. [type=%s]", conn.getClass().getCanonicalName()));
             }
-            connection( (AwsSQSConnection) conn);
+            connection((AwsSQSConnection) conn);
             session(connection().connection());
 
             setupMetrics(queue());

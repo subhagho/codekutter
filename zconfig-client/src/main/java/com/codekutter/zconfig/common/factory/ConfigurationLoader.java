@@ -60,7 +60,7 @@ public class ConfigurationLoader {
                               @Nonnull ConfigProviderFactory.EConfigType configType,
                               @Nonnull Version version,
                               ConfigurationSettings settings, String password)
-    throws ConfigurationException {
+            throws ConfigurationException {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(configName));
         Preconditions.checkArgument(!Strings.isNullOrEmpty(configUri));
         Preconditions.checkArgument(version != null);
@@ -69,15 +69,15 @@ public class ConfigurationLoader {
         try {
             URI uri = new URI(configUri);
             LogUtils.debug(getClass(),
-                           String.format(
-                                   "Reading configuration: [type=%s][uri=%s][version=%s]",
-                                   configType.name(), uri.toString(),
-                                   version.toString()));
+                    String.format(
+                            "Reading configuration: [type=%s][uri=%s][version=%s]",
+                            configType.name(), uri.toString(),
+                            version.toString()));
             try (AbstractConfigReader reader = ConfigProviderFactory.reader(uri)) {
                 if (reader == null) {
                     throw new ConfigurationException(
                             String.format("Error getting reader for URI: [uri=%s]",
-                                          configUri));
+                                    configUri));
                 }
                 try (
                         AbstractConfigParser parser =
@@ -112,7 +112,7 @@ public class ConfigurationLoader {
     public Configuration load(@Nonnull String configName, @Nonnull String configUri,
                               @Nonnull ConfigProviderFactory.EConfigType configType,
                               @Nonnull Version version, String password)
-    throws ConfigurationException {
+            throws ConfigurationException {
         return load(configName, configUri, configType, version, null, password);
     }
 
@@ -129,16 +129,16 @@ public class ConfigurationLoader {
     public Configuration load(@Nonnull String configName, @Nonnull String filename,
                               @Nonnull Version version,
                               ConfigurationSettings settings, String password)
-    throws ConfigurationException {
+            throws ConfigurationException {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(configName));
         Preconditions.checkArgument(!Strings.isNullOrEmpty(filename));
         Preconditions.checkArgument(version != null);
 
         LogUtils.debug(getClass(),
-                       String.format(
-                               "Reading configuration: [name=%s][filename=%s][version=%s]",
-                               configName, filename,
-                               version.toString()));
+                String.format(
+                        "Reading configuration: [name=%s][filename=%s][version=%s]",
+                        configName, filename,
+                        version.toString()));
         try {
             try (ConfigFileReader reader = new ConfigFileReader(filename)) {
                 try (
@@ -170,7 +170,7 @@ public class ConfigurationLoader {
      */
     public Configuration load(@Nonnull String configName, @Nonnull String filename,
                               @Nonnull Version version, String password)
-    throws ConfigurationException {
+            throws ConfigurationException {
         return load(configName, filename, version, null, password);
     }
 }

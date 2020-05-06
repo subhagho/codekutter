@@ -15,16 +15,12 @@
  *
  */
 
-package com.codekutter.common.model.annotations;
+package com.codekutter.r2db.driver.impl;
 
-public enum EPermissionPolicy {
-    /**
-     * Cascade Permission Check to parent(s) - Permissions specified on parents
-     * will be used to filter permissions on the specified entity.
-     */
-    CascadeUp,
-    /**
-     * Entity permission will override any constraints on the parent(s) permissions.
-     */
-    Override
+import javax.persistence.Entity;
+import javax.persistence.Table;
+
+@Entity
+@Table(name = "config_ds_filesystem_aws")
+public class BaseS3StoreConfig extends S3StoreConfig {
 }

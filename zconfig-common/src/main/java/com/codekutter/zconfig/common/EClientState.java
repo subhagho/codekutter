@@ -60,4 +60,5 @@ public enum EClientState implements IState<EClientState> {
     @Override
     public EClientState getErrorState() {
         return Error;
-    }}
+    }
+}

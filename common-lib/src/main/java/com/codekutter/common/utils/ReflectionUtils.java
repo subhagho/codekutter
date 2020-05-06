@@ -184,13 +184,14 @@ public class ReflectionUtils {
         Field[] fields = getAllFields(type);
         if (fields != null && fields.length > 0) {
             Map<String, Field> map = new HashMap<>();
-            for(Field field : fields) {
+            for (Field field : fields) {
                 map.put(field.getName(), field);
             }
             return map;
         }
         return null;
     }
+
     /**
      * Get fields declared for this type and add them to the list passed.
      *
@@ -262,7 +263,11 @@ public class ReflectionUtils {
      * @return - Field value.
      * @throws Exception
      */
-    public static Object getFieldValue(@Nonnull Object o, @Nonnull Field field)
+    public static Object getFieldValue(@Nonnull Object o, @Nonnull Field field) throws Exception {
+        return getFieldValue(o, field, false);
+    }
+
+    public static Object getFieldValue(@Nonnull Object o, @Nonnull Field field, boolean ignore)
             throws Exception {
         Preconditions.checkArgument(o != null);
         Preconditions.checkArgument(field != null);
@@ -284,9 +289,12 @@ public class ReflectionUtils {
         }
 
         if (m == null)
-            throw new Exception("No accessable method found for field. [field="
-                    + field.getName() + "][class="
-                    + o.getClass().getCanonicalName() + "]");
+            if (!ignore)
+                throw new Exception("No accessable method found for field. [field="
+                        + field.getName() + "][class="
+                        + o.getClass().getCanonicalName() + "]");
+            else return null;
+
         return MethodUtils.invokeMethod(o, method);
     }
 
@@ -700,20 +708,8 @@ public class ReflectionUtils {
      * @return - Is primitive?
      */
     public static boolean isPrimitiveTypeOrClass(@Nonnull Class<?> type) {
-        if (type.isPrimitive())
-            return true;
-        else if (type.equals(Boolean.class) || type.equals(boolean.class) ||
-                type.equals(Short.class) || type.equals(short.class)
-                || type.equals(Integer.class) || type.equals(int.class) ||
-                type.equals(Long.class) || type.equals(long.class)
-                || type.equals(Float.class) || type.equals(float.class) ||
-                type.equals(Double.class) || type.equals(double.class)
-                || type.equals(Character.class) || type.equals(char.class)) {
-            return true;
-        } else if (type.equals(Class.class)) {
-            return true;
-        }
-        return false;
+        if (isNumericType(type)) return true;
+        return type.equals(Class.class);
     }
 
     /**
@@ -741,6 +737,18 @@ public class ReflectionUtils {
             return true;
         }
         return false;
+    }
+
+    public static boolean isNumericType(@Nonnull Class<?> type) {
+        if (type.isPrimitive())
+            return true;
+        else return type.equals(Boolean.class) || type.equals(boolean.class) ||
+                type.equals(Short.class) || type.equals(short.class)
+                || type.equals(Integer.class) || type.equals(int.class) ||
+                type.equals(Long.class) || type.equals(long.class)
+                || type.equals(Float.class) || type.equals(float.class) ||
+                type.equals(Double.class) || type.equals(double.class)
+                || type.equals(Character.class) || type.equals(char.class);
     }
 
     /**

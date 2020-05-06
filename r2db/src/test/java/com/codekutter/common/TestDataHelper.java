@@ -71,6 +71,14 @@ public class TestDataHelper {
                 order.addItem(item);
             }
             order.setCreatedOn(new Date());
+            List<String> strings = new ArrayList<>();
+            for (int jj = 0; jj < ii + 5; jj++) {
+                strings.add(UUID.randomUUID().toString());
+            }
+            order.setTestEncryptionList(strings);
+            Set<Customer> customers = new HashSet<>();
+            customers.add(order.getCustomer());
+            order.setTestSetEmbedded(customers);
             orders.add(order);
         }
         return orders;
@@ -96,7 +104,7 @@ public class TestDataHelper {
         return customer;
     }
 
-    public static Product createProduct(int index , String prefix) {
+    public static Product createProduct(int index, String prefix) {
         if (Strings.isNullOrEmpty(prefix)) {
             prefix = "PRODUCT_";
         }

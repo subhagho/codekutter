@@ -15,7 +15,7 @@
  *
  */
 
-package com.codekutter.r2db.driver.model;
+package com.codekutter.common.model;
 
 import com.codekutter.common.model.IEntity;
 import com.codekutter.common.model.IKey;
@@ -31,6 +31,7 @@ import java.net.URI;
 @Setter
 public abstract class RemoteFileEntity<K extends IKey, C> extends File implements IEntity<K> {
     private long updateTimestamp;
+    private URI remoteUri;
 
     public RemoteFileEntity(String pathname) {
         super(pathname);

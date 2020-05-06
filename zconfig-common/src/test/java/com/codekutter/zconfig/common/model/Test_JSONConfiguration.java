@@ -127,7 +127,7 @@ class Test_JSONConfiguration {
             String param = ((ConfigValueNode) node).getValue();
             assertFalse(Strings.isNullOrEmpty(param));
             debug(getClass(),
-                  String.format("[path=%s] property value = %s", path, param));
+                    String.format("[path=%s] property value = %s", path, param));
         } catch (Throwable e) {
             error(getClass(), e);
             fail(e);
@@ -149,7 +149,7 @@ class Test_JSONConfiguration {
             String param = ((ConfigValueNode) node).getValue();
             assertFalse(Strings.isNullOrEmpty(param));
             debug(getClass(),
-                  String.format("[path=%s] parameter value = %s", path, param));
+                    String.format("[path=%s] parameter value = %s", path, param));
 
             path = "configuration/node_1/node_2#";
             node = configuration.find(path);
@@ -177,7 +177,7 @@ class Test_JSONConfiguration {
             String param = ((ConfigValueNode) node).getValue();
             assertFalse(Strings.isNullOrEmpty(param));
             debug(getClass(),
-                  String.format("[path=%s] parameter value = %s", path, param));
+                    String.format("[path=%s] parameter value = %s", path, param));
         } catch (Throwable e) {
             error(getClass(), e);
             fail(e);

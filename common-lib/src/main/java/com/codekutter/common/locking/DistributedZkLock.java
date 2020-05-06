@@ -24,6 +24,7 @@ import com.google.common.base.Preconditions;
 import org.apache.curator.framework.recipes.locks.InterProcessMutex;
 
 import javax.annotation.Nonnull;
+import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -31,18 +32,10 @@ import java.util.concurrent.TimeUnit;
  * persist and synchronize lock(s) and state(s).
  */
 public class DistributedZkLock extends DistributedLock {
-    private static final class Metrics {
-        private static final String METRIC_LATENCY_LOCK = String.format("%s.%s.%s.LOCK", DistributedZkLock.class.getName(), "%s", "%s");
-        private static final String METRIC_LATENCY_UNLOCK = String.format("%s.%s.%s.UNLOCK", DistributedZkLock.class.getName(), "%s", "%s");
-        private static final String METRIC_COUNTER_ERROR = String.format("%s.%s.%s.ERRORS", DistributedZkLock.class.getName(), "%s", "%s");
-        private static final String METRIC_COUNTER_CALLS = String.format("%s.%s.%s.CALLS", DistributedZkLock.class.getName(), "%s", "%s");
-    }
-
     /**
      * Default Lock get timeout.
      */
     private static final int DEFAULT_LOCK_TIMEOUT = 500;
-
     /**
      * ZooKeeper Inter-process Mutex instance.
      */
@@ -64,6 +57,26 @@ public class DistributedZkLock extends DistributedLock {
                 Metrics.METRIC_LATENCY_UNLOCK,
                 Metrics.METRIC_COUNTER_CALLS,
                 Metrics.METRIC_COUNTER_ERROR);
+    }
+
+    /**
+     * Release this lock handle.
+     *
+     * @throws IOException
+     */
+    @Override
+    public void remove() throws IOException {
+
+    }
+
+    /**
+     * Check the lock state is valid.
+     *
+     * @return - Is valid?
+     */
+    @Override
+    public boolean isValid() {
+        return true;
     }
 
     public DistributedZkLock withMutex(@Nonnull InterProcessMutex mutex) {
@@ -151,11 +164,11 @@ public class DistributedZkLock extends DistributedLock {
                 } else {
                     throw new LockException(String.format("[%s][%s] Lock not held by current thread. [thread=%d]", id().getNamespace(), id().getName(), threadId()));
                 }
-                super.unlock();
             } catch (Throwable t) {
-                super.unlock();
                 Monitoring.increment(errorCounter.name(), (KeyValuePair<String, String>[]) null);
                 throw new LockException(t);
+            } finally {
+                super.unlock();
             }
         });
     }
@@ -167,5 +180,12 @@ public class DistributedZkLock extends DistributedLock {
             return mutex.isAcquiredInThisProcess();
         }
         return false;
+    }
+
+    private static final class Metrics {
+        private static final String METRIC_LATENCY_LOCK = String.format("%s.%s.%s.LOCK", DistributedZkLock.class.getName(), "%s", "%s");
+        private static final String METRIC_LATENCY_UNLOCK = String.format("%s.%s.%s.UNLOCK", DistributedZkLock.class.getName(), "%s", "%s");
+        private static final String METRIC_COUNTER_ERROR = String.format("%s.%s.%s.ERRORS", DistributedZkLock.class.getName(), "%s", "%s");
+        private static final String METRIC_COUNTER_CALLS = String.format("%s.%s.%s.CALLS", DistributedZkLock.class.getName(), "%s", "%s");
     }
 }

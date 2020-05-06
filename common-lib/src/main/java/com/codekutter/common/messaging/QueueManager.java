@@ -45,8 +45,17 @@ import java.util.Map;
 @ConfigPath(path = "queues")
 @SuppressWarnings("rawtypes")
 public class QueueManager implements IConfigurable, Closeable {
+    public static final QueueManager __instance = new QueueManager();
     @Setter(AccessLevel.NONE)
     private Map<String, AbstractQueue> queues = new HashMap<>();
+
+    public static void setup(@Nonnull AbstractConfigNode node) throws ConfigurationException {
+        __instance.configure(node);
+    }
+
+    public static QueueManager get() {
+        return __instance;
+    }
 
     @SuppressWarnings("unchecked")
     public <C, M> AbstractQueue<C, M> getQueue(@Nonnull String name,
@@ -112,15 +121,5 @@ public class QueueManager implements IConfigurable, Closeable {
             }
             queues.clear();
         }
-    }
-
-    public static final QueueManager __instance = new QueueManager();
-
-    public static void setup(@Nonnull AbstractConfigNode node) throws ConfigurationException {
-        __instance.configure(node);
-    }
-
-    public static QueueManager get() {
-        return __instance;
     }
 }

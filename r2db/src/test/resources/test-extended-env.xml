@@ -130,15 +130,20 @@
             </audit-manager>
         </audit>
         <r2db>
+            <azure-auth id="e99810ce-bfe3-4002-ba4c-22bb170b72e6">
+                <authority>https://login.microsoftonline.com/organizations</authority>
+                <username></username>
+            </azure-auth>
             <entity-manager>
                 <connections>
-                    <connection name="TestOneDriveConnection" class="com.codekutter.r2db.driver.impl.MSGraphConnection">
-                        <clientId>3a1bcfe7-d2e4-42d2-a304-e98f9f14dd4b</clientId>
-                        <username>851000113@devO365.com</username>
+                    <!--connection name="TestOneDriveConnection" class="com.codekutter.r2db.driver.impl.MSGraphConnection">
+                        <tenantId>fb96c922-d113-4a72-94e1-cfb4c90523bd</tenantId>
+                        <clientId>e99810ce-bfe3-4002-ba4c-22bb170b72e6</clientId>
+                        <username>testoned@subhoghoshoutlook.onmicrosoft.com</username>
                         <password encrypted="true">
-                            <value>XfBK34nbUkp3kV81dmPPwQ==</value>
+                            <value>iyGiHwGIT2JDgk01E/xjUw==</value>
                         </password>
-                    </connection>
+                    </connection-->
                     <connection name="TestAuditConnection" class="com.codekutter.common.stores.impl.HibernateConnection"
                                 driver="org.mariadb.jdbc.Driver" dialect="org.hibernate.dialect.MariaDBDialect">
                         <url>jdbc:mariadb://127.0.0.1:3306/test</url>
@@ -148,7 +153,7 @@
                             <value>iyGiHwGIT2JDgk01E/xjUw==</value>
                         </password>
                         <classes>
-                            <class>com.codekutter.common.scheduling.impl.JobAuditLog</class>
+                            <class>com.codekutter.common.model.JobAuditLog</class>
                             <class>com.codekutter.common.model.AuditRecord</class>
                         </classes>
                         <hibernate>
@@ -170,7 +175,9 @@
                             <class>com.codekutter.common.stores.model.Product</class>
                             <class>com.codekutter.common.stores.model.Item</class>
                             <class>com.codekutter.common.stores.model.Order</class>
-                            <class>com.codekutter.common.scheduling.impl.JobAuditLog</class>
+                            <class>com.codekutter.common.model.JobAuditLog</class>
+                            <class>com.codekutter.r2db.driver.impl.AwsS3ConnectionConfig</class>
+                            <class>com.codekutter.r2db.driver.impl.S3StoreConfig</class>
                         </classes>
                         <hibernate>
                             <parameters>
@@ -194,6 +201,12 @@
                         <token encrypted="true">
                             <value>I1wamaUKOAPqAX3lKkYEawBueg3pnFunxyosMgW50F7F7TImy7c4wrV/Jqd+TQfI</value>
                         </token>
+                    </connection>
+                    <connection name="TEST_S3_DB"
+                                class="com.codekutter.r2db.driver.impl.AwsS3Connection"
+                                configType="com.codekutter.r2db.driver.impl.AwsS3ConnectionConfig"
+                                source="Database">
+                        <connection reference="TestDbConnection" class="com.codekutter.common.stores.impl.HibernateConnection"/>
                     </connection>
                 </connections>
                 <dataStoreManager>

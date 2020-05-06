@@ -79,9 +79,9 @@ public class RestBasicAuthConnection extends RestConnection {
 
     @Override
     public Invocation.Builder target(@Nonnull String url) throws ConnectionException {
-       state().checkOpened();
-       return client.target(url).request()
-               .property(HttpAuthenticationFeature.HTTP_AUTHENTICATION_BASIC_USERNAME, username)
-               .property(HttpAuthenticationFeature.HTTP_AUTHENTICATION_BASIC_PASSWORD, password.getDecryptedValue());
+        state().checkOpened();
+        return client.target(url).request()
+                .property(HttpAuthenticationFeature.HTTP_AUTHENTICATION_BASIC_USERNAME, username)
+                .property(HttpAuthenticationFeature.HTTP_AUTHENTICATION_BASIC_PASSWORD, password.getDecryptedValue());
     }
 }

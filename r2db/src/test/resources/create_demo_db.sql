@@ -17,17 +17,15 @@
 
 drop table if exists tb_customer;
 
-create table tb_customer
-(
-	customer_id varchar(128) not null
-		primary key,
-	first_name varchar(100) not null,
-	last_name varchar(100) not null,
-	date_of_birth datetime not null,
-	email_id varchar(100) not null,
-	phone_no varchar(16) not null
-)
-comment 'Demo customer entity table.' charset=utf8;
+CREATE TABLE `tb_customer` (
+  `customer_id` varchar(128) NOT NULL,
+  `first_name` varchar(100) NOT NULL,
+  `last_name` varchar(100) NOT NULL,
+  `date_of_birth` datetime NOT NULL,
+  `email_id` varchar(256) NOT NULL,
+  `phone_no` varchar(256) NOT NULL,
+  PRIMARY KEY (`customer_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='Demo customer entity table.';
 
 drop table if exists tb_orders;
 

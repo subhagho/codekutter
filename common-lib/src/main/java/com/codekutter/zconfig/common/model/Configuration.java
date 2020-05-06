@@ -48,79 +48,25 @@ import java.util.UUID;
  * Configuration class that defines a configuration set.
  */
 public class Configuration {
-    @Data
-    public static class Header {
-        /**
-         * Unique configuration ID for this configuration/version.
-         */
-        private String id;
-        /**
-         * Application Group this configuration belongs to.
-         */
-        private String applicationGroup;
-        /**
-         * Application this configuration belong to.
-         */
-        private String application;
-        /**
-         * Name of this configuration set. Must be globally unique within a configuration server instance.
-         */
-        private String name;
-        /**
-         * Description of this configuration.
-         */
-        private String description;
-        /**
-         * Version of this configuration instance.
-         */
-        private Version version;
-        /**
-         * Created By information about this configuration.
-         */
-        private ModifiedBy createdBy;
-        /**
-         * Last Modified By information about this configuration.
-         */
-        private ModifiedBy updatedBy;
-        /**
-         * Specifies the sync mode for this configuration.
-         */
-        private ESyncMode syncMode;
-
-        /**
-         * MD5 Hash of the encryption Key.
-         */
-        private String encryptionHash;
-        /**
-         * Loaded Timestamp of this instance.
-         */
-        private long timestamp = System.currentTimeMillis();
-    }
-
     /**
      * Local instance ID of this configuration handle.
      */
     @JsonIgnore
     private String instanceId;
-
     /**
      * Local State of this configuration instance.
      */
     @JsonIgnore
     private NodeState state;
-
     /**
      * Configuration Header.
      */
     private Header header = new Header();
-
     /**
      * Root configuration node for this configuration.
      */
     private ConfigPathNode rootConfigNode;
-
     private ConfigurationSettings settings;
-
     private AbstractConnection<Session> connection;
 
     /**
@@ -433,7 +379,7 @@ public class Configuration {
     public void loaded() throws ConfigurationException {
         if (state.hasError()) {
             throw new ConfigurationException("Configuration in error state.",
-                                             state.getError());
+                    state.getError());
         }
         state.setState(ENodeState.Synced);
         if (rootConfigNode != null)
@@ -453,7 +399,7 @@ public class Configuration {
      * @return - Configuration Node or NULL.
      */
     public AbstractConfigNode find(AbstractConfigNode node, String path)
-    throws ConfigurationException {
+            throws ConfigurationException {
         Preconditions.checkArgument(node != null);
         Preconditions.checkArgument(!Strings.isNullOrEmpty(path));
 
@@ -581,7 +527,7 @@ public class Configuration {
                             for (String key : pmap.keySet()) {
                                 if (!props.hasKey(key)) {
                                     props.addKeyValue(key,
-                                                      pmap.get(key).getValue());
+                                            pmap.get(key).getValue());
                                 }
                             }
                         } else {
@@ -680,11 +626,11 @@ public class Configuration {
      * @throws ConfigurationException
      */
     public synchronized String getInstancePath(String subdir)
-    throws ConfigurationException {
+            throws ConfigurationException {
         String dir =
                 String.format("%s/%s/%s/%s", header.applicationGroup,
-                              header.application, header.name,
-                              header.version.toString());
+                        header.application, header.name,
+                        header.version.toString());
         if (!Strings.isNullOrEmpty(subdir)) {
             dir = String.format("%s/%s", dir, subdir);
         }
@@ -693,5 +639,54 @@ public class Configuration {
         } catch (IOException e) {
             throw new ConfigurationException(e);
         }
+    }
+
+    @Data
+    public static class Header {
+        /**
+         * Unique configuration ID for this configuration/version.
+         */
+        private String id;
+        /**
+         * Application Group this configuration belongs to.
+         */
+        private String applicationGroup;
+        /**
+         * Application this configuration belong to.
+         */
+        private String application;
+        /**
+         * Name of this configuration set. Must be globally unique within a configuration server instance.
+         */
+        private String name;
+        /**
+         * Description of this configuration.
+         */
+        private String description;
+        /**
+         * Version of this configuration instance.
+         */
+        private Version version;
+        /**
+         * Created By information about this configuration.
+         */
+        private ModifiedBy createdBy;
+        /**
+         * Last Modified By information about this configuration.
+         */
+        private ModifiedBy updatedBy;
+        /**
+         * Specifies the sync mode for this configuration.
+         */
+        private ESyncMode syncMode;
+
+        /**
+         * MD5 Hash of the encryption Key.
+         */
+        private String encryptionHash;
+        /**
+         * Loaded Timestamp of this instance.
+         */
+        private long timestamp = System.currentTimeMillis();
     }
 }

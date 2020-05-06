@@ -34,5 +34,6 @@ public interface IRestResponseHandler extends IConfigurable {
      * @return - Processed response object.
      * @throws JobExecutionException
      */
-    @Nonnull Object handle(@Nonnull Response response) throws JobExecutionException;
+    @Nonnull
+    Object handle(@Nonnull Response response) throws JobExecutionException;
 }

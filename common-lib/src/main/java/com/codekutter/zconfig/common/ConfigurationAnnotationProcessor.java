@@ -48,25 +48,6 @@ import java.util.Set;
  */
 public class ConfigurationAnnotationProcessor {
     /**
-     * Struct class to pass information about field annotations.
-     */
-    public static class StructFieldAnnotation {
-        /**
-         * Annotated field.
-         */
-        public Field field;
-        /**
-         * Annotation type.
-         */
-        public Annotation annotation;
-    }
-
-    private static class StructNodeInfo {
-        public String name;
-        public AbstractConfigNode node;
-    }
-
-    /**
      * Reader and apply the values from the passed configuration based on the type annotations.
      *
      * @param type   - Type of the target object.
@@ -125,7 +106,6 @@ public class ConfigurationAnnotationProcessor {
         }
         return target;
     }
-
 
     /**
      * Reader and apply the values from the passed configuration based on the type annotations.
@@ -698,7 +678,7 @@ public class ConfigurationAnnotationProcessor {
                     ConfigParametersNode.NODE_ABBR_PREFIX);
             if (field.getType() == EncryptedValue.class) {
                 ConfigValueNode vn = null;
-                if (node instanceof ConfigPathNode) {
+                if (nodeInfo.node instanceof ConfigPathNode) {
                     ConfigPathNode pathNode = (ConfigPathNode) nodeInfo.node;
                     ConfigParametersNode params = pathNode.parmeters();
                     if (params != null && !params.isEmpty()) {
@@ -723,7 +703,7 @@ public class ConfigurationAnnotationProcessor {
                 return;
             }
             String value = null;
-            if (node instanceof ConfigPathNode) {
+            if (nodeInfo.node instanceof ConfigPathNode) {
                 ConfigPathNode pathNode = (ConfigPathNode) nodeInfo.node;
                 ConfigParametersNode params = pathNode.parmeters();
                 if (params != null && !params.isEmpty()) {
@@ -790,7 +770,7 @@ public class ConfigurationAnnotationProcessor {
                     ConfigAttributesNode.NODE_ABBR_PREFIX);
             if (field.getType() == EncryptedValue.class) {
                 ConfigValueNode vn = null;
-                if (node instanceof ConfigPathNode) {
+                if (nodeInfo.node instanceof ConfigPathNode) {
                     ConfigPathNode pathNode = (ConfigPathNode) nodeInfo.node;
                     ConfigAttributesNode attrs = pathNode.attributes();
                     if (attrs != null && !attrs.isEmpty()) {
@@ -816,7 +796,7 @@ public class ConfigurationAnnotationProcessor {
             }
 
             String value = null;
-            if (node instanceof ConfigPathNode) {
+            if (nodeInfo.node instanceof ConfigPathNode) {
                 ConfigPathNode pathNode = (ConfigPathNode) nodeInfo.node;
                 ConfigAttributesNode attrs = pathNode.attributes();
                 if (attrs != null && !attrs.isEmpty()) {
@@ -1021,5 +1001,24 @@ public class ConfigurationAnnotationProcessor {
             }
         }
         return null;
+    }
+
+    /**
+     * Struct class to pass information about field annotations.
+     */
+    public static class StructFieldAnnotation {
+        /**
+         * Annotated field.
+         */
+        public Field field;
+        /**
+         * Annotation type.
+         */
+        public Annotation annotation;
+    }
+
+    private static class StructNodeInfo {
+        public String name;
+        public AbstractConfigNode node;
     }
 }

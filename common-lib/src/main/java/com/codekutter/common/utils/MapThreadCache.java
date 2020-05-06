@@ -17,12 +17,17 @@
 
 package com.codekutter.common.utils;
 
+import com.codekutter.common.ICloseDelegate;
+import com.google.common.base.Preconditions;
+
 import javax.annotation.Nonnull;
+import java.io.Closeable;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.locks.ReentrantLock;
 
-public class MapThreadCache<K, V> {
+public class MapThreadCache<K, V> implements Closeable {
     private Map<Long, Map<K, V>> cache = new HashMap<>();
     private ReentrantLock cacheLock = new ReentrantLock();
 
@@ -60,15 +65,29 @@ public class MapThreadCache<K, V> {
         return null;
     }
 
-    public boolean remove(K key) {
-        Map<K, V> values = get();
-        if (values != null && !values.isEmpty()) {
-            if (values.containsKey(key)) {
-                values.remove(key);
-                return true;
-            }
+    public boolean containsKey(K key) {
+        if (containsThread()) {
+            return get().containsKey(key);
         }
         return false;
+    }
+
+    public boolean remove(K key) {
+        long threadId = Thread.currentThread().getId();
+        cacheLock.lock();
+        try {
+            Map<K, V> values = cache.get(threadId);
+            if (values != null && !values.isEmpty()) {
+                if (values.containsKey(key)) {
+                    V value = values.remove(key);
+                    return value != null;
+                }
+                Preconditions.checkState(get(key) == null);
+            }
+            return false;
+        } finally {
+            cacheLock.unlock();
+        }
     }
 
     public void clear() {
@@ -100,5 +119,53 @@ public class MapThreadCache<K, V> {
 
     public boolean containsThread() {
         return cache.containsKey(Thread.currentThread().getId());
+    }
+
+    @Override
+    public void close() throws IOException {
+        cacheLock.lock();
+        try {
+            if (!cache.isEmpty()) {
+                for (long id : cache.keySet()) {
+                    Map<K, V> map = cache.get(id);
+                    if (!map.isEmpty()) {
+                        for (K key : map.keySet()) {
+                            V value = map.get(key);
+                            if (value instanceof Closeable) {
+                                ((Closeable) value).close();
+                                ;
+                            }
+                        }
+                        map.clear();
+                    }
+                }
+                cache.clear();
+            }
+        } finally {
+            cacheLock.unlock();
+        }
+    }
+
+    public void close(ICloseDelegate<V> delegate) throws IOException {
+        cacheLock.lock();
+        try {
+            if (!cache.isEmpty()) {
+                for (long id : cache.keySet()) {
+                    Map<K, V> map = cache.get(id);
+                    if (!map.isEmpty()) {
+                        for (K key : map.keySet()) {
+                            V value = map.get(key);
+                            delegate.close(value);
+                        }
+                        map.clear();
+                    }
+                }
+                cache.clear();
+            }
+        } catch (Exception ex) {
+            throw new IOException(ex);
+        } finally {
+            cacheLock.unlock();
+        }
     }
 }

@@ -48,42 +48,10 @@ import java.util.List;
 @Accessors(fluent = true)
 @ConfigPath(path = "queue")
 public abstract class AbstractQueue<C, M> implements IConfigurable, Closeable {
-    private static final class Metrics {
-        private static final String METRIC_LATENCY_SEND = String.format("%s.%s.%s.SEND", "%s", "%s", "%s");
-        private static final String METRIC_LATENCY_RECEIVE = String.format("%s.%s.%s.RECEIVE", "%s", "%s", "%s");
-        private static final String METRIC_COUNTER_SEND_ERROR = String.format("%s.%s.%s.ERRORS.SEND", "%s", "%s", "%s");
-        private static final String METRIC_COUNTER_RECV = String.format("%s.%s.%s.COUNT.RECEIVE", "%s", "%s", "%s");
-        private static final String METRIC_COUNTER_SEND = String.format("%s.%s.%s.COUNT.SEND", "%s", "%s", "%s");
-        private static final String METRIC_COUNTER_RECV_ERROR = String.format("%s.%s.%s.ERRORS.RECEIVE", "%s", "%s", "%s");
-    }
     /**
      * Default Queue receive message timeout.
      */
     private static final long DEFAULT_RECEIVE_TIMEOUT = 30 * 1000;
-
-    /**
-     * Message queue name.
-     */
-    @ConfigAttribute(required = true)
-    private String name;
-    /**
-     * Queue receive message timeout.
-     */
-    @ConfigValue(name = "receiveTimeout")
-    private long receiveTimeout = DEFAULT_RECEIVE_TIMEOUT;
-
-    @ConfigAttribute
-    private boolean audited = false;
-
-    @ConfigValue
-    private String auditLogger;
-
-    /**
-     * Queue connection handle.
-     */
-    @Setter(AccessLevel.MODULE)
-    private AbstractConnection<C> connection;
-
     /**
      * Metrics - Send Latency
      */
@@ -120,6 +88,25 @@ public abstract class AbstractQueue<C, M> implements IConfigurable, Closeable {
     @Setter(AccessLevel.NONE)
     @Getter(AccessLevel.NONE)
     protected Id sendErrorCounter = null;
+    /**
+     * Message queue name.
+     */
+    @ConfigAttribute(required = true)
+    private String name;
+    /**
+     * Queue receive message timeout.
+     */
+    @ConfigValue(name = "receiveTimeout")
+    private long receiveTimeout = DEFAULT_RECEIVE_TIMEOUT;
+    @ConfigAttribute
+    private boolean audited = false;
+    @ConfigValue
+    private String auditLogger;
+    /**
+     * Queue connection handle.
+     */
+    @Setter(AccessLevel.MODULE)
+    private AbstractConnection<C> connection;
 
     /**
      * Send a message to the queue.
@@ -161,7 +148,6 @@ public abstract class AbstractQueue<C, M> implements IConfigurable, Closeable {
      */
     public abstract List<M> receiveBatch(int maxResults, long timeout, @Nonnull Principal user) throws JMSException;
 
-
     /**
      * Receive a batch of messages, with the specified batch size and
      * the default receive timeout.
@@ -197,11 +183,19 @@ public abstract class AbstractQueue<C, M> implements IConfigurable, Closeable {
         sendErrorCounter = Monitoring.addCounter(String.format(Metrics.METRIC_COUNTER_SEND_ERROR, getClass().getCanonicalName(), name(), queue));
     }
 
-
     public QueueAuditContext context() {
         QueueAuditContext ctx = new QueueAuditContext();
         ctx.setQueueType(getClass().getCanonicalName());
         ctx.setQueueName(name);
         return ctx;
+    }
+
+    private static final class Metrics {
+        private static final String METRIC_LATENCY_SEND = String.format("%s.%s.%s.SEND", "%s", "%s", "%s");
+        private static final String METRIC_LATENCY_RECEIVE = String.format("%s.%s.%s.RECEIVE", "%s", "%s", "%s");
+        private static final String METRIC_COUNTER_SEND_ERROR = String.format("%s.%s.%s.ERRORS.SEND", "%s", "%s", "%s");
+        private static final String METRIC_COUNTER_RECV = String.format("%s.%s.%s.COUNT.RECEIVE", "%s", "%s", "%s");
+        private static final String METRIC_COUNTER_SEND = String.format("%s.%s.%s.COUNT.SEND", "%s", "%s", "%s");
+        private static final String METRIC_COUNTER_RECV_ERROR = String.format("%s.%s.%s.ERRORS.RECEIVE", "%s", "%s", "%s");
     }
 }

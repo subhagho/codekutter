@@ -47,38 +47,6 @@ import java.util.concurrent.locks.ReentrantLock;
  */
 public class ConfigurationManager {
     /**
-     * Local Struct to store the autowired instances
-     * loaded by this Configuration Manager.
-     */
-    private static class AutowiredIndexStruct {
-        /**
-         * Configuration Name
-         */
-        public String configName;
-        /**
-         * Instance Type
-         */
-        public Class<?> type;
-        /**
-         * Relative Path instance loaded from.
-         */
-        public String relativePath;
-        /**
-         * Loaded instance handle.
-         */
-        public Object instance;
-
-        @Override
-        public String toString() {
-            return "AutowiredIndexStruct{" +
-                    "configName='" + configName + '\'' +
-                    ", type=" + type.getCanonicalName() +
-                    ", relativePath='" + relativePath + '\'' +
-                    '}';
-        }
-    }
-
-    /**
      * Instance of the configuration loader.
      */
     private ConfigurationLoader loader = new ConfigurationLoader();
@@ -351,7 +319,7 @@ public class ConfigurationManager {
      * @return - Map of types needing update.
      */
     private Map<Integer, AutowiredIndexStruct> getUpdatedTypes(String configName,
-                                                              List<String> paths) {
+                                                               List<String> paths) {
         Map<Integer, AutowiredIndexStruct> map = new HashMap<>();
         for (String path : paths) {
             String indexKey = getTypeIndexKey(path, configName);
@@ -436,8 +404,8 @@ public class ConfigurationManager {
      */
     @SuppressWarnings("unchecked")
     public <T> T autowireType(@Nonnull Class<? extends T> type,
-                               @Nonnull String configName,
-                               String relativePath)
+                              @Nonnull String configName,
+                              String relativePath)
             throws ConfigurationException {
         String key = getTypeKey(type, relativePath, configName);
         if (!Strings.isNullOrEmpty(key)) {
@@ -551,5 +519,37 @@ public class ConfigurationManager {
             }
         }
         return null;
+    }
+
+    /**
+     * Local Struct to store the autowired instances
+     * loaded by this Configuration Manager.
+     */
+    private static class AutowiredIndexStruct {
+        /**
+         * Configuration Name
+         */
+        public String configName;
+        /**
+         * Instance Type
+         */
+        public Class<?> type;
+        /**
+         * Relative Path instance loaded from.
+         */
+        public String relativePath;
+        /**
+         * Loaded instance handle.
+         */
+        public Object instance;
+
+        @Override
+        public String toString() {
+            return "AutowiredIndexStruct{" +
+                    "configName='" + configName + '\'' +
+                    ", type=" + type.getCanonicalName() +
+                    ", relativePath='" + relativePath + '\'' +
+                    '}';
+        }
     }
 }

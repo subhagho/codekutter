@@ -90,7 +90,7 @@ public abstract class AbstractConfigReader implements Closeable {
      * @throws ConfigurationException
      */
     public abstract BufferedReader getBufferedStream()
-    throws ConfigurationException;
+            throws ConfigurationException;
 
     /**
      * Get the  input stream associated with this reader.

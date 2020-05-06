@@ -33,6 +33,7 @@ import javax.jms.Session;
 import java.io.FileInputStream;
 import java.util.List;
 import java.util.Properties;
+import java.util.Random;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -40,13 +41,13 @@ import static org.junit.jupiter.api.Assertions.*;
 class Test_ExtendedZConfigEnv {
     private static final String BASE_PROPS_FILE =
             "src/test/resources/XML/test-extended-env.properties";
+    private static final User user = new User(UUID.randomUUID().toString());
     private static String encryptionKey = "21947a50-6755-47";
     private static String IV = "/NK/c+NKGUwMm0RF";
     private static String namespace = Test_ExtendedZConfigEnv.class.getCanonicalName();
     private static String zkLockName = "TEST_ZK_LOCK";
     private static String dbLockName = "TEST_DB_LOCK";
     private static String sqsQueueName = "TEST-SQS-QUEUE";
-    private static final User user = new User(UUID.randomUUID().toString());
 
     @BeforeAll
     public static void setup() throws Exception {
@@ -80,14 +81,39 @@ class Test_ExtendedZConfigEnv {
     @Test
     void getDbLock() {
         try {
-            DistributedLock lock = DistributedLockFactory.get().getDbLock(namespace, dbLockName);
-            assertNotNull(lock);
-            lock.lock();
-            try {
-                LogUtils.debug(getClass(), String.format("Acquired lock. [namespace=%s][name=%s]", lock.id().getNamespace(), lock.id().getName()));
-                Thread.sleep(35000);
-            } finally {
-                lock.unlock();
+            Thread[] array = new Thread[3];
+            for (int ii = 0; ii < array.length; ii++) {
+                array[ii] = new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            Random r = new Random(System.currentTimeMillis());
+                            int s = r.nextInt(1000);
+                            Thread.sleep(s);
+                            for (int jj = 0; jj < 5; jj++) {
+                                try (DistributedLock lock = DistributedLockFactory.get().getDbLock(namespace, dbLockName)) {
+                                    assertNotNull(lock);
+                                    lock.lock();
+                                    try {
+                                        LogUtils.debug(getClass(),
+                                                String.format("Acquired lock. [thread id=%d][cycle=%d][namespace=%s][name=%s]",
+                                                        Thread.currentThread().getId(), jj, lock.id().getNamespace(), lock.id().getName()));
+                                        Thread.sleep(2000);
+                                    } finally {
+                                        lock.unlock();
+                                    }
+                                }
+                                Thread.sleep(1000);
+                            }
+                        } catch (Throwable t) {
+                            LogUtils.error(getClass(), t);
+                        }
+                    }
+                });
+                array[ii].start();
+            }
+            for (Thread thread : array) {
+                thread.join();
             }
         } catch (Throwable t) {
             LogUtils.error(getClass(), t);

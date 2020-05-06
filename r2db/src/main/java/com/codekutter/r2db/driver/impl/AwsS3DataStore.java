@@ -21,9 +21,11 @@ import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.*;
 import com.codekutter.common.Context;
 import com.codekutter.common.model.IEntity;
+import com.codekutter.common.model.IKey;
 import com.codekutter.common.stores.*;
 import com.codekutter.common.stores.impl.DataStoreAuditContext;
 import com.codekutter.common.stores.impl.EntitySearchResult;
+import com.codekutter.common.utils.CypherUtils;
 import com.codekutter.common.utils.IOUtils;
 import com.codekutter.common.utils.LogUtils;
 import com.codekutter.common.utils.ReflectionUtils;
@@ -39,6 +41,7 @@ import com.google.common.cache.RemovalNotification;
 import lombok.Getter;
 import lombok.experimental.Accessors;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
 
 import javax.annotation.Nonnull;
 import java.io.File;
@@ -83,6 +86,50 @@ public class AwsS3DataStore extends AbstractDirectoryStore<AmazonS3> {
     }
 
     @Override
+    public <K extends IKey, T extends IEntity<K>> T changeGroup(@Nonnull K key, @Nonnull String group, Context context) throws DataStoreException {
+        S3FileEntity entity = find(key, S3FileEntity.class, context);
+        if (entity != null) {
+            try {
+                // Get the existing object ACL that we want to modify.
+                AccessControlList acl = connection().connection().getObjectAcl(entity.getKey().bucket(), entity.getKey().key());
+                List<Grant> grants = acl.getGrantsAsList();
+                List<Grant> remove = new ArrayList<>();
+                if (grants != null && !grants.isEmpty()) {
+                    for (Grant grant : grants) {
+                        if (grant.getPermission() == Permission.FullControl) {
+                            if (!(grant.getGrantee() instanceof CanonicalGrantee)) {
+                                remove.add(grant);
+                            }
+                        }
+                    }
+                }
+                if (!remove.isEmpty()) {
+                    for(Grant grant : remove) {
+                        acl.getGrantsAsList().remove(grant);
+                    }
+                }
+                acl.grantPermission(new EmailAddressGrantee(group), Permission.FullControl);
+                connection().connection().setObjectAcl(entity.getKey().bucket(), entity.getKey().key(), acl);
+
+                return (T) entity;
+            } catch (Exception ex) {
+                throw new DataStoreException(ex);
+            }
+        }
+        return null;
+    }
+
+    @Override
+    public <K extends IKey, T extends IEntity<K>> T changeOwner(@Nonnull K key, @Nonnull String owner, Context context) throws DataStoreException {
+        return changeGroup(key, owner, context);
+    }
+
+    @Override
+    public <K extends IKey, T extends IEntity<K>> T changePermission(@Nonnull K key, String permission, Context context) throws DataStoreException {
+        return null;
+    }
+
+    @Override
     public <S, T> void copy(S source, T target, Context context) throws DataStoreException {
         Preconditions.checkArgument(source instanceof S3FileKey);
         Preconditions.checkArgument(target instanceof S3FileKey);
@@ -111,15 +158,15 @@ public class AwsS3DataStore extends AbstractDirectoryStore<AmazonS3> {
         Preconditions.checkState(config() instanceof S3StoreConfig);
         try {
             AbstractConnection<AmazonS3> connection =
-                    dataStoreManager.getConnection(config().connectionName(), AmazonS3.class);
+                    dataStoreManager.getConnection(config().getConnectionName(), AmazonS3.class);
             if (!(connection instanceof AwsS3Connection)) {
-                throw new ConfigurationException(String.format("No connection found for name. [name=%s]", config().connectionName()));
+                throw new ConfigurationException(String.format("No connection found for name. [name=%s]", config().getConnectionName()));
             }
             withConnection(connection);
 
             S3StoreConfig config = (S3StoreConfig) config();
-            this.bucket = config.bucket();
-            String wd = config.tempDirectory();
+            this.bucket = config.getBucket();
+            String wd = config.getTempDirectory();
             if (Strings.isNullOrEmpty(wd)) {
                 wd = IOUtils.getTempDirectory(UUID.randomUUID().toString());
             } else {
@@ -132,7 +179,7 @@ public class AwsS3DataStore extends AbstractDirectoryStore<AmazonS3> {
                 }
             }
 
-            if (config.useCache()) {
+            if (config.isUseCache()) {
                 RemovalListener<S3FileKey, S3FileEntity> listener = new RemovalListener<S3FileKey, S3FileEntity>() {
                     @Override
                     public void onRemoval(RemovalNotification<S3FileKey, S3FileEntity> notification) {
@@ -145,10 +192,13 @@ public class AwsS3DataStore extends AbstractDirectoryStore<AmazonS3> {
                     }
                 };
                 cache = CacheBuilder.newBuilder()
-                        .maximumSize(config.maxCacheSize())
-                        .expireAfterAccess(config.cacheExpiryWindow(), TimeUnit.MILLISECONDS)
+                        .maximumSize(config.getMaxCacheSize())
+                        .expireAfterAccess(config.getCacheExpiryWindow(), TimeUnit.MILLISECONDS)
                         .removalListener(listener)
                         .build();
+            }
+            if (config.getMaxResults() > 0) {
+                maxResults(config.getMaxResults());
             }
         } catch (Throwable t) {
             throw new ConfigurationException(t);
@@ -251,20 +301,24 @@ public class AwsS3DataStore extends AbstractDirectoryStore<AmazonS3> {
             }
             S3Object obj = connection().connection().getObject(fk.bucket(), fk.key());
             if (obj != null) {
-                String lfname = getLocalFileName(fk);
-                S3FileEntity entity = new S3FileEntity(fk.bucket(), fk.key(), lfname).
-                        withClient(connection().connection());
-                ObjectMetadata meta = obj.getObjectMetadata();
-                entity.setUpdateTimestamp(meta.getLastModified().getTime());
+                try {
+                    String lfname = getLocalFileName(fk);
+                    S3FileEntity entity = new S3FileEntity(fk.bucket(), fk.key(), lfname).
+                            withClient(connection().connection());
+                    ObjectMetadata meta = obj.getObjectMetadata();
+                    entity.setUpdateTimestamp(meta.getLastModified().getTime());
 
-                File lf = entity.copyToLocal();
-                if (!lf.exists()) {
-                    throw new DataStoreException(String.format("Local file not found. [path=%s]", lf.getAbsolutePath()));
+                    File lf = entity.copyToLocal();
+                    if (!lf.exists()) {
+                        throw new DataStoreException(String.format("Local file not found. [path=%s]", lf.getAbsolutePath()));
+                    }
+                    if (cache != null) {
+                        cache.put(entity.getKey(), entity);
+                    }
+                    return (E) entity;
+                } finally {
+                    obj.close();
                 }
-                if (cache != null) {
-                    cache.put(entity.getKey(), entity);
-                }
-                return (E) entity;
             }
             return null;
         } catch (Throwable t) {
@@ -367,8 +421,16 @@ public class AwsS3DataStore extends AbstractDirectoryStore<AmazonS3> {
         return ctx;
     }
 
-    private String getLocalFileName(S3FileKey key) {
-        return String.format("%s/bucket-%s/%s", workDirectory.getAbsolutePath(), key.bucket(), key.key());
+    private String getLocalFileName(S3FileKey key) throws Exception {
+        String fname = FilenameUtils.getName(key.key());
+        if (Strings.isNullOrEmpty(fname)) {
+            // Should not happen. Will only happen due to null keys created in S3.
+            fname = "ERROR.null";
+        }
+        String dname = FilenameUtils.getPath(key.key());
+        String hash = CypherUtils.getKeyHash(dname);
+        hash = hash.replaceAll("==", "");
+        return String.format("%s/bucket_%s/%s/%s", workDirectory.getAbsolutePath(), key.bucket(), hash, fname);
     }
 
     @Override

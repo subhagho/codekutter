@@ -25,7 +25,7 @@ import javax.persistence.*;
 
 @Data
 @Entity
-@Table(name = "tb_config_records")
+@Table(name = "config_records")
 public class ConfigDbRecord {
     @EmbeddedId
     private ConfigDbRecordId id;

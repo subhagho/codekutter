@@ -34,7 +34,7 @@ import java.lang.annotation.*;
  * Created by subho on 16/11/15.
  */
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.FIELD })
+@Target({ElementType.FIELD})
 @Inherited
 public @interface ConfigAttribute {
     /**

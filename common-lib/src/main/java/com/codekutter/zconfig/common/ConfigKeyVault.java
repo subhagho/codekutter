@@ -24,10 +24,30 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 
 import javax.annotation.Nonnull;
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 
 public class ConfigKeyVault {
+    private static final ConfigKeyVault _instance = new ConfigKeyVault();
     private IKeyVault vault = null;
+
+    public static String getIvSpec(@Nonnull String id, @Nonnull String group,
+                                   @Nonnull String app, @Nonnull String name,
+                                   @Nonnull String keyHash) throws Exception {
+        StringBuffer buffer = new StringBuffer();
+        buffer.append(id).append(group).append(app).append(name).append(keyHash);
+
+        String spec = CypherUtils.getKeyHash(buffer.toString());
+        return spec.substring(0, 16);
+    }
+
+    public static ConfigKeyVault getInstance() {
+        return _instance;
+    }
+
+    public static String getIVSpec(Configuration config) throws Exception {
+        return getIvSpec(config.getId(), config.getApplicationGroup(),
+                config.getApplication(), config.getName(), config.getEncryptionHash());
+    }
 
     public ConfigKeyVault withVault(@Nonnull IKeyVault vault) {
         this.vault = vault;
@@ -47,6 +67,21 @@ public class ConfigKeyVault {
         return this;
     }
 
+    public String encrypt(@Nonnull String value, @Nonnull Configuration config) throws SecurityException {
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(value));
+        Preconditions.checkState(vault != null);
+
+        try {
+            String name = String.format("%s:%s:%s", config.getApplicationGroup(), config.getApplication(), config.getName());
+
+            String iv = getIVSpec(config);
+            char[] pc = vault.getPasscode(name);
+            return CypherUtils.encryptAsString(value, new String(pc), iv);
+        } catch (Exception ex) {
+            throw new SecurityException(ex);
+        }
+    }
+
     public String decrypt(@Nonnull String value, @Nonnull Configuration config) throws SecurityException {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(value));
         Preconditions.checkState(vault != null);
@@ -59,30 +94,9 @@ public class ConfigKeyVault {
             if (data == null || data.length <= 0) {
                 throw new SecurityException(String.format("No passcode returned for configuration. [name=%s]", name));
             }
-            return new String(data, Charset.defaultCharset());
+            return new String(data, StandardCharsets.UTF_8);
         } catch (Exception e) {
             throw new SecurityException(e);
         }
-    }
-
-    private String getIVSpec(Configuration config) throws Exception {
-        return getIvSpec(config.getId(), config.getApplicationGroup(),
-                config.getApplication(), config.getName(), config.getEncryptionHash());
-    }
-
-    public static String getIvSpec(@Nonnull String id, @Nonnull String group,
-                                   @Nonnull String app, @Nonnull String name,
-                                   @Nonnull String keyHash) throws Exception {
-        StringBuffer buffer = new StringBuffer();
-        buffer.append(id).append(group).append(app).append(name).append(keyHash);
-
-        String spec = CypherUtils.getKeyHash(buffer.toString());
-        return spec.substring(0, 16);
-    }
-
-    private static final ConfigKeyVault _instance = new ConfigKeyVault();
-
-    public static ConfigKeyVault getInstance() {
-        return _instance;
     }
 }

@@ -29,7 +29,7 @@ package com.codekutter.common;
  * State enum representing a environment state.
  */
 public enum EEnvState implements
-                      IState<EEnvState> {
+        IState<EEnvState> {
     /**
      * Environment State is unknown.
      */

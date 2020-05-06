@@ -53,7 +53,7 @@ public class RemoteFileHelper {
      */
     public static long downloadRemoteFile(@Nonnull URI remoteUri,
                                           @Nonnull File location)
-    throws IOException {
+            throws IOException {
         Preconditions.checkArgument(remoteUri != null);
         Preconditions.checkArgument(location != null);
         EReaderType type = EReaderType.parseFromUri(remoteUri);
@@ -68,18 +68,18 @@ public class RemoteFileHelper {
             if (!location.delete()) {
                 throw new IOException(
                         String.format("Error deleting existing file : [path=%s]",
-                                      location.getAbsolutePath()));
+                                location.getAbsolutePath()));
             }
         }
         URL url = remoteUri.toURL();
         LogUtils.info(RemoteFileHelper.class,
-                      String.format("Downloading file [url=%s]", url.toString()));
+                String.format("Downloading file [url=%s]", url.toString()));
         try (
                 ReadableByteChannel remoteChannel = Channels
                         .newChannel(url.openStream())) {
             try (FileOutputStream fos = new FileOutputStream(location)) {
                 return fos.getChannel()
-                          .transferFrom(remoteChannel, 0, Long.MAX_VALUE);
+                        .transferFrom(remoteChannel, 0, Long.MAX_VALUE);
             }
         }
     }
@@ -95,7 +95,7 @@ public class RemoteFileHelper {
      */
     public static long downloadRemoteDirectory(@Nonnull URI remoteUri,
                                                @Nonnull File directory)
-    throws IOException {
+            throws IOException {
         String tempf = IOUtils.getTempFile();
         File file = new File(tempf);
 
@@ -103,7 +103,7 @@ public class RemoteFileHelper {
         if (bread <= 0) {
             throw new IOException(
                     String.format("No data downloaded from URL. [uri=%s]",
-                                  remoteUri.toString()));
+                            remoteUri.toString()));
         }
         try {
             byte[] buffer = new byte[1024];
@@ -124,8 +124,8 @@ public class RemoteFileHelper {
                 zis.closeEntry();
             }
             LogUtils.info(RemoteFileHelper.class,
-                          String.format("Created downloaded directory. [path=%s]",
-                                        directory.getAbsolutePath()));
+                    String.format("Created downloaded directory. [path=%s]",
+                            directory.getAbsolutePath()));
             return bread;
         } finally {
             file.delete();
@@ -141,7 +141,7 @@ public class RemoteFileHelper {
      * @throws IOException
      */
     private static File newFile(File destinationDir, ZipEntry zipEntry)
-    throws IOException {
+            throws IOException {
         File destFile = new File(destinationDir, zipEntry.getName());
 
         String destDirPath = destinationDir.getCanonicalPath();

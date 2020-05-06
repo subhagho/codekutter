@@ -17,11 +17,12 @@
 
 package com.codekutter.common.utils;
 
+import com.beust.jcommander.JCommander;
+import com.beust.jcommander.Parameter;
+import com.beust.jcommander.ParameterException;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import org.apache.commons.codec.binary.Base64;
-import org.kohsuke.args4j.*;
-import org.kohsuke.args4j.spi.BooleanOptionHandler;
 
 import javax.annotation.Nonnull;
 import javax.crypto.Cipher;
@@ -38,6 +39,20 @@ public class CypherUtils {
     private static final String HASH_ALGO = "MD5";
     private static final String CIPHER_ALGO = "AES/CBC/PKCS5Padding";
     private static final String CIPHER_TYPE = "AES";
+    @Parameter(names = {"-h", "--hash"}, description = "Get the MD5 Hash")
+    private boolean doHash = false;
+    @Parameter(names = {"-e", "--encrypt"}, description = "Encrypt the passed String")
+    private boolean encrypt = false;
+    @Parameter(names = {"-d", "--decrypt"}, description = "Decrypt the passed String")
+    private boolean decrypt = false;
+    @Parameter(names = {"-p", "--password"}, description = "Password used to encrypt/decrypt")
+    private String password;
+    @Parameter(names = {"-i", "--IV"}, description = "IV Spec used to encrypt/decrypt")
+    private String ivSpec;
+    @Parameter(names = {"--help"}, help = true)
+    private boolean help = false;
+    @Parameter(description = "Other program arguments")
+    private List<String> otherArgs = new ArrayList<>();
 
     /**
      * Get an MD5 hash of the specified key.
@@ -111,7 +126,6 @@ public class CypherUtils {
         return new String(Base64.encodeBase64(encrypted));
     }
 
-
     /**
      * Encrypt the passed data buffer using the passcode.
      *
@@ -177,58 +191,47 @@ public class CypherUtils {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(password));
         Preconditions.checkArgument(!Strings.isNullOrEmpty(iv));
 
-        byte[] array = Base64.decodeBase64(data.getBytes(StandardCharsets.UTF_8));
+        byte[] array = Base64.decodeBase64(data);
         return decrypt(array, password, iv);
     }
 
-    @Option(name = "-h", usage = "Get the MD5 Hash",
-            handler = BooleanOptionHandler.class,
-            aliases = {"--hash"})
-    private boolean doHash = false;
-    @Option(name = "-e", usage = "Encrypt the passed String",
-            handler = BooleanOptionHandler.class,
-            aliases = {"--encrypt"})
-    private boolean encrypt = false;
-    @Option(name = "-d", usage = "Decrypt the passed String",
-            handler = BooleanOptionHandler.class,
-            aliases = {"--decrypt"})
-    private boolean decrypt = false;
-    @Option(name = "-p", usage = "Password used to encrypt/decrypt",
-            aliases = {"--password"})
-    private String password;
-    @Option(name = "-i", usage = "IV Spec used to encrypt/decrypt",
-            aliases = {"--iv"})
-    private String ivSpec;
-
-    @Argument
-    private List<String> otherArgs = new ArrayList<>();
+    public static void main(String[] args) {
+        try {
+            new CypherUtils().execute(args);
+        } catch (Throwable t) {
+            LogUtils.error(CypherUtils.class, t);
+            t.printStackTrace();
+        }
+    }
 
     private void execute(String[] args) throws Exception {
-        CmdLineParser parser = new CmdLineParser(this);
+        JCommander parser = JCommander.newBuilder().addObject(this).build();
         // if you have a wider console, you could increase the value;
         // here 80 is also the default
-        parser.setUsageWidth(80);
 
         String value = null;
         try {
             // parse the arguments.
-            parser.parseArgument(args);
+            parser.parse(args);
 
+            if (help) {
+                parser.usage();
+                return;
+            }
             // you can parse additional arguments if you want.
             // parser.parseArgument("more","args");
 
             // after parsing arguments, you should check
             // if enough arguments are given.
             if (otherArgs.isEmpty())
-                throw new CmdLineException(parser, "No argument is given");
+                throw new ParameterException("No program arguments given...");
             value = otherArgs.get(0);
             if (Strings.isNullOrEmpty(value)) {
-                throw new CmdLineException(parser,
-                        "NULL/Empty value to Hash/Encrypt.");
+                throw new ParameterException("NULL/Empty value to Hash/Encrypt.");
             }
 
-        } catch (CmdLineException e) {
-            printUsage(parser, e);
+        } catch (ParameterException e) {
+            parser.usage();
             throw e;
         }
         if (encrypt) {
@@ -246,28 +249,9 @@ public class CypherUtils {
             System.out.println(String.format("MD5 Hash: %s", output));
         } else {
             Exception e = new Exception("No valid option set.");
-            printUsage(parser, e);
+            parser.usage();
             throw e;
         }
-    }
-
-    private void printUsage(CmdLineParser parser, Exception e) {
-        // if there's a problem in the command line,
-        // you'll get this exception. this will report
-        // an error message.
-        System.err.println(e.getMessage());
-        System.err.println(String.format("java %s [options...] arguments...",
-                getClass().getCanonicalName()));
-        // print the list of available options
-        parser.printUsage(System.err);
-        System.err.println();
-
-        // print option sample. This is useful some time
-        System.err.println(
-                String.format("  Example: java %s",
-                        getClass().getCanonicalName()) +
-                        parser.printExample(
-                                OptionHandlerFilter.ALL));
     }
 
     private String getPassword() {
@@ -287,14 +271,5 @@ public class CypherUtils {
             }
         }
         return password;
-    }
-
-    public static void main(String[] args) {
-        try {
-            new CypherUtils().execute(args);
-        } catch (Throwable t) {
-            LogUtils.error(CypherUtils.class, t);
-            t.printStackTrace();
-        }
     }
 }

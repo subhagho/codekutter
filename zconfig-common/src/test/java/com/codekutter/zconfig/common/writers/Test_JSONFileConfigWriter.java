@@ -100,7 +100,7 @@ class Test_JSONFileConfigWriter {
             File outf = new File(outfile);
             assertTrue(outf.exists());
             debug(getClass(), String.format("Created configuration : file=%s",
-                                            outf.getAbsolutePath()));
+                    outf.getAbsolutePath()));
         } catch (Throwable e) {
             error(getClass(), e);
             fail(e);

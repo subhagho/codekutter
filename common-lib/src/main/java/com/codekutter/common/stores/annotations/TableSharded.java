@@ -26,5 +26,6 @@ import java.lang.annotation.*;
 @Inherited
 public @interface TableSharded {
     Class<? extends IShardProvider> provider() default DefaultShardProvider.class;
+
     TableShardSpec[] specs();
 }

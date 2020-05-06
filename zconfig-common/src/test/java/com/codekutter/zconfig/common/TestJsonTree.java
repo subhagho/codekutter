@@ -36,6 +36,14 @@ import java.util.Map;
 public class TestJsonTree {
     private static final String JSON_FILE = "zconfig-common/src/test/resources/json/test-tree.json";
 
+    public static void main(String[] args) {
+        try {
+            new TestJsonTree().parse();
+        } catch (Throwable e) {
+            LogUtils.error(TestJsonTree.class, e);
+        }
+    }
+
     private void parse() throws Exception {
         File pwd = new File(".");
         LogUtils.info(getClass(), "Current directory = " + pwd.getAbsolutePath());
@@ -50,7 +58,7 @@ public class TestJsonTree {
     private void print(String name, JsonNode node, int offset) {
         String padding = Strings.repeat(" ", offset);
         String mesg = String.format("%s{NAME=%s, TYPE=%s} => %s", padding, name,
-                                    node.getNodeType().name(), node.textValue());
+                node.getNodeType().name(), node.textValue());
         LogUtils.info(getClass(), mesg);
 
         Iterator<Map.Entry<String, JsonNode>> nodes = node.fields();
@@ -59,14 +67,6 @@ public class TestJsonTree {
                 Map.Entry<String, JsonNode> nn = nodes.next();
                 print(nn.getKey(), nn.getValue(), offset + 1);
             }
-        }
-    }
-
-    public static void main(String[] args) {
-        try {
-            new TestJsonTree().parse();
-        } catch (Throwable e) {
-            LogUtils.error(TestJsonTree.class, e);
         }
     }
 }

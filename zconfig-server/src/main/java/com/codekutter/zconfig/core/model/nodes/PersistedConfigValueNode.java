@@ -31,7 +31,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
  * ZooKeeper node that stores a configuration value.
  */
 @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, include = JsonTypeInfo.As.PROPERTY,
-              property = "@class")
+        property = "@class")
 public class PersistedConfigValueNode extends PersistedConfigPathNode {
     /**
      * Configuration Value.

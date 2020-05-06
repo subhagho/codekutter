@@ -20,8 +20,12 @@ package com.codekutter.r2db.driver.impl.annotations;
 import java.lang.annotation.*;
 
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.TYPE })
+@Target({ElementType.TYPE})
 @Inherited
 public @interface Indexed {
     String index() default "";
+
+    String language() default "english";
+
+    String tokenizer() default "whitespace";
 }

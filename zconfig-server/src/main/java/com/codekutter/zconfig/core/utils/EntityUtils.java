@@ -62,7 +62,7 @@ public class EntityUtils {
      */
     public static <K extends IKey, T extends IEntity<K>> T copyChanges(@Nonnull T source,
                                                                        @Nonnull T target)
-    throws EntityException {
+            throws EntityException {
         Preconditions.checkArgument(
                 ReflectionUtils.isSuperType(target.getClass(), source.getClass()));
         try {
@@ -98,9 +98,9 @@ public class EntityUtils {
      */
     @SuppressWarnings("rawtypes")
     private static <T extends IEntity> void copyField(Field field,
-                                                        @Nonnull T source,
-                                                        @Nonnull T target)
-    throws EntityException {
+                                                      @Nonnull T source,
+                                                      @Nonnull T target)
+            throws EntityException {
         try {
             Object value = ReflectionUtils.getFieldValue(source, field);
             if (value == null) {

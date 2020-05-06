@@ -18,6 +18,8 @@
 package com.codekutter.common.stores.impl;
 
 import com.codekutter.common.Context;
+import com.codekutter.common.model.BaseEntity;
+import com.codekutter.common.model.EEntityState;
 import com.codekutter.common.model.IEntity;
 import com.codekutter.common.stores.*;
 import com.codekutter.zconfig.common.ConfigurationException;
@@ -30,13 +32,26 @@ import javax.annotation.Nonnull;
 import javax.persistence.Query;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 public class RdbmsDataStore extends TransactionDataStore<Session, Transaction> {
-    private HibernateConnection readConnection = null;
+
+    private static class TransactionCacheElement {
+        private Transaction tx;
+        private String key;
+        private BaseEntity<?> entity;
+
+        public static String generateKey(BaseEntity<?> entity) {
+            return String.format("%s[%s]", entity.getClass(), entity.getKey().stringKey());
+        }
+    }
+
     protected Session session;
     protected Session readSession;
+    private HibernateConnection readConnection = null;
+    private Map<String, TransactionCacheElement> transactionCache = new HashMap<>();
 
     @Override
     public boolean isInTransaction() throws DataStoreException {
@@ -64,6 +79,8 @@ public class RdbmsDataStore extends TransactionDataStore<Session, Transaction> {
         Preconditions.checkState(isInTransaction());
         checkThread();
 
+        transactionCache.clear();
+
         transaction().commit();
         transaction(null);
     }
@@ -71,10 +88,12 @@ public class RdbmsDataStore extends TransactionDataStore<Session, Transaction> {
     @Override
     public void rollback() throws DataStoreException {
         Preconditions.checkState(session != null);
-        Preconditions.checkState(isInTransaction());
         checkThread();
 
-        transaction().rollback();
+        if (session.isJoinedToTransaction() && transaction().isActive())
+            transaction().rollback();
+        transactionCache.clear();
+
         transaction(null);
     }
 
@@ -87,10 +106,42 @@ public class RdbmsDataStore extends TransactionDataStore<Session, Transaction> {
         Preconditions.checkState(session != null);
         Preconditions.checkState(isInTransaction());
         checkThread();
-
+        if (entity instanceof BaseEntity) {
+            if (((BaseEntity) entity).getState().getState() != EEntityState.New) {
+                String key = TransactionCacheElement.generateKey((BaseEntity<?>) entity);
+                TransactionCacheElement ce = transactionCache.get(key);
+                if (ce != null) {
+                    Transaction tx = transaction();
+                    if (!tx.equals(ce.tx)) {
+                        throw new DataStoreException(
+                                String.format("Invalid transaction cache: transaction handle is stale. [entity=%s]",
+                                        entity.getKey().stringKey()));
+                    }
+                    if (((BaseEntity<?>) entity).getState().getState() != EEntityState.Synced) {
+                        throw new DataStoreException(
+                                String.format("Invalid entity state. [entity=%s][state=%s]",
+                                        entity.getKey().stringKey(), ((BaseEntity<?>) entity).getState().getState().name()));
+                    }
+                    return entity;
+                } else
+                    throw new DataStoreException(
+                            String.format("Invalid entity state: [state=%s][id=%s]",
+                                    ((BaseEntity) entity).getState().getState().name(), entity.getKey().stringKey()));
+            }
+        }
+        IDGenerator.process(entity, session);
         Object result = session.save(entity);
         if (result == null) {
             throw new DataStoreException(String.format("Error saving entity. [type=%s][key=%s]", type.getCanonicalName(), entity.getKey()));
+        }
+        if (entity instanceof BaseEntity) {
+            ((BaseEntity) entity).getState().setState(EEntityState.Synced);
+            TransactionCacheElement ce = new TransactionCacheElement();
+            ce.entity = (BaseEntity<?>) entity;
+            ce.key = TransactionCacheElement.generateKey((BaseEntity<?>) entity);
+            ce.tx = transaction();
+
+            transactionCache.put(ce.key, ce);
         }
         return entity;
     }
@@ -104,10 +155,41 @@ public class RdbmsDataStore extends TransactionDataStore<Session, Transaction> {
         Preconditions.checkState(session != null);
         Preconditions.checkState(isInTransaction());
         checkThread();
-
+        if (entity instanceof BaseEntity) {
+            if (((BaseEntity) entity).getState().getState() != EEntityState.Updated) {
+                String key = TransactionCacheElement.generateKey((BaseEntity<?>) entity);
+                TransactionCacheElement ce = transactionCache.get(key);
+                if (ce != null) {
+                    Transaction tx = transaction();
+                    if (!tx.equals(ce.tx)) {
+                        throw new DataStoreException(
+                                String.format("Invalid transaction cache: transaction handle is stale. [entity=%s]",
+                                        entity.getKey().stringKey()));
+                    }
+                    if (((BaseEntity<?>) entity).getState().getState() != EEntityState.Synced) {
+                        throw new DataStoreException(
+                                String.format("Invalid entity state. [entity=%s][state=%s]",
+                                        entity.getKey().stringKey(), ((BaseEntity<?>) entity).getState().getState().name()));
+                    }
+                    return entity;
+                } else
+                    throw new DataStoreException(
+                            String.format("Invalid entity state: [state=%s][id=%s]",
+                                    ((BaseEntity) entity).getState().getState().name(), entity.getKey().stringKey()));
+            }
+        }
         Object result = session.save(entity);
         if (result == null) {
             throw new DataStoreException(String.format("Error updating entity. [type=%s][key=%s]", type.getCanonicalName(), entity.getKey()));
+        }
+        if (entity instanceof BaseEntity) {
+            ((BaseEntity) entity).getState().setState(EEntityState.Synced);
+            TransactionCacheElement ce = new TransactionCacheElement();
+            ce.entity = (BaseEntity<?>) entity;
+            ce.key = TransactionCacheElement.generateKey((BaseEntity<?>) entity);
+            ce.tx = transaction();
+
+            transactionCache.put(ce.key, ce);
         }
         return entity;
     }
@@ -125,6 +207,15 @@ public class RdbmsDataStore extends TransactionDataStore<Session, Transaction> {
         E entity = findEntity(key, type, context);
         if (entity != null) {
             session.delete(entity);
+            if (entity instanceof BaseEntity) {
+                ((BaseEntity) entity).getState().setState(EEntityState.Deleted);
+                TransactionCacheElement ce = new TransactionCacheElement();
+                ce.entity = (BaseEntity<?>) entity;
+                ce.key = TransactionCacheElement.generateKey((BaseEntity<?>) entity);
+                ce.tx = transaction();
+
+                transactionCache.put(ce.key, ce);
+            }
             return true;
         }
         return false;
@@ -139,27 +230,36 @@ public class RdbmsDataStore extends TransactionDataStore<Session, Transaction> {
         Preconditions.checkState(session != null);
         checkThread();
 
-        return session.find(type, key);
+        E entity = session.find(type, key);
+        if (entity instanceof BaseEntity) {
+            ((BaseEntity) entity).getState().setState(EEntityState.Synced);
+        }
+        return entity;
     }
 
     @Override
     @SuppressWarnings({"unchecked", "rawtypes"})
     public <E extends IEntity> BaseSearchResult<E> doSearch(@Nonnull String query,
-                                                      int offset, int maxResults,
-                                                      @Nonnull Class<? extends E> type,
-                                                      Context context)
+                                                            int offset,
+                                                            int maxResults,
+                                                            @Nonnull Class<? extends E> type,
+                                                            Context context)
             throws DataStoreException {
         Preconditions.checkState(readSession != null);
         checkThread();
-        query = String.format("FROM %s WHERE (%s)", type.getCanonicalName(), query);
         Query qq = session.createQuery(query, type).setMaxResults(maxResults).setFirstResult(offset);
-        List<?> result = qq.getResultList();
+        List<E> result = qq.getResultList();
         if (result != null && !result.isEmpty()) {
+            for (E entity : result) {
+                if (entity instanceof BaseEntity) {
+                    ((BaseEntity) entity).getState().setState(EEntityState.Synced);
+                }
+            }
             EntitySearchResult<E> er = new EntitySearchResult<>(type);
             er.setQuery(query);
             er.setOffset(offset);
             er.setCount(result.size());
-            er.setEntities((Collection<E>) result);
+            er.setEntities(result);
             return er;
         }
         return null;
@@ -168,22 +268,26 @@ public class RdbmsDataStore extends TransactionDataStore<Session, Transaction> {
     @Override
     @SuppressWarnings({"unchecked", "rawtypes"})
     public <E extends IEntity> BaseSearchResult<E> doSearch(@Nonnull String query,
-                                                      int offset, int maxResults,
-                                                      Map<String, Object> parameters,
-                                                      @Nonnull Class<? extends E> type,
-                                                      Context context)
+                                                            int offset, int maxResults,
+                                                            Map<String, Object> parameters,
+                                                            @Nonnull Class<? extends E> type,
+                                                            Context context)
             throws DataStoreException {
         Preconditions.checkState(readSession != null);
         checkThread();
 
-        query = String.format("FROM %s WHERE (%s)", type.getCanonicalName(), query);
         Query qq = readSession.createQuery(query, type).setMaxResults(maxResults).setFirstResult(offset);
         if (parameters != null && !parameters.isEmpty()) {
             for (String key : parameters.keySet())
                 qq.setParameter(key, parameters.get(key));
         }
-        List<?> result = qq.getResultList();
+        List<E> result = qq.getResultList();
         if (result != null && !result.isEmpty()) {
+            for (E entity : result) {
+                if (entity instanceof BaseEntity) {
+                    ((BaseEntity) entity).getState().setState(EEntityState.Synced);
+                }
+            }
             EntitySearchResult<E> er = new EntitySearchResult<>(type);
             er.setQuery(query);
             er.setOffset(offset);
@@ -211,9 +315,9 @@ public class RdbmsDataStore extends TransactionDataStore<Session, Transaction> {
 
         try {
             AbstractConnection<Session> connection =
-                    dataStoreManager.getConnection(config().connectionName(), Session.class);
+                    dataStoreManager.getConnection(config().getConnectionName(), Session.class);
             if (!(connection instanceof HibernateConnection)) {
-                throw new ConfigurationException(String.format("No connection found for name. [name=%s]", config().connectionName()));
+                throw new ConfigurationException(String.format("No connection found for name. [name=%s]", config().getConnectionName()));
             }
             withConnection(connection);
             HibernateConnection hibernateConnection = (HibernateConnection) connection;
@@ -233,6 +337,9 @@ public class RdbmsDataStore extends TransactionDataStore<Session, Transaction> {
             } else {
                 readSession = session;
             }
+            if (config().getMaxResults() > 0) {
+                maxResults(config().getMaxResults());
+            }
         } catch (ConnectionException | DataStoreException ex) {
             throw new ConfigurationException(ex);
         }
@@ -240,13 +347,19 @@ public class RdbmsDataStore extends TransactionDataStore<Session, Transaction> {
 
     @Override
     public void close() throws IOException {
-        session.close();
-        if (readConnection != null) {
-            readSession.close();
-            readConnection = null;
+        try {
+            if (session != null)
+                connection().close(session);
+            if (readConnection != null && readSession != null) {
+                readConnection.close(readSession);
+            }
+            transactionCache.clear();
+
+            session = null;
+            readSession = null;
+            super.close();
+        } catch (Exception ex) {
+            throw new IOException(ex);
         }
-        session = null;
-        readSession = null;
-        super.close();
     }
 }

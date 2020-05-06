@@ -32,6 +32,24 @@ package com.codekutter.zconfig.common.model.annotations;
  * @param <S> - Source field type.
  */
 public interface ITransformer<T, S> {
+    /**
+     * Transform the source value to the target type.
+     *
+     * @param source - Source value.
+     * @return - Transformed value.
+     * @throws TransformationException
+     */
+    T transform(S source) throws TransformationException;
+
+    /**
+     * Transform the target value to the source type.
+     *
+     * @param source - Source value.
+     * @return - Transformed value.
+     * @throws TransformationException
+     */
+    S reverse(T source) throws TransformationException;
+
     public static class TransformationException extends Exception {
         private static final String PREFIX = "Transformation Error: %s";
 
@@ -61,25 +79,7 @@ public interface ITransformer<T, S> {
          */
         public TransformationException(Throwable throwable) {
             super(String.format(PREFIX, throwable.getLocalizedMessage()),
-                  throwable);
+                    throwable);
         }
     }
-
-    /**
-     * Transform the source value to the target type.
-     *
-     * @param source - Source value.
-     * @return - Transformed value.
-     * @throws TransformationException
-     */
-    T transform(S source) throws TransformationException;
-
-    /**
-     * Transform the target value to the source type.
-     *
-     * @param source - Source value.
-     * @return - Transformed value.
-     * @throws TransformationException
-     */
-    S reverse(T source) throws TransformationException;
 }

@@ -21,7 +21,7 @@ import java.util.Collection;
 
 /**
  * Check for NULL/Empty values.
- *
+ * <p>
  * Empty values will be checked for String/Collections.
  */
 public class NullOrEmpty implements IValidationConstraint {

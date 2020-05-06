@@ -85,6 +85,10 @@ import java.util.Map;
 @ConfigPath(path = "distributed-locks")
 public class DistributedLockFactory implements IConfigurable {
     /**
+     * Lock Factory singleton instance.
+     */
+    private final static DistributedLockFactory factory = new DistributedLockFactory();
+    /**
      * Map of configured lock allocators.
      */
     private Map<Class<? extends DistributedLock>, AbstractLockAllocator<?>> allocators = new HashMap<>();
@@ -92,6 +96,32 @@ public class DistributedLockFactory implements IConfigurable {
      * Factory State
      */
     private ObjectState state = new ObjectState();
+
+    /**
+     * Setup the lock factory singleton.
+     *
+     * @param node - Configuration node to setup with.
+     * @throws ConfigurationException
+     */
+    public static void setup(@Nonnull AbstractConfigNode node) throws ConfigurationException {
+        factory.configure(node);
+    }
+
+    /**
+     * Close and dispose the factory singleton.
+     */
+    public static void close() {
+        factory.dispose();
+    }
+
+    /**
+     * Get the handle to the factory singleton.
+     *
+     * @return - Lock Factory instance.
+     */
+    public static DistributedLockFactory get() {
+        return factory;
+    }
 
     /**
      * Get a lock instance for the specified type and name.
@@ -213,36 +243,5 @@ public class DistributedLockFactory implements IConfigurable {
                 LogUtils.error(getClass(), ex);
             }
         }
-    }
-
-    /**
-     * Lock Factory singleton instance.
-     */
-    private final static DistributedLockFactory factory = new DistributedLockFactory();
-
-    /**
-     * Setup the lock factory singleton.
-     *
-     * @param node - Configuration node to setup with.
-     * @throws ConfigurationException
-     */
-    public static void setup(@Nonnull AbstractConfigNode node) throws ConfigurationException {
-        factory.configure(node);
-    }
-
-    /**
-     * Close and dispose the factory singleton.
-     */
-    public static void close() {
-        factory.dispose();
-    }
-
-    /**
-     * Get the handle to the factory singleton.
-     *
-     * @return - Lock Factory instance.
-     */
-    public static DistributedLockFactory get() {
-        return factory;
     }
 }
