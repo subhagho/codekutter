@@ -17,6 +17,7 @@
 
 package com.codekutter.common.scheduling.impl;
 
+import com.codekutter.common.scheduling.remote.EJobState;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -51,4 +52,10 @@ public class JobAuditLog {
     private String error;
     @Column(name = "error_trace")
     private String errorTrace;
+    @Column(name = "correlation_id")
+    private String correlationId;
+    @Column(name = "job_state")
+    private EJobState jobState;
+    @Column(name = "last_status_sync")
+    private long stateUpdateTimestamp;
 }
