@@ -22,6 +22,7 @@ import com.codekutter.common.model.EObjectState;
 import com.codekutter.common.model.ObjectState;
 import com.codekutter.common.utils.ConfigUtils;
 import com.codekutter.common.utils.LogUtils;
+import com.codekutter.common.utils.TypeUtils;
 import com.codekutter.zconfig.common.ConfigurationAnnotationProcessor;
 import com.codekutter.zconfig.common.ConfigurationException;
 import com.codekutter.zconfig.common.IConfigurable;
@@ -44,10 +45,7 @@ import org.quartz.impl.StdSchedulerFactory;
 import javax.annotation.Nonnull;
 import java.io.Closeable;
 import java.io.IOException;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static org.quartz.DateBuilder.futureDate;
 
@@ -81,6 +79,12 @@ public class ScheduleManager implements IConfigurable, Closeable {
     @Getter(AccessLevel.NONE)
     @Setter(AccessLevel.NONE)
     private Scheduler scheduler = null;
+    @Setter(AccessLevel.NONE)
+    private final String scheduleNodeId;
+
+    public ScheduleManager() {
+        scheduleNodeId = UUID.randomUUID().toString();
+    }
 
     public static void setup(@Nonnull AbstractConfigNode node) throws ConfigurationException {
         __instance.configure(node);
@@ -101,6 +105,20 @@ public class ScheduleManager implements IConfigurable, Closeable {
             return jobs.get(key);
         }
         return null;
+    }
+
+    public Set<JobConfig> getAsyncJobConfigs() {
+        Set<JobConfig> configs = null;
+        if (jobs != null && !jobs.isEmpty()) {
+            for (String key : jobs.keySet()) {
+                JobConfig jc = jobs.get(key);
+                if (jc.isAsync()) {
+                    if (configs == null) configs = new HashSet<>();
+                    configs.add(jc);
+                }
+            }
+        }
+        return configs;
     }
 
     /**
@@ -174,7 +192,7 @@ public class ScheduleManager implements IConfigurable, Closeable {
             }
             try {
                 Class<? extends JobConfig> cls = (Class<? extends JobConfig>) Class.forName(cname);
-                JobConfig job = cls.newInstance();
+                JobConfig job = TypeUtils.createInstance(cls);
                 job.configure(jnode);
                 job.withScheduleManager(this);
                 jobs.put(job.jobKey(), job);

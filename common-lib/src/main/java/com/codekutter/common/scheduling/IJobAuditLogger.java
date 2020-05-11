@@ -18,11 +18,14 @@
 package com.codekutter.common.scheduling;
 
 import com.codekutter.common.auditing.AuditException;
+import com.codekutter.common.model.JobAuditLog;
+import com.codekutter.common.scheduling.remote.EJobState;
 import com.codekutter.zconfig.common.IConfigurable;
 import org.quartz.JobExecutionContext;
 
 import javax.annotation.Nonnull;
 import java.io.Closeable;
+import java.util.List;
 
 /**
  * Interface for defining Scheduled Job audit logger.
@@ -31,13 +34,15 @@ public interface IJobAuditLogger extends IConfigurable, Closeable {
     /**
      * Log Job start.
      *
-     * @param config  - Job Config
-     * @param context - Execution Context
-     * @param type    - Job Type
+     * @param config        - Job Config
+     * @param correlationId - Job Correlation ID
+     * @param context       - Execution Context
+     * @param type          - Job Type
      * @return - Unique Job ID
      * @throws AuditException
      */
     String logJobStart(@Nonnull JobConfig config,
+                       @Nonnull String correlationId,
                        @Nonnull JobExecutionContext context,
                        @Nonnull Class<? extends AbstractJob> type) throws AuditException;
 
@@ -50,4 +55,38 @@ public interface IJobAuditLogger extends IConfigurable, Closeable {
      * @throws AuditException
      */
     void logJobEnd(@Nonnull String id, Object response, Throwable error) throws AuditException;
+
+    /**
+     * Update the Job Status.
+     *
+     * @param correlationId - Job Correlation ID
+     * @param state         - Job State
+     * @throws AuditException
+     */
+    void logJobState(@Nonnull String correlationId, EJobState state) throws AuditException;
+
+    /**
+     * Update the Job with Error.
+     *
+     * @param correlationId - Job Correlation ID
+     * @param error         - Error handle.
+     * @throws AuditException
+     */
+    void logJobError(@Nonnull String correlationId, Throwable error) throws AuditException;
+
+    /**
+     * Find List of Job ID(s) for jobs that are in pending status.
+     *
+     * @return - List of pending Jobs
+     * @throws AuditException
+     */
+    List<JobAuditLog> findPendingJobs() throws AuditException;
+
+    /**
+     * Find List of Job ID(s) for jobs that are in running status.
+     *
+     * @return - List of running Jobs
+     * @throws AuditException
+     */
+    List<JobAuditLog> findRunningJobs() throws AuditException;
 }

@@ -15,19 +15,17 @@
  *
  */
 
-package com.codekutter.zconfig.common.scheduling;
+package com.codekutter.common.scheduling.impl;
 
-import com.codekutter.common.scheduling.AbstractJob;
-import com.codekutter.common.scheduling.JobConfig;
-import org.quartz.JobExecutionContext;
-import org.quartz.JobExecutionException;
+import com.codekutter.zconfig.common.model.annotations.ConfigValue;
+import lombok.Getter;
+import lombok.Setter;
 
-import javax.annotation.Nonnull;
-
-public class DemoJobLog extends AbstractJob {
-
-    @Override
-    public Object doExecute(@Nonnull String correlationId, @Nonnull JobExecutionContext context, @Nonnull JobConfig config) throws JobExecutionException {
-        return config;
-    }
+@Getter
+@Setter
+public class AsyncRestJobConfig extends RestJobConfig {
+    @ConfigValue(required = true)
+    private String requestStatusUrl;
+    @ConfigValue(name = "dbConnection", required = true)
+    private String dbConnectionName;
 }

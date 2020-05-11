@@ -52,6 +52,8 @@ public class JobConfig implements IConfigurable {
     private Class<? extends AbstractJob> type;
     @ConfigValue
     private boolean audited = false;
+    @ConfigAttribute
+    private boolean async = false;
     @Setter(AccessLevel.NONE)
     @JsonIgnore
     private ScheduleManager manager;

@@ -18,6 +18,7 @@
 package com.codekutter.common.scheduling;
 
 import com.codekutter.common.auditing.AuditException;
+import com.codekutter.common.scheduling.remote.EJobState;
 import com.codekutter.common.utils.LogUtils;
 import com.codekutter.common.utils.Monitoring;
 import com.netflix.spectator.api.Id;
@@ -26,6 +27,7 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
+import org.elasticsearch.common.Strings;
 import org.quartz.Job;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
@@ -105,16 +107,18 @@ public abstract class AbstractJob implements Job {
                     if (config.isAudited()) {
                         logger = config.getManager().auditLogger();
                     }
+                    String correlationId = UUID.randomUUID().toString();
+                    correlationId = String.format("%s::%s", getClass().getName().toUpperCase(), correlationId);
                     if (logger != null) {
-                        jobId = logger.logJobStart(config, context, getClass());
+                        jobId = logger.logJobStart(config, correlationId, context, getClass());
                     }
-                    Object response = doExecute(context, config);
-                    if (logger != null) {
+                    Object response = doExecute(correlationId, context, config);
+                    if (!config.isAsync() && logger != null) {
                         logger.logJobEnd(jobId, response, null);
                     }
                 } catch (Throwable e) {
                     try {
-                        if (logger != null) {
+                        if (logger != null && !Strings.isNullOrEmpty(jobId)) {
                             logger.logJobEnd(jobId, null, e);
                         }
                     } catch (AuditException ae) {
@@ -130,5 +134,27 @@ public abstract class AbstractJob implements Job {
         }
     }
 
-    public abstract Object doExecute(@Nonnull JobExecutionContext context, @Nonnull JobConfig config) throws JobExecutionException;
+    public void auditJobState(@Nonnull String correlationId, @Nonnull EJobState state) throws JobExecutionException {
+        try {
+            IJobAuditLogger logger = ScheduleManager.get(getClass()).auditLogger();
+            if (logger != null) {
+                logger.logJobState(correlationId, state);
+            }
+        } catch (Exception ex) {
+            throw new JobExecutionException(ex);
+        }
+    }
+
+    public void auditJobError(@Nonnull String correlationId, Throwable error) throws JobExecutionException {
+        try {
+            IJobAuditLogger logger = ScheduleManager.get(getClass()).auditLogger();
+            if (logger != null) {
+                logger.logJobError(correlationId, error);
+            }
+        } catch (Exception ex) {
+            throw new JobExecutionException(ex);
+        }
+    }
+
+    public abstract Object doExecute(@Nonnull String correlationId, @Nonnull JobExecutionContext context, @Nonnull JobConfig config) throws JobExecutionException;
 }

@@ -25,11 +25,11 @@ import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.Response;
 
 public interface IRestRequestBuilder {
-    Response get(@Nonnull WebTarget target, @Nonnull RestJobConfig config) throws JobExecutionException;
+    Response get(@Nonnull String correlationId, @Nonnull WebTarget target, @Nonnull RestJobConfig config) throws JobExecutionException;
 
-    Response post(@Nonnull WebTarget target, @Nonnull RestJobConfig config) throws JobExecutionException;
+    Response post(@Nonnull String correlationId, @Nonnull WebTarget target, @Nonnull RestJobConfig config) throws JobExecutionException;
 
-    Response put(@Nonnull WebTarget target, @Nonnull RestJobConfig config) throws JobExecutionException;
+    Response put(@Nonnull String correlationId, @Nonnull WebTarget target, @Nonnull RestJobConfig config) throws JobExecutionException;
 
-    Response delete(@Nonnull WebTarget target, @Nonnull RestJobConfig config) throws JobExecutionException;
+    Response delete(@Nonnull String correlationId, @Nonnull WebTarget target, @Nonnull RestJobConfig config) throws JobExecutionException;
 }

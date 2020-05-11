@@ -67,20 +67,23 @@ CREATE TABLE `sys_audit_records`
 
 DROP TABLE IF EXISTS `sys_job_audit`;
 
-CREATE TABLE `sys_job_audit`
+CREATE TABLE `tb_job_audit`
 (
-    `job_id`          varchar(128)   NOT NULL,
-    `namespace`       varchar(128)   NOT NULL,
-    `name`            varchar(128)   NOT NULL,
-    `job_type`        varchar(256)   NOT NULL,
-    `start_timestamp` decimal(24, 0) NOT NULL,
-    `end_timestamp`   decimal(24, 0) DEFAULT NULL,
-    `context_json`    mediumblob     NOT NULL,
-    `response_json`   longblob       DEFAULT NULL,
-    `error`           varchar(256)   DEFAULT NULL,
-    `error_trace`     longtext       DEFAULT NULL,
+    `job_id`           varchar(128)   NOT NULL,
+    `namespace`        varchar(128)   NOT NULL,
+    `name`             varchar(128)   NOT NULL,
+    `job_type`         varchar(256)   NOT NULL,
+    `start_timestamp`  decimal(24, 0) NOT NULL,
+    `end_timestamp`    decimal(24, 0) DEFAULT NULL,
+    `context_json`     mediumblob     NOT NULL,
+    `response_json`    longblob       DEFAULT NULL,
+    `error`            varchar(256)   DEFAULT NULL,
+    `error_trace`      longtext       DEFAULT NULL,
+    `correlation_id`   varchar(128)   DEFAULT NULL,
+    `job_state`        varchar(64)    DEFAULT NULL,
+    `last_status_sync` decimal(24, 0) DEFAULT 0,
     PRIMARY KEY (`job_id`),
-    KEY `sys_job_audit_namespace_IDX` (`namespace`, `name`, `job_id`) USING BTREE
+    KEY `tb_job_audit_namespace_IDX` (`namespace`, `name`, `job_id`) USING BTREE
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8 COMMENT ='Audit table for logging Scheduled Job execution history.';
 

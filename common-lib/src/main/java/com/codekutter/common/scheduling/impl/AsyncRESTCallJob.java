@@ -19,8 +19,11 @@ package com.codekutter.common.scheduling.impl;
 
 import com.codekutter.common.scheduling.AbstractJob;
 import com.codekutter.common.scheduling.JobConfig;
+import com.codekutter.common.scheduling.remote.EJobState;
+import com.codekutter.common.scheduling.remote.JobResponse;
 import com.codekutter.common.stores.ConnectionManager;
 import com.codekutter.common.stores.impl.RestConnection;
+import com.codekutter.common.utils.LogUtils;
 import com.google.common.base.Preconditions;
 import org.apache.http.HttpStatus;
 import org.quartz.JobExecutionContext;
@@ -31,29 +34,28 @@ import javax.ws.rs.client.Client;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.Response;
 
-public class RESTCallJob extends AbstractJob {
+public class AsyncRESTCallJob extends AbstractJob {
     @Override
-    public Object doExecute(@Nonnull String correlationId,
-                            @Nonnull JobExecutionContext context,
-                            @Nonnull JobConfig config) throws JobExecutionException {
-        Preconditions.checkArgument(config instanceof RestJobConfig);
+    public Object doExecute(@Nonnull String correlationId, @Nonnull JobExecutionContext context, @Nonnull JobConfig config) throws JobExecutionException {
+        Preconditions.checkArgument(config instanceof AsyncRestJobConfig);
+        Preconditions.checkArgument(config.isAsync());
         try {
-            RestJobConfig rc = (RestJobConfig) config;
+            AsyncRestJobConfig rc = (AsyncRestJobConfig) config;
             RestConnection connection = (RestConnection) ConnectionManager.get().connection(rc.getConnectionName(), Client.class);
             if (connection == null) {
                 throw new JobExecutionException(String.format("Connection not found. [type=%s][name=%s]",
                         RestConnection.class.getCanonicalName(), ((RestJobConfig) config).getConnectionName()));
             }
             WebTarget webTarget = connection.client().target(((RestJobConfig) config).getRequestUrl());
-            switch (((RestJobConfig) config).getRequestType()) {
+            switch (rc.getRequestType()) {
                 case GET:
-                    return doGet(correlationId, webTarget, (RestJobConfig) config);
+                    return doGet(correlationId, webTarget, rc);
                 case PUT:
-                    return doPut(correlationId, webTarget, (RestJobConfig) config);
+                    return doPut(correlationId, webTarget, rc);
                 case POST:
-                    return doPost(correlationId, webTarget, (RestJobConfig) config);
+                    return doPost(correlationId, webTarget, rc);
                 case DELETE:
-                    return doDelete(correlationId, webTarget, (RestJobConfig) config);
+                    return doDelete(correlationId, webTarget, rc);
             }
             return null;
         } catch (Exception ex) {
@@ -61,7 +63,7 @@ public class RESTCallJob extends AbstractJob {
         }
     }
 
-    private Object doGet(String correlationId, WebTarget target, RestJobConfig config) throws JobExecutionException {
+    private Object doGet(String correlationId, WebTarget target, AsyncRestJobConfig config) throws JobExecutionException {
         Response response = null;
         if (config.getRequestBuilder() != null) {
             response = config.getRequestBuilder().get(correlationId, target, config);
@@ -73,10 +75,10 @@ public class RESTCallJob extends AbstractJob {
         if (config.getResponseHandler() != null) {
             return config.getResponseHandler().handle(response);
         }
-        return response.readEntity(String.class);
+        return processResponse(correlationId, response);
     }
 
-    private Object doPost(String correlationId, WebTarget target, RestJobConfig config) throws JobExecutionException {
+    private Object doPost(String correlationId, WebTarget target, AsyncRestJobConfig config) throws JobExecutionException {
         Response response = null;
         if (config.getRequestBuilder() != null) {
             response = config.getRequestBuilder().post(correlationId, target, config);
@@ -88,10 +90,10 @@ public class RESTCallJob extends AbstractJob {
         if (config.getResponseHandler() != null) {
             return config.getResponseHandler().handle(response);
         }
-        return response.readEntity(String.class);
+        return processResponse(correlationId, response);
     }
 
-    private Object doPut(String correlationId, WebTarget target, RestJobConfig config) throws JobExecutionException {
+    private Object doPut(String correlationId, WebTarget target, AsyncRestJobConfig config) throws JobExecutionException {
         Response response = null;
         if (config.getRequestBuilder() != null) {
             response = config.getRequestBuilder().put(correlationId, target, config);
@@ -103,10 +105,10 @@ public class RESTCallJob extends AbstractJob {
         if (config.getResponseHandler() != null) {
             return config.getResponseHandler().handle(response);
         }
-        return response.readEntity(String.class);
+        return processResponse(correlationId, response);
     }
 
-    private Object doDelete(String correlationId, WebTarget target, RestJobConfig config) throws JobExecutionException {
+    private Object doDelete(String correlationId, WebTarget target, AsyncRestJobConfig config) throws JobExecutionException {
         Response response = null;
         if (config.getRequestBuilder() != null) {
             response = config.getRequestBuilder().delete(correlationId, target, config);
@@ -118,6 +120,23 @@ public class RESTCallJob extends AbstractJob {
         if (config.getResponseHandler() != null) {
             return config.getResponseHandler().handle(response);
         }
-        return response.readEntity(String.class);
+        return processResponse(correlationId, response);
+    }
+
+    private JobResponse processResponse(String correlationId, Response response) throws JobExecutionException {
+        JobResponse jr = response.readEntity(JobResponse.class);
+        if (jr.getJobState().hasError()) {
+            throw new JobExecutionException(jr.getJobState().getError());
+        } else {
+            EJobState state = EJobState.Error;
+            if (jr.getJobState() != null) {
+                state = jr.getJobState().getState();
+            } else {
+                throw new JobExecutionException("NULL Job State returned...");
+            }
+            auditJobState(correlationId, state);
+        }
+        LogUtils.debug(getClass(), jr);
+        return jr;
     }
 }

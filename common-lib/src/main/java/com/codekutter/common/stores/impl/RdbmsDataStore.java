@@ -73,6 +73,12 @@ public class RdbmsDataStore extends TransactionDataStore<Session, Transaction> {
         }
     }
 
+    public void flush() throws DataStoreException {
+        Preconditions.checkState(session != null);
+        checkThread();
+        session.flush();
+    }
+
     @Override
     public void commit() throws DataStoreException {
         Preconditions.checkState(session != null);

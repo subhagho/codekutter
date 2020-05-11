@@ -56,7 +56,7 @@ public class SearchableRdbmsDataStore extends RdbmsDataStore implements ISearcha
 
     @Override
     public void commit() throws DataStoreException {
-        super.commit();
+        super.flush();
         if (!dirtyCache.isEmpty()) {
             for (Class<? extends IEntity> type : dirtyCache.keySet()) {
                 Map<IKey, CacheEntry> entries = dirtyCache.get(type);
@@ -75,6 +75,7 @@ public class SearchableRdbmsDataStore extends RdbmsDataStore implements ISearcha
             }
         }
         dirtyCache.clear();
+        super.commit();
     }
 
     @Override
