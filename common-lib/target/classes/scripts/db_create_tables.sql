@@ -67,7 +67,7 @@ CREATE TABLE `sys_audit_records`
 
 DROP TABLE IF EXISTS `sys_job_audit`;
 
-CREATE TABLE `tb_job_audit`
+CREATE TABLE `sys_job_audit`
 (
     `job_id`           varchar(128)   NOT NULL,
     `namespace`        varchar(128)   NOT NULL,

@@ -15,36 +15,15 @@
  *
  */
 
-package com.codekutter.common.model;
+package com.codekutter.r2db.notifications.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import lombok.Setter;
 
-import javax.persistence.Version;
-import javax.persistence.*;
-
-@Entity
-@Table(name = "sys_db_locks")
 @Getter
 @Setter
-public class DbLockRecord {
-    @EmbeddedId
-    private LockId id;
-    @Column(name = "locked")
-    private boolean locked = false;
-    @Column(name = "instance_id")
-    private String instanceId;
-    @Column(name = "timestamp")
-    private long timestamp;
-    @Column(name = "read_lock_count")
-    private long readLockCount;
-    @Version
-    @Column(name = "record_version")
-    private long recordVersion;
-
-    @JsonIgnore
-    public boolean isReadLocked() {
-        return readLockCount > 0;
-    }
+public class NotificationQuery {
+    private ENotificationState[] states;
+    private long startTime;
+    private long endTime;
 }

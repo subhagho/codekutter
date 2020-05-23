@@ -54,6 +54,7 @@ public abstract class AbstractLockAllocator<T> implements IConfigurable, Closeab
     @Setter(AccessLevel.NONE)
     @Getter(AccessLevel.NONE)
     private final MapThreadCache<LockId, DistributedLock> threadLocks = new MapThreadCache<>();
+
     /**
      * Connection instance used to persist the lock.
      */
