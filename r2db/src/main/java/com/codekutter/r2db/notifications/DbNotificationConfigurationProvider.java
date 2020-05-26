@@ -50,7 +50,7 @@ import java.util.Map;
 @Getter
 @Setter
 @Accessors(fluent = true)
-@ConfigPath(path = "notification-configuration-provider")
+@ConfigPath(path = "configuration-provider")
 public class DbNotificationConfigurationProvider implements INotificationConfigurationProvider {
     @ConfigAttribute(name = "dataStore", required = true)
     private String dataStoreName;
@@ -58,37 +58,19 @@ public class DbNotificationConfigurationProvider implements INotificationConfigu
     /**
      * Fetch all the topics for the given shard (if shard < 0, fetch all).
      *
-     * @param shardId   - Shard ID to fetch the subscriptions for.
-     * @param numShards - Total # of shards configured
      * @return - List of Topics
      * @throws NotificationException
      */
     @Override
-    public List<Topic> fetchTopics(int shardId, int numShards) throws NotificationException {
+    public List<Topic> fetchTopics() throws NotificationException {
         try {
-            if (shardId >= 0) {
-                if (numShards <= 0) {
-                    throw new NotificationException("Number of Shards not specified...");
-                }
-            }
             try (RdbmsDataStore dataStore = getDataStore()) {
                 String qstr = null;
                 Map<String, Object> params = new HashMap<>();
-                if (numShards > 0) {
-                    qstr = String.format(
-                            "FROM %s WHERE MOD(shardValue, :num_shards) = :shard_id)" +
-                                    " AND active = :is_active AND deleted = :is_deleted",
-                            Topic.class.getCanonicalName());
-                    params.put("num_shards", numShards);
-                    params.put("shard_id", shardId);
-                    params.put("is_active", true);
-                    params.put("is_deleted", false);
-                } else {
-                    qstr = String.format("FROM %s WHERE active = :is_active AND deleted = :is_deleted",
-                            Topic.class.getCanonicalName());
-                    params.put("is_active", true);
-                    params.put("is_deleted", false);
-                }
+                qstr = String.format("FROM %s WHERE active = :is_active AND deleted = :is_deleted",
+                        Topic.class.getCanonicalName());
+                params.put("is_active", true);
+                params.put("is_deleted", false);
                 BaseSearchResult<Topic> topics = dataStore.search(qstr, 0, -1, params, Topic.class, null);
                 if (topics instanceof EntitySearchResult) {
                     EntitySearchResult<Topic> result = (EntitySearchResult<Topic>) topics;
@@ -252,20 +234,22 @@ public class DbNotificationConfigurationProvider implements INotificationConfigu
      * @throws NotificationException
      */
     @Override
-    public List<Subscription> findSubscriptions(@Nonnull String topicId) throws NotificationException {
+    public List<Subscription> findSubscriptions(@Nonnull String topicId, int shardId, int numShards) throws NotificationException {
         try {
             try (RdbmsDataStore dataStore = getDataStore()) {
-                return findSubscriptions(topicId, dataStore);
+                return findSubscriptions(topicId, shardId, numShards, dataStore);
             }
         } catch (Exception ex) {
             throw new NotificationException(ex);
         }
     }
 
-    private List<Subscription> findSubscriptions(@Nonnull String topicId, RdbmsDataStore dataStore) throws DataStoreException {
-        String qstr = String.format("FROM %s WHERE id.topicId = :topic_id", Subscription.class.getCanonicalName());
+    private List<Subscription> findSubscriptions(@Nonnull String topicId, int shardId, int numShards, RdbmsDataStore dataStore) throws DataStoreException {
+        String qstr = String.format("FROM %s WHERE id.topicId = :topic_id and MOD(hashValue, :num_shards) = :shard_id", Subscription.class.getCanonicalName());
         Map<String, Object> params = new HashMap<>();
         params.put("topic_id", topicId);
+        params.put("num_shards", numShards);
+        params.put("shard_id", shardId);
         BaseSearchResult<Subscription> topics
                 = dataStore.search(qstr, 0, -1, params, Subscription.class, null);
         if (topics instanceof EntitySearchResult) {
@@ -438,7 +422,8 @@ public class DbNotificationConfigurationProvider implements INotificationConfigu
 
     private int deleteSubscriptions(@Nonnull String topicId, boolean hardDelete, RdbmsDataStore dataStore) throws DataStoreException {
         int count = 0;
-        List<Subscription> subscriptions = findSubscriptions(topicId, dataStore);
+        // Get all the subscriptions to be deleted.
+        List<Subscription> subscriptions = findSubscriptions(topicId, 0, 1, dataStore);
         if (subscriptions != null && !subscriptions.isEmpty()) {
             for (Subscription subscription : subscriptions) {
                 if (deleteSubscription(subscription.getId(), hardDelete, dataStore)) {

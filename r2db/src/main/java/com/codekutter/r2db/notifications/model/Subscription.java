@@ -47,6 +47,8 @@ public class Subscription implements IEntity<SubscriptionId> {
     private long createdDate;
     @Column(name = "update_timestamp")
     private long updatedDate;
+    @Column(name = "hash_value")
+    private long hashValue;
 
     /**
      * Compare the entity key with the key specified.
@@ -110,6 +112,6 @@ public class Subscription implements IEntity<SubscriptionId> {
      */
     @Override
     public void validate() throws ValidationExceptions {
-
+        hashValue = id.stringKey().hashCode();
     }
 }

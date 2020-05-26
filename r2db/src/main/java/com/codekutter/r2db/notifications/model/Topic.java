@@ -56,8 +56,6 @@ public class Topic implements IEntity<ID> {
     private long createdDate;
     @Column(name = "update_timestamp")
     private long updatedDate;
-    @Column(name = "shard_value")
-    private int shardValue;
 
     /**
      * Compare the entity key with the key specified.
@@ -121,6 +119,5 @@ public class Topic implements IEntity<ID> {
      */
     @Override
     public void validate() throws ValidationExceptions {
-        shardValue = id.getId().hashCode();
     }
 }

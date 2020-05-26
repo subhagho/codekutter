@@ -20,14 +20,27 @@ package com.codekutter.r2db.notifications;
 import com.codekutter.r2db.notifications.model.Notification;
 import com.codekutter.r2db.notifications.model.NotificationQuery;
 import com.codekutter.zconfig.common.ConfigurationException;
+import com.codekutter.zconfig.common.model.annotations.ConfigAttribute;
 import com.codekutter.zconfig.common.model.nodes.AbstractConfigNode;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.experimental.Accessors;
 
 import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.security.Principal;
 import java.util.List;
 
+@Getter
+@Setter
+@Accessors(fluent = true)
 public class ChronicleNotificationHandler extends AbstractNotificationHandler {
+    @ConfigAttribute
+    private int numShards = -1;
+    @ConfigAttribute
+    private int shardId = -1;
+
     @Override
     public Notification doSend(@Nonnull String topic, @Nonnull Principal sender, @Nonnull Notification notification) throws NotificationException {
         return null;

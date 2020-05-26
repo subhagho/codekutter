@@ -34,12 +34,10 @@ public interface INotificationConfigurationProvider extends IConfigurable, Close
     /**
      * Fetch all the topics for the given shard (if shard < 0, fetch all).
      *
-     * @param shardId - Shard ID to fetch the subscriptions for.
-     * @param numShards - Total # of shards configured
      * @return - List of Topics
      * @throws NotificationException
      */
-    List<Topic> fetchTopics(int shardId, int numShards) throws NotificationException;
+    List<Topic> fetchTopics() throws NotificationException;
 
     /**
      * Find the topic specified by the Topic ID.
@@ -95,7 +93,7 @@ public interface INotificationConfigurationProvider extends IConfigurable, Close
      * @return - List of fetched subscriptions.
      * @throws NotificationException
      */
-    List<Subscription> findSubscriptions(@Nonnull String topicId) throws NotificationException;
+    List<Subscription> findSubscriptions(@Nonnull String topicId, int shardId, int numShards) throws NotificationException;
 
     /**
      * Find all active subscriptions for the specified user.

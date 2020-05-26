@@ -42,7 +42,7 @@ public class Notification implements IEntity<NotificationId>, Serializable {
     @Enumerated(EnumType.STRING)
     private ENotificationState notificationState;
     @Column(name = "body")
-    private String body;
+    private byte[] body;
     @Column(name = "principal")
     private String principal;
 
