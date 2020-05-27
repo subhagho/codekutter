@@ -227,6 +227,36 @@ public class DbNotificationConfigurationProvider implements INotificationConfigu
     }
 
     /**
+     * Fetch all active subscriptions.
+     *
+     * @return - List of active subscriptions.
+     * @throws NotificationException
+     */
+    @Override
+    public List<Subscription> fetchSubscriptions() throws NotificationException {
+        try {
+            try (RdbmsDataStore dataStore = getDataStore()) {
+                String qstr = String.format("FROM %s WHERE active = :active AND deleted = :deleted",
+                        Subscription.class.getCanonicalName());
+                Map<String, Object> params = new HashMap<>();
+                params.put("active", true);
+                params.put("deleted", false);
+                BaseSearchResult<Subscription> topics
+                        = dataStore.search(qstr, 0, -1, params, Subscription.class, null);
+                if (topics instanceof EntitySearchResult) {
+                    EntitySearchResult<Subscription> result = (EntitySearchResult<Subscription>) topics;
+                    if (result.getEntities() != null && !result.getEntities().isEmpty()) {
+                        return new ArrayList<>(result.getEntities());
+                    }
+                }
+                return null;
+            }
+        } catch (Exception ex) {
+            throw new NotificationException(ex);
+        }
+    }
+
+    /**
      * Find all active subscriptions for the specified topic.
      *
      * @param topicId - Topic ID
@@ -245,11 +275,15 @@ public class DbNotificationConfigurationProvider implements INotificationConfigu
     }
 
     private List<Subscription> findSubscriptions(@Nonnull String topicId, int shardId, int numShards, RdbmsDataStore dataStore) throws DataStoreException {
-        String qstr = String.format("FROM %s WHERE id.topicId = :topic_id and MOD(hashValue, :num_shards) = :shard_id", Subscription.class.getCanonicalName());
+        String qstr = String.format("FROM %s WHERE id.topicId = :topic_id and MOD(hashValue, :num_shards) = :shard_id " +
+                        "AND active = :active AND deleted = :deleted",
+                Subscription.class.getCanonicalName());
         Map<String, Object> params = new HashMap<>();
         params.put("topic_id", topicId);
         params.put("num_shards", numShards);
         params.put("shard_id", shardId);
+        params.put("active", true);
+        params.put("deleted", false);
         BaseSearchResult<Subscription> topics
                 = dataStore.search(qstr, 0, -1, params, Subscription.class, null);
         if (topics instanceof EntitySearchResult) {

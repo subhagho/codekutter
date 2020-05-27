@@ -17,20 +17,12 @@
 
 package com.codekutter.common.utils;
 
-import com.codekutter.common.TimeWindow;
 import com.codekutter.common.model.EObjectState;
 import com.codekutter.common.model.IKey;
 import com.codekutter.common.model.IKeyed;
-import com.codekutter.common.model.ObjectState;
-import com.codekutter.zconfig.common.ConfigurationAnnotationProcessor;
 import com.codekutter.zconfig.common.ConfigurationException;
-import com.codekutter.zconfig.common.IConfigurable;
-import com.codekutter.zconfig.common.model.annotations.ConfigAttribute;
-import com.codekutter.zconfig.common.model.annotations.ConfigPath;
-import com.codekutter.zconfig.common.model.annotations.ConfigValue;
 import com.codekutter.zconfig.common.model.nodes.AbstractConfigNode;
 import com.codekutter.zconfig.common.model.nodes.ConfigPathNode;
-import com.codekutter.zconfig.common.transformers.TimeWindowParser;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
@@ -40,29 +32,14 @@ import lombok.Setter;
 import lombok.experimental.Accessors;
 
 import javax.annotation.Nonnull;
-import java.io.Closeable;
 import java.io.IOException;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.locks.ReentrantLock;
 
 @Getter
 @Setter
 @Accessors(fluent = true)
-@ConfigPath(path = "map-cache")
-public class MultiMapCache<K extends IKey, T extends IKeyed<K>> extends Runner implements IConfigurable, Closeable {
-    @ConfigAttribute(required = true)
-    private String name;
-    @Setter(AccessLevel.NONE)
-    private final Class<? extends T> entityType;
-    @ConfigValue(name = "loader", required = true)
-    private String loaderClass;
-    @Setter(AccessLevel.NONE)
-    private MultiMapCacheLoader<K, T> loader;
-    @ConfigValue(required = true, parser = TimeWindowParser.class)
-    private TimeWindow refreshInterval;
+public class MultiMapCache<K extends IKey, T extends IKeyed<K>> extends AbstractMultiMapCache<K, T> {
     @Getter(AccessLevel.NONE)
     @Setter(AccessLevel.NONE)
     private Multimap<K, T> cache = null;
@@ -75,20 +52,9 @@ public class MultiMapCache<K extends IKey, T extends IKeyed<K>> extends Runner i
     @Getter(AccessLevel.NONE)
     @Setter(AccessLevel.NONE)
     private Multimap<K, T> cache02 = ArrayListMultimap.create();
-    @Setter(AccessLevel.NONE)
-    private ObjectState state = new ObjectState();
-    @Getter(AccessLevel.NONE)
-    @Setter(AccessLevel.NONE)
-    private ManagedThread loaderThread;
-    @Getter(AccessLevel.NONE)
-    @Setter(AccessLevel.NONE)
-    private final ReentrantLock lock = new ReentrantLock();
-    @Getter(AccessLevel.NONE)
-    @Setter(AccessLevel.NONE)
-    private long lastRunTime;
 
     public MultiMapCache(@Nonnull Class<? extends T> entityType) {
-        this.entityType = entityType;
+        super(entityType);
         cache = cache01;
         backupCache = cache02;
     }
@@ -102,15 +68,8 @@ public class MultiMapCache<K extends IKey, T extends IKeyed<K>> extends Runner i
     @Override
     public void configure(@Nonnull AbstractConfigNode node) throws ConfigurationException {
         Preconditions.checkArgument(node instanceof ConfigPathNode);
+        super.configure(node);
         try {
-            ConfigurationAnnotationProcessor.readConfigAnnotations(getClass(), (ConfigPathNode) node, this);
-            Class<? extends MultiMapCacheLoader> cls = (Class<? extends MultiMapCacheLoader>) Class.forName(loaderClass);
-            loader = TypeUtils.createInstance(cls);
-            AbstractConfigNode nn = ConfigUtils.getPathNode(getClass(), (ConfigPathNode) node);
-            if (nn == null) {
-                throw new ConfigurationException(String.format("Type node not found. [type=%s][path=%s]", getClass().getCanonicalName(), node.getAbsolutePath()));
-            }
-            loader.configure(nn);
             load();
 
             state.setState(EObjectState.Available);
@@ -122,24 +81,28 @@ public class MultiMapCache<K extends IKey, T extends IKeyed<K>> extends Runner i
         }
     }
 
+    @Override
     public Collection<T> get(@Nonnull K key) {
         Preconditions.checkState(state.getState() == EObjectState.Available);
         if (cache != null && !cache.isEmpty()) return cache.get(key);
         return null;
     }
 
+    @Override
     public Set<K> keySet() {
         Preconditions.checkState(state.getState() == EObjectState.Available);
         if (cache != null && !cache.isEmpty()) return cache.keySet();
         return null;
     }
 
+    @Override
     public Collection<T> values() {
         Preconditions.checkState(state.getState() == EObjectState.Available);
         if (cache != null && !cache.isEmpty()) return cache.values();
         return null;
     }
 
+    @Override
     public boolean isEmpty() {
         if (state.getState() == EObjectState.Available && cache != null) {
             return cache.isEmpty();
@@ -147,6 +110,7 @@ public class MultiMapCache<K extends IKey, T extends IKeyed<K>> extends Runner i
         return true;
     }
 
+    @Override
     public int size() {
         if (state.getState() == EObjectState.Available && cache != null) {
             return cache.size();

@@ -79,12 +79,20 @@ public interface INotificationConfigurationProvider extends IConfigurable, Close
      * Delete the specified topic. If hard delete will delete the record,
      * else will mark as deleted.
      *
-     * @param topicId - Topic ID to delete.
+     * @param topicId    - Topic ID to delete.
      * @param hardDelete - Do a hard delete.
      * @return
      * @throws NotificationException
      */
     boolean deleteTopic(@Nonnull String topicId, boolean hardDelete) throws NotificationException;
+
+    /**
+     * Fetch all active subscriptions.
+     *
+     * @return - List of active subscriptions.
+     * @throws NotificationException
+     */
+    List<Subscription> fetchSubscriptions() throws NotificationException;
 
     /**
      * Find all active subscriptions for the specified topic.
