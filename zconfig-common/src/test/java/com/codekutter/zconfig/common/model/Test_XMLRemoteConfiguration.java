@@ -30,7 +30,6 @@ import com.codekutter.zconfig.common.ConfigTestConstants;
 import com.codekutter.zconfig.common.model.nodes.*;
 import com.codekutter.zconfig.common.parsers.XMLConfigParser;
 import com.codekutter.zconfig.common.readers.AbstractConfigReader;
-import com.codekutter.zconfig.common.readers.ConfigFileReader;
 import com.google.common.base.Strings;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -43,9 +42,9 @@ import static com.codekutter.common.utils.LogUtils.debug;
 import static com.codekutter.common.utils.LogUtils.error;
 import static org.junit.jupiter.api.Assertions.*;
 
-class Test_XMLConfiguration {
+class Test_XMLRemoteConfiguration {
     private static final String BASE_PROPS_FILE =
-            "src/test/resources/XML/test-config.properties";
+            "src/test/resources/XML/test-remote-config.properties";
     private static Configuration configuration = null;
 
     @BeforeAll
