@@ -22,6 +22,7 @@ import com.codekutter.r2db.notifications.model.NotificationQuery;
 import com.codekutter.zconfig.common.ConfigurationException;
 import com.codekutter.zconfig.common.model.annotations.ConfigAttribute;
 import com.codekutter.zconfig.common.model.nodes.AbstractConfigNode;
+import com.codekutter.zconfig.common.model.nodes.ConfigPathNode;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
@@ -69,6 +70,11 @@ public class ChronicleNotificationHandler extends AbstractNotificationHandler {
     @Override
     public Notification doDelete(@Nonnull String topic, @Nonnull String notificationId, @Nonnull Principal receiver) throws NotificationException {
         return null;
+    }
+
+    @Override
+    public void doConfigure(@Nonnull ConfigPathNode node) throws ConfigurationException {
+
     }
 
     /**
