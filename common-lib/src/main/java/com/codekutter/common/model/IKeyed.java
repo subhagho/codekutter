@@ -19,12 +19,14 @@ package com.codekutter.common.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+import java.io.Serializable;
+
 /**
  * Interface represents a object instance with a key.
  *
  * @param <K> - Key class.
  */
-public interface IKeyed<K extends IKey> {
+public interface IKeyed<K extends IKey> extends Serializable {
     /**
      * Get the object instance Key.
      *

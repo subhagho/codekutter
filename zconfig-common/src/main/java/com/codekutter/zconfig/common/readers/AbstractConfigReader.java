@@ -25,16 +25,22 @@
 package com.codekutter.zconfig.common.readers;
 
 
+import com.codekutter.common.model.EReaderType;
 import com.codekutter.zconfig.common.ConfigurationException;
+import org.elasticsearch.common.Strings;
 
-import java.io.BufferedReader;
-import java.io.Closeable;
-import java.io.InputStream;
+import javax.annotation.Nonnull;
+import java.io.*;
+import java.net.URI;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Abstract base class for reading configuration data.
  */
 public abstract class AbstractConfigReader implements Closeable {
+    public static final String REGEX_URL = "^(https?|ftp|file)://[-a-zA-Z0-9+&@#/%?=~_|!:,.;]*[-a-zA-Z0-9+&@#/%=~_|]";
+
     /**
      * State of this reader.
      */
@@ -104,4 +110,28 @@ public abstract class AbstractConfigReader implements Closeable {
      * Close this configuration reader instance.
      */
     public abstract void close();
+
+    public static AbstractConfigReader reader(@Nonnull String source) throws IOException {
+        if (!Strings.isNullOrEmpty(source)) {
+            Pattern p = Pattern.compile(REGEX_URL);
+            Matcher m = p.matcher(source);
+            if (m.matches()) {
+                URI uri = URI.create(source);
+                EReaderType rt = EReaderType.parseFromUri(uri);
+                if (rt != null) {
+                    if (rt == EReaderType.HTTP || rt == EReaderType.HTTPS) {
+                        return new ConfigURLReader(source);
+                    } else if (rt == EReaderType.File) {
+                        return new ConfigFileReader(source);
+                    }
+                }
+            } else {
+                File f = new File(source);
+                if (f.exists()) {
+                    return new ConfigFileReader(f.getAbsolutePath());
+                }
+            }
+        }
+        throw new IOException(String.format("Invalid Source String: %s", source));
+    }
 }

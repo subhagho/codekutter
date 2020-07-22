@@ -29,6 +29,7 @@ import com.codekutter.zconfig.common.ConfigProviderFactory;
 import com.codekutter.zconfig.common.ConfigTestConstants;
 import com.codekutter.zconfig.common.model.nodes.*;
 import com.codekutter.zconfig.common.parsers.XMLConfigParser;
+import com.codekutter.zconfig.common.readers.AbstractConfigReader;
 import com.codekutter.zconfig.common.readers.ConfigFileReader;
 import com.google.common.base.Strings;
 import org.junit.jupiter.api.BeforeAll;
@@ -65,7 +66,7 @@ class Test_XMLConfiguration {
         Version version = Version.parse(vs);
         assertNotNull(version);
 
-        try (ConfigFileReader reader = new ConfigFileReader(filename)) {
+        try (ConfigFileReader reader = (ConfigFileReader) AbstractConfigReader.reader(filename)) {
             ConfigurationSettings settings = new ConfigurationSettings();
             settings.setDownloadRemoteFiles(
                     ConfigurationSettings.EStartupOptions.OnStartUp);
