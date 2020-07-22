@@ -25,7 +25,6 @@
 package com.codekutter.zconfig.common.readers;
 
 
-import com.codekutter.common.model.EReaderType;
 import com.codekutter.zconfig.common.ConfigurationException;
 import org.elasticsearch.common.Strings;
 
@@ -113,19 +112,18 @@ public abstract class AbstractConfigReader implements Closeable {
 
     public static AbstractConfigReader reader(@Nonnull String source) throws IOException {
         if (!Strings.isNullOrEmpty(source)) {
+            source = source.trim();
             Pattern p = Pattern.compile(REGEX_URL);
             Matcher m = p.matcher(source);
             if (m.matches()) {
                 URI uri = URI.create(source);
-                EReaderType rt = EReaderType.parseFromUri(uri);
-                if (rt != null) {
-                    if (rt == EReaderType.HTTP || rt == EReaderType.HTTPS) {
-                        return new ConfigURLReader(source);
-                    } else if (rt == EReaderType.File) {
-                        return new ConfigFileReader(source);
-                    }
-                }
+                return new ConfigURLReader(uri.toURL());
             } else {
+                // Sometimes file URI is represented with only one "/"
+                if (source.startsWith("file:/")) {
+                    URI uri = URI.create(source);
+                    return new ConfigURLReader(uri.toURL());
+                }
                 File f = new File(source);
                 if (f.exists()) {
                     return new ConfigFileReader(f.getAbsolutePath());

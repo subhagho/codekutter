@@ -24,13 +24,9 @@
 
 package com.codekutter.zconfig.common;
 
-import com.codekutter.common.model.EReaderType;
 import com.codekutter.zconfig.common.parsers.AbstractConfigParser;
 import com.codekutter.zconfig.common.parsers.JSONConfigParser;
 import com.codekutter.zconfig.common.parsers.XMLConfigParser;
-import com.codekutter.zconfig.common.readers.AbstractConfigReader;
-import com.codekutter.zconfig.common.readers.ConfigFileReader;
-import com.codekutter.zconfig.common.readers.ConfigURLReader;
 import com.codekutter.zconfig.common.writers.AbstractConfigWriter;
 import com.codekutter.zconfig.common.writers.JSONFileConfigWriter;
 import com.google.common.base.Preconditions;
@@ -38,11 +34,6 @@ import com.google.common.base.Strings;
 import org.apache.commons.io.FilenameUtils;
 
 import javax.annotation.Nonnull;
-import java.io.File;
-import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URL;
-import java.nio.file.Paths;
 
 /**
  * Factory class to provide config parser and config reader instances.
@@ -99,36 +90,6 @@ public class ConfigProviderFactory {
                 return null;
             default:
                 return null;
-        }
-    }
-
-    /**
-     * Get a new instance of a Configuration reader. Type of reader is determined based on the
-     * SCHEME of the URI.
-     * SCHEME = "http", TYPE = HTTP
-     * SCHEME = "file", type = File
-     *
-     * @param uri - URI to get the input from.
-     * @return - Configuration Reader instance.
-     * @throws ConfigurationException
-     */
-    public static final AbstractConfigReader reader(URI uri)
-            throws ConfigurationException {
-        Preconditions.checkArgument(uri != null);
-        EReaderType type = EReaderType.parseFromUri(uri);
-        try {
-            if (type != null) {
-                if (type == EReaderType.HTTP || type == EReaderType.HTTPS) {
-                    URL url = uri.toURL();
-                    return new ConfigURLReader(url);
-                } else if (type == EReaderType.File) {
-                    File file = Paths.get(uri).toFile();
-                    return new ConfigFileReader(file);
-                }
-            }
-            return null;
-        } catch (MalformedURLException e) {
-            throw new ConfigurationException(e);
         }
     }
 

@@ -30,7 +30,10 @@ import com.codekutter.common.utils.CypherUtils;
 import com.codekutter.common.utils.IOUtils;
 import com.codekutter.common.utils.LogUtils;
 import com.codekutter.common.utils.RemoteFileHelper;
-import com.codekutter.zconfig.common.*;
+import com.codekutter.zconfig.common.ConfigKeyVault;
+import com.codekutter.zconfig.common.ConfigurationException;
+import com.codekutter.zconfig.common.JSONConfigConstants;
+import com.codekutter.zconfig.common.ValueParseException;
 import com.codekutter.zconfig.common.model.*;
 import com.codekutter.zconfig.common.model.nodes.*;
 import com.codekutter.zconfig.common.readers.AbstractConfigReader;
@@ -909,32 +912,36 @@ public class JSONConfigParser extends AbstractConfigParser {
                 throw new ConfigurationException(
                         "Error getting URI for include node.");
             }
-            AbstractConfigReader reader = ConfigProviderFactory.reader(uri);
-            if (reader == null) {
-                throw new ConfigurationException(
-                        String.format("Error getting reader instance : [URI=%s]",
-                                uri.toString()));
-            }
-            JSONConfigParser nparser = new JSONConfigParser();
-            nparser.parse(node.getConfigName(), reader, settings,
-                    node.getVersion(), password);
-            if (nparser.configuration != null) {
-                ConfigPathNode configPathNode =
-                        nparser.configuration.getRootConfigNode();
-                if (parent instanceof ConfigPathNode) {
-                    ((ConfigPathNode) parent).addChildNode(configPathNode);
-                    configPathNode.changeConfiguration(configuration);
-                    node.setNode(configPathNode);
+            try {
+                AbstractConfigReader reader = AbstractConfigReader.reader(uri.toString());
+                if (reader == null) {
+                    throw new ConfigurationException(
+                            String.format("Error getting reader instance : [URI=%s]",
+                                    uri.toString()));
+                }
+                JSONConfigParser nparser = new JSONConfigParser();
+                nparser.parse(node.getConfigName(), reader, settings,
+                        node.getVersion(), password);
+                if (nparser.configuration != null) {
+                    ConfigPathNode configPathNode =
+                            nparser.configuration.getRootConfigNode();
+                    if (parent instanceof ConfigPathNode) {
+                        ((ConfigPathNode) parent).addChildNode(configPathNode);
+                        configPathNode.changeConfiguration(configuration);
+                        node.setNode(configPathNode);
+                    } else {
+                        throw new ConfigurationException(String.format(
+                                "Error adding include node : [expected parent=%s][actual parent=%s]",
+                                ConfigPathNode.class.getCanonicalName(),
+                                parent.getClass().getCanonicalName()));
+                    }
                 } else {
                     throw new ConfigurationException(String.format(
-                            "Error adding include node : [expected parent=%s][actual parent=%s]",
-                            ConfigPathNode.class.getCanonicalName(),
-                            parent.getClass().getCanonicalName()));
+                            "Error loading included configuration. [URI=%s]",
+                            uri.toString()));
                 }
-            } else {
-                throw new ConfigurationException(String.format(
-                        "Error loading included configuration. [URI=%s]",
-                        uri.toString()));
+            } catch (IOException ioe) {
+                throw new ConfigurationException(ioe);
             }
         } else {
             throw new ConfigurationException(

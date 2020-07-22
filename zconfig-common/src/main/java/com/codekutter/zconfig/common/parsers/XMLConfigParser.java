@@ -30,7 +30,10 @@ import com.codekutter.common.utils.CypherUtils;
 import com.codekutter.common.utils.IOUtils;
 import com.codekutter.common.utils.LogUtils;
 import com.codekutter.common.utils.RemoteFileHelper;
-import com.codekutter.zconfig.common.*;
+import com.codekutter.zconfig.common.ConfigKeyVault;
+import com.codekutter.zconfig.common.ConfigurationException;
+import com.codekutter.zconfig.common.ValueParseException;
+import com.codekutter.zconfig.common.XMLConfigConstants;
 import com.codekutter.zconfig.common.model.*;
 import com.codekutter.zconfig.common.model.nodes.*;
 import com.codekutter.zconfig.common.readers.AbstractConfigReader;
@@ -601,25 +604,29 @@ public class XMLConfigParser extends AbstractConfigParser {
             throw new ConfigurationException(
                     "Error getting URI for include node.");
         }
-        AbstractConfigReader reader = ConfigProviderFactory.reader(uri);
-        if (reader == null) {
-            throw new ConfigurationException(
-                    String.format("Error getting reader instance : [URI=%s]",
-                            uri.toString()));
-        }
-        XMLConfigParser nparser = new XMLConfigParser();
-        nparser.parse(includeNode.getConfigName(), reader, settings,
-                includeNode.getVersion(), password);
-        if (nparser.configuration != null) {
-            ConfigPathNode configPathNode =
-                    nparser.configuration.getRootConfigNode();
-            includeNode.setNode(configPathNode);
-            configPathNode.changeConfiguration(configuration);
-            parent.addChildNode(configPathNode);
-        } else {
-            throw new ConfigurationException(String.format(
-                    "Error loading included configuration. [URI=%s]",
-                    uri.toString()));
+        try {
+            AbstractConfigReader reader = AbstractConfigReader.reader(uri.toString());
+            if (reader == null) {
+                throw new ConfigurationException(
+                        String.format("Error getting reader instance : [URI=%s]",
+                                uri.toString()));
+            }
+            XMLConfigParser nparser = new XMLConfigParser();
+            nparser.parse(includeNode.getConfigName(), reader, settings,
+                    includeNode.getVersion(), password);
+            if (nparser.configuration != null) {
+                ConfigPathNode configPathNode =
+                        nparser.configuration.getRootConfigNode();
+                includeNode.setNode(configPathNode);
+                configPathNode.changeConfiguration(configuration);
+                parent.addChildNode(configPathNode);
+            } else {
+                throw new ConfigurationException(String.format(
+                        "Error loading included configuration. [URI=%s]",
+                        uri.toString()));
+            }
+        } catch (IOException ioe) {
+            throw new ConfigurationException(ioe);
         }
     }
 

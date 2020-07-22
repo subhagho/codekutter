@@ -31,14 +31,13 @@ import com.codekutter.common.utils.NetUtils;
 import com.codekutter.zconfig.common.model.Version;
 import com.codekutter.zconfig.common.model.nodes.ConfigPathNode;
 import com.codekutter.zconfig.common.parsers.AbstractConfigParser;
+import com.codekutter.zconfig.common.readers.AbstractConfigReader;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import org.joda.time.DateTime;
 
 import javax.annotation.Nonnull;
 import java.net.InetAddress;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.UUID;
 
 /**
@@ -132,8 +131,7 @@ public abstract class ZConfigEnv extends BaseConfigEnv {
             LogUtils.info(getClass(), String.format(
                     "Initializing Client Environment : With Configuration file [%s]...",
                     configfile));
-            Path path = Paths.get(configfile);
-            parser.parse(configName, ConfigProviderFactory.reader(path.toUri()),
+            parser.parse(configName, AbstractConfigReader.reader(configfile),
                     null,
                     version, password);
             configuration = parser.getConfiguration();

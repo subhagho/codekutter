@@ -73,7 +73,7 @@ public class ConfigurationLoader {
                             "Reading configuration: [type=%s][uri=%s][version=%s]",
                             configType.name(), uri.toString(),
                             version.toString()));
-            try (AbstractConfigReader reader = ConfigProviderFactory.reader(uri)) {
+            try (AbstractConfigReader reader = AbstractConfigReader.reader(uri.toString())) {
                 if (reader == null) {
                     throw new ConfigurationException(
                             String.format("Error getting reader for URI: [uri=%s]",
