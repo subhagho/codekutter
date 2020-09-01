@@ -24,6 +24,7 @@
 
 package com.codekutter.zconfig.common.model;
 
+import com.codekutter.common.GlobalConstants;
 import com.codekutter.common.utils.LogUtils;
 import com.codekutter.zconfig.common.ConfigProviderFactory;
 import com.codekutter.zconfig.common.ConfigTestConstants;
@@ -36,6 +37,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import java.io.FileInputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.Properties;
 
@@ -74,6 +76,7 @@ class Test_XMLConfiguration {
             configuration = parser.getConfiguration();
             assertNotNull(configuration);
         }
+        assertSame(GlobalConstants.defaultCharset(), StandardCharsets.UTF_16);
     }
 
     @Test

@@ -181,6 +181,11 @@ public class Configuration {
         this.header.name = name;
     }
 
+    public void setCharset(String charset) {
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(charset));
+        this.header.setCharset(charset);
+    }
+
     /**
      * Get the description of this configuration.
      *
@@ -688,5 +693,10 @@ public class Configuration {
          * Loaded Timestamp of this instance.
          */
         private long timestamp = System.currentTimeMillis();
+
+        /**
+         * Configured System Charset
+         */
+        private String charset;
     }
 }

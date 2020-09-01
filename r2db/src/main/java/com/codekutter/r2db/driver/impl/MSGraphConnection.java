@@ -17,6 +17,7 @@
 
 package com.codekutter.r2db.driver.impl;
 
+import com.codekutter.common.GlobalConstants;
 import com.codekutter.common.stores.AbstractConnection;
 import com.codekutter.common.stores.ConnectionException;
 import com.codekutter.common.stores.EConnectionState;
@@ -140,7 +141,7 @@ public class MSGraphConnection extends AbstractConnection<IGraphServiceClient> {
         conn.setDoOutput(true);
         conn.setInstanceFollowRedirects(false);
         conn.connect();
-        OutputStreamWriter writer = new OutputStreamWriter(conn.getOutputStream(), StandardCharsets.UTF_8);
+        OutputStreamWriter writer = new OutputStreamWriter(conn.getOutputStream(), GlobalConstants.defaultCharset());
         String payload = String.format("grant_type=%1$s&resource=%2$s&client_id=%3$s&username=%4$s&password=%5$s",
                 grantType,
                 resourceId,

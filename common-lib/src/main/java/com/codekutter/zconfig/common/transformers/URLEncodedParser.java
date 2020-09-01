@@ -1,5 +1,6 @@
 package com.codekutter.zconfig.common.transformers;
 
+import com.codekutter.common.GlobalConstants;
 import com.codekutter.zconfig.common.ConfigurationException;
 import com.codekutter.zconfig.common.model.annotations.ICustomParser;
 import com.codekutter.zconfig.common.model.nodes.AbstractConfigNode;
@@ -25,7 +26,7 @@ public class URLEncodedParser implements ICustomParser<String> {
             if (node instanceof ConfigValueNode) {
                 ConfigValueNode vn = (ConfigValueNode) node;
                 String value = vn.getValue();
-                return URLDecoder.decode(value, StandardCharsets.UTF_8.name());
+                return URLDecoder.decode(value, GlobalConstants.defaultCharset().name());
             }
             return null;
         } catch (Exception ex) {

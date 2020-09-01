@@ -17,6 +17,7 @@
 
 package com.codekutter.common.utils;
 
+import com.codekutter.common.GlobalConstants;
 import com.codekutter.common.IKeyVault;
 import com.codekutter.common.model.ModifiedBy;
 import com.codekutter.common.model.StringKey;
@@ -72,7 +73,7 @@ public class DBKeyVault implements IKeyVault {
             throw new SecurityException("Caller User ID not specified.");
 
         try {
-            byte[] encrypted = CypherUtils.encrypt(new String(key).getBytes(StandardCharsets.UTF_8), vaultKey.getDecryptedValue(), ivSpec);
+            byte[] encrypted = CypherUtils.encrypt(new String(key).getBytes(GlobalConstants.defaultCharset()), vaultKey.getDecryptedValue(), ivSpec);
 
             Session session = connection.connection();
             try {
@@ -121,7 +122,7 @@ public class DBKeyVault implements IKeyVault {
                 }
                 try {
                     byte[] d = CypherUtils.decrypt(record.getData(), vaultKey.getDecryptedValue(), ivSpec);
-                    return new String(d, StandardCharsets.UTF_8).toCharArray();
+                    return new String(d, GlobalConstants.defaultCharset()).toCharArray();
                 } catch (Exception e) {
                     throw new SecurityException(e);
                 }

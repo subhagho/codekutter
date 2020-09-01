@@ -46,7 +46,7 @@ public class JsonAuditSerDe implements IAuditSerDe<Object> {
                 throw new SerializationException(String.format("Error serializing record. [type=%s]",
                         type.getCanonicalName()));
             }
-            return json.getBytes(StandardCharsets.UTF_8);
+            return json.getBytes(GlobalConstants.defaultCharset());
         } catch (Exception ex) {
             throw new SerializationException(ex);
         }

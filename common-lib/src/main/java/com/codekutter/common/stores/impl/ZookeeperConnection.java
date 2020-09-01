@@ -17,6 +17,7 @@
 
 package com.codekutter.common.stores.impl;
 
+import com.codekutter.common.GlobalConstants;
 import com.codekutter.common.stores.AbstractConnection;
 import com.codekutter.common.stores.ConnectionException;
 import com.codekutter.common.stores.EConnectionState;
@@ -98,7 +99,9 @@ public class ZookeeperConnection extends AbstractConnection<CuratorFramework> {
             RetryPolicy policy = new RetryNTimes(maxRetries, retryInterval);
             String conn = String.format("%s:%d", zkHost, zkPort);
             String auth = String.format("%s:%s", username, password.getDecryptedValue());
-            client = CuratorFrameworkFactory.builder().connectString(conn).retryPolicy(policy).authorization("digest", auth.getBytes(StandardCharsets.UTF_8)).aclProvider(new ACLProvider() {
+            client = CuratorFrameworkFactory.builder().connectString(conn).
+                    retryPolicy(policy).authorization("digest", auth.getBytes(GlobalConstants.defaultCharset()))
+                    .aclProvider(new ACLProvider() {
                 @Override
                 public List<ACL> getDefaultAcl() {
                     return ZooDefs.Ids.CREATOR_ALL_ACL;

@@ -909,6 +909,13 @@ public class XMLConfigParser extends AbstractConfigParser {
                         String name = nn.getTextContent();
                         Preconditions.checkState(!Strings.isNullOrEmpty(name));
                         configuration.setDescription(name);
+                    } else if (nn.getNodeName()
+                            .compareTo(
+                                    XMLConfigConstants.CONFIG_CHARSET) ==
+                            0) {
+                        String name = nn.getTextContent();
+                        Preconditions.checkState(!Strings.isNullOrEmpty(name));
+                        configuration.setCharset(name);
                     }
                 }
             }

@@ -20,6 +20,7 @@ package com.codekutter.zconfig.common.utils;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterException;
+import com.codekutter.common.GlobalConstants;
 import com.codekutter.common.utils.CypherUtils;
 import com.codekutter.zconfig.common.ConfigKeyVault;
 import com.google.common.base.Strings;
@@ -108,7 +109,7 @@ public class ConfigSetupUtils {
                     key = getPassword();
                 }
                 text = "Encrypted Value";
-                value = CypherUtils.encryptAsString(input.getBytes(StandardCharsets.UTF_8), key, iv);
+                value = CypherUtils.encryptAsString(input.getBytes(GlobalConstants.defaultCharset()), key, iv);
             } else if (operation == EOperation.decrypt) {
                 if (Strings.isNullOrEmpty(iv)) {
                     iv = getValue("IV Spec");
@@ -121,7 +122,7 @@ public class ConfigSetupUtils {
                 }
                 text = "Encrypted Value";
                 byte[] data = CypherUtils.decrypt(input, key, iv);
-                value = new String(data, StandardCharsets.UTF_8);
+                value = new String(data, GlobalConstants.defaultCharset());
             } else if (operation == EOperation.hash) {
                 if (Strings.isNullOrEmpty(key)) {
                     key = getValue("Key");

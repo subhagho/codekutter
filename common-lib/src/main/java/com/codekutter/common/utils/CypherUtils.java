@@ -20,6 +20,7 @@ package com.codekutter.common.utils;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterException;
+import com.codekutter.common.GlobalConstants;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import org.apache.commons.codec.binary.Base64;
@@ -29,7 +30,6 @@ import javax.crypto.Cipher;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 import java.io.Console;
-import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.security.MessageDigest;
 import java.util.ArrayList;
@@ -65,9 +65,9 @@ public class CypherUtils {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(key));
 
         MessageDigest digest = MessageDigest.getInstance(HASH_ALGO);
-        byte[] d = digest.digest(key.getBytes(StandardCharsets.UTF_8));
+        byte[] d = digest.digest(key.getBytes(GlobalConstants.defaultCharset()));
         d = Base64.encodeBase64(d);
-        return new String(d, StandardCharsets.UTF_8);
+        return new String(d, GlobalConstants.defaultCharset());
     }
 
     /**
@@ -83,7 +83,7 @@ public class CypherUtils {
         MessageDigest digest = MessageDigest.getInstance(HASH_ALGO);
         byte[] d = digest.digest(data);
         d = Base64.encodeBase64(d);
-        return new String(d, StandardCharsets.UTF_8);
+        return new String(d, GlobalConstants.defaultCharset());
     }
 
     /**
@@ -142,7 +142,7 @@ public class CypherUtils {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(password));
         Preconditions.checkArgument(!Strings.isNullOrEmpty(iv));
 
-        byte[] encrypted = encrypt(data.getBytes(StandardCharsets.UTF_8), password, iv);
+        byte[] encrypted = encrypt(data.getBytes(GlobalConstants.defaultCharset()), password, iv);
         return new String(Base64.encodeBase64(encrypted));
     }
 
@@ -168,8 +168,8 @@ public class CypherUtils {
 
     private static Cipher getCipher(String password, String iv, int mode) throws Exception {
         // Create key and cipher
-        Key aesKey = new SecretKeySpec(password.getBytes(StandardCharsets.UTF_8), CIPHER_TYPE);
-        IvParameterSpec ivspec = new IvParameterSpec(iv.getBytes(StandardCharsets.UTF_8));
+        Key aesKey = new SecretKeySpec(password.getBytes(GlobalConstants.defaultCharset()), CIPHER_TYPE);
+        IvParameterSpec ivspec = new IvParameterSpec(iv.getBytes(GlobalConstants.defaultCharset()));
 
         Cipher cipher = Cipher.getInstance(CIPHER_ALGO);
         cipher.init(mode, aesKey, ivspec);
@@ -237,12 +237,12 @@ public class CypherUtils {
         if (encrypt) {
             String pwd = getPassword();
             String output =
-                    encryptAsString(value.getBytes(StandardCharsets.UTF_8), pwd, ivSpec);
+                    encryptAsString(value.getBytes(GlobalConstants.defaultCharset()), pwd, ivSpec);
             System.out.println(String.format("Encrypted Text: %s", output));
         } else if (decrypt) {
             String pwd = getPassword();
-            byte[] buff = decrypt(value.getBytes(StandardCharsets.UTF_8), pwd, ivSpec);
-            String output = new String(buff, StandardCharsets.UTF_8);
+            byte[] buff = decrypt(value.getBytes(GlobalConstants.defaultCharset()), pwd, ivSpec);
+            String output = new String(buff, GlobalConstants.defaultCharset());
             System.out.println(String.format("Decrypted Text: %s", output));
         } else if (doHash) {
             String output = getKeyHash(value);

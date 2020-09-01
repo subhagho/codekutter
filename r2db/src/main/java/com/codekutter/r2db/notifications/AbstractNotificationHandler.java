@@ -104,7 +104,7 @@ public abstract class AbstractNotificationHandler implements IConfigurable, Clos
             notification.setUpdatedDate(notification.getCreatedDate());
             if (body != null) {
                 String json = GlobalConstants.getJsonMapper().writeValueAsString(body);
-                byte[] array = json.getBytes(StandardCharsets.UTF_8);
+                byte[] array = json.getBytes(GlobalConstants.defaultCharset());
                 if (array != null && array.length > maxSize) {
                     throw new NotificationException(String.format("Max notification size exceeded. [max size=%d][size=%d]", maxSize, array.length));
                 }

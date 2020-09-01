@@ -17,6 +17,7 @@
 
 package com.codekutter.common.messaging;
 
+import com.codekutter.common.GlobalConstants;
 import com.codekutter.common.model.IKeyed;
 import com.codekutter.common.stores.AbstractConnection;
 import com.codekutter.common.stores.ConnectionManager;
@@ -53,7 +54,7 @@ public abstract class AbstractSQSDbCachedQueue<M extends IKeyed> extends Abstrac
         Preconditions.checkArgument(node instanceof ConfigPathNode);
         try {
             ConfigurationAnnotationProcessor.readConfigAnnotations(getClass(), (ConfigPathNode) node, this);
-            queue(URLDecoder.decode(queue(), StandardCharsets.UTF_8.name()));
+            queue(URLDecoder.decode(queue(), GlobalConstants.defaultCharset().name()));
             LogUtils.info(getClass(), String.format("Configuring Queue. [name=%s]...", name()));
             AbstractConfigNode cnode = ConfigUtils.getPathNode(getClass(), (ConfigPathNode) node);
             if (!(cnode instanceof ConfigPathNode)) {

@@ -219,7 +219,7 @@ public class ZookeeperDataStore extends AbstractDataStore<CuratorFramework> {
             }
             CuratorFramework client = connection().connection();
             String json = GlobalConstants.getJsonMapper().writeValueAsString(properties);
-            Stat stat = client.setData().forPath(path, json.getBytes(StandardCharsets.UTF_8));
+            Stat stat = client.setData().forPath(path, json.getBytes(GlobalConstants.defaultCharset()));
             if (stat == null) {
                 throw new DataStoreException(String.format("Error setting data for path. [path=%s]", path));
             }

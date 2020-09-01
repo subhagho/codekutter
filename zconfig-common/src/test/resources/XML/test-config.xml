@@ -28,6 +28,7 @@
         <description>This is a test JSON configuration file.</description>
         <createdBy user="subho" tiemstamp="1552835141000"/>
         <updatedBy user="subho" tiemstamp="1552835341000"/>
+        <charset>UTF-16</charset>
     </header>
     <configuration>
         <nodeVersion>2</nodeVersion>

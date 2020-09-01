@@ -24,11 +24,15 @@
 
 package com.codekutter.common;
 
+import com.codekutter.common.utils.LogUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.joda.JodaModule;
+import org.elasticsearch.common.Strings;
 
 import javax.annotation.Nonnull;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 
 /**
  * Class defines static global constants.
@@ -82,6 +86,8 @@ public class GlobalConstants {
 
     private static String OS = System.getProperty("os.name").toLowerCase();
 
+    private static Charset charset = StandardCharsets.UTF_8;
+
     /**
      * Is this a windows OS?
      *
@@ -133,5 +139,30 @@ public class GlobalConstants {
 
     public static String quote(@Nonnull String value) {
         return String.format("\"%s\"", value);
+    }
+
+    public static Charset defaultCharset() {
+        return charset;
+    }
+
+    public static void defaultCharset(@Nonnull String value) {
+        if (!Strings.isNullOrEmpty(value)) {
+            charset = Charset.forName(value);
+        }
+    }
+
+    public static void defaultCharset(@Nonnull Charset value) {
+        if (value != null) {
+            charset = value;
+        }
+    }
+
+    static {
+        charset = Charset.defaultCharset();
+        String cs = System.getProperty("file.encoding");
+        if (!Strings.isNullOrEmpty(cs)) {
+            charset = Charset.forName(cs);
+        }
+        System.out.println(String.format("Using default charset. [charset=%s]", charset.displayName()));
     }
 }

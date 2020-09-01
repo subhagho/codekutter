@@ -69,7 +69,7 @@ public class DefaultStringMessageUtils {
     public static byte[] getBytes(@Nonnull DefaultStringMessage message) throws Exception {
         String json = GlobalConstants.getJsonMapper().writeValueAsString(message);
         if (!Strings.isNullOrEmpty(json)) {
-            return json.getBytes(StandardCharsets.UTF_8);
+            return json.getBytes(GlobalConstants.defaultCharset());
         }
         return new byte[0];
     }

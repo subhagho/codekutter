@@ -18,6 +18,7 @@
 package com.codekutter.r2db.driver;
 
 import com.codekutter.common.Context;
+import com.codekutter.common.GlobalConstants;
 import com.codekutter.common.auditing.*;
 import com.codekutter.common.model.AuditRecord;
 import com.codekutter.common.model.EAuditType;
@@ -53,7 +54,6 @@ import javax.annotation.Nonnull;
 import javax.persistence.JoinColumn;
 import java.io.IOException;
 import java.lang.reflect.Field;
-import java.nio.charset.StandardCharsets;
 import java.security.Principal;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -1366,7 +1366,7 @@ public class EntityManager implements IConfigurable {
             if (ReflectionUtils.isPrimitiveTypeOrString(field)) {
                 if (field.isAnnotationPresent(Encrypted.class)) {
                     if (field.getType().equals(String.class)) {
-                        String encrypted = BaseConfigEnv.env().cryptoHandler().decryptAsString((String) entity, StandardCharsets.UTF_8, context);
+                        String encrypted = BaseConfigEnv.env().cryptoHandler().decryptAsString((String) entity, GlobalConstants.defaultCharset(), context);
                         ReflectionUtils.setObjectValue(parent, field, encrypted);
                     } else if (field.getType().isArray()) {
                         if (field.getType().getComponentType() != null && field.getType().getComponentType().equals(byte.class)) {
@@ -1376,7 +1376,7 @@ public class EntityManager implements IConfigurable {
                         } else if (field.getType().getComponentType() != null && field.getType().getComponentType().equals(String.class)) {
                             String[] array = (String[]) entity;
                             for (int ii = 0; ii < array.length; ii++) {
-                                array[ii] = BaseConfigEnv.env().cryptoHandler().decryptAsString(array[ii], StandardCharsets.UTF_8, context);
+                                array[ii] = BaseConfigEnv.env().cryptoHandler().decryptAsString(array[ii], GlobalConstants.defaultCharset(), context);
                             }
                         } else {
                             throw new DataStoreException(String.format("Cannot encrypt type. [type=%s]", field.getType().getComponentType().getCanonicalName()));
@@ -1393,7 +1393,7 @@ public class EntityManager implements IConfigurable {
                             List<String> ls = (List<String>) entity;
                             List<String> els = (List<String>) TypeUtils.createInstance(entity.getClass());
                             for (String v : ls) {
-                                String encrypted = BaseConfigEnv.env().cryptoHandler().decryptAsString(v, StandardCharsets.UTF_8, context);
+                                String encrypted = BaseConfigEnv.env().cryptoHandler().decryptAsString(v, GlobalConstants.defaultCharset(), context);
                                 els.add(encrypted);
                             }
                             ReflectionUtils.setObjectValue(parent, field, els);
@@ -1419,7 +1419,7 @@ public class EntityManager implements IConfigurable {
                             Set<String> ls = (Set<String>) entity;
                             Set<String> els = (Set<String>) TypeUtils.createInstance(entity.getClass());
                             for (String v : ls) {
-                                String encrypted = BaseConfigEnv.env().cryptoHandler().decryptAsString(v, StandardCharsets.UTF_8, context);
+                                String encrypted = BaseConfigEnv.env().cryptoHandler().decryptAsString(v, GlobalConstants.defaultCharset(), context);
                                 els.add(encrypted);
                             }
                             ReflectionUtils.setObjectValue(parent, field, els);
@@ -1459,7 +1459,7 @@ public class EntityManager implements IConfigurable {
             if (ReflectionUtils.isPrimitiveTypeOrString(field)) {
                 if (field.isAnnotationPresent(Encrypted.class)) {
                     if (field.getType().equals(String.class)) {
-                        String encrypted = BaseConfigEnv.env().cryptoHandler().encryptAsString((String) entity, StandardCharsets.UTF_8, context);
+                        String encrypted = BaseConfigEnv.env().cryptoHandler().encryptAsString((String) entity, GlobalConstants.defaultCharset(), context);
                         ReflectionUtils.setObjectValue(parent, field, encrypted);
                     } else if (field.getType().isArray()) {
                         if (field.getType().getComponentType() != null && field.getType().getComponentType().equals(byte.class)) {
@@ -1469,7 +1469,7 @@ public class EntityManager implements IConfigurable {
                         } else if (field.getType().getComponentType() != null && field.getType().getComponentType().equals(String.class)) {
                             String[] array = (String[]) entity;
                             for (int ii = 0; ii < array.length; ii++) {
-                                array[ii] = BaseConfigEnv.env().cryptoHandler().encryptAsString(array[ii], StandardCharsets.UTF_8, context);
+                                array[ii] = BaseConfigEnv.env().cryptoHandler().encryptAsString(array[ii], GlobalConstants.defaultCharset(), context);
                             }
                         } else {
                             throw new DataStoreException(String.format("Cannot encrypt type. [type=%s]", field.getType().getComponentType().getCanonicalName()));
@@ -1486,7 +1486,7 @@ public class EntityManager implements IConfigurable {
                             List<String> ls = (List<String>) entity;
                             List<String> els = (List<String>) TypeUtils.createInstance(entity.getClass());
                             for (String v : ls) {
-                                String encrypted = BaseConfigEnv.env().cryptoHandler().encryptAsString(v, StandardCharsets.UTF_8, context);
+                                String encrypted = BaseConfigEnv.env().cryptoHandler().encryptAsString(v, GlobalConstants.defaultCharset(), context);
                                 els.add(encrypted);
                             }
                             ReflectionUtils.setObjectValue(parent, field, els);
@@ -1512,7 +1512,7 @@ public class EntityManager implements IConfigurable {
                             Set<String> ls = (Set<String>) entity;
                             Set<String> els = (Set<String>) TypeUtils.createInstance(entity.getClass());
                             for (String v : ls) {
-                                String encrypted = BaseConfigEnv.env().cryptoHandler().encryptAsString(v, StandardCharsets.UTF_8, context);
+                                String encrypted = BaseConfigEnv.env().cryptoHandler().encryptAsString(v, GlobalConstants.defaultCharset(), context);
                                 els.add(encrypted);
                             }
                             ReflectionUtils.setObjectValue(parent, field, els);

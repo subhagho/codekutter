@@ -17,6 +17,7 @@
 
 package com.codekutter.common.auditing;
 
+import com.codekutter.common.GlobalConstants;
 import com.codekutter.common.StateException;
 import com.codekutter.common.model.*;
 import com.codekutter.common.stores.AbstractDataStore;
@@ -318,10 +319,10 @@ public abstract class AbstractAuditLogger<C> implements IConfigurable, Closeable
             record.setEntityData(data);
             record.setEntityId(entity.getKey().stringKey());
             if (!Strings.isNullOrEmpty(changeDelta)) {
-                record.setChangeDelta(changeDelta.getBytes(StandardCharsets.UTF_8));
+                record.setChangeDelta(changeDelta.getBytes(GlobalConstants.defaultCharset()));
             }
             if (!Strings.isNullOrEmpty(changeContext)) {
-                record.setChangeContext(changeContext.getBytes(StandardCharsets.UTF_8));
+                record.setChangeContext(changeContext.getBytes(GlobalConstants.defaultCharset()));
             }
             return record;
         } catch (Throwable ex) {

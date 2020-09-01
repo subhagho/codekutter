@@ -1062,6 +1062,14 @@ public class JSONConfigParser extends AbstractConfigParser {
                         configuration.setDescription(desc);
                     }
                 }
+
+                JsonNode chnode = header.get(JSONConfigConstants.CONFIG_CHARSET);
+                if (chnode != null) {
+                    String sc = chnode.textValue();
+                    if (!Strings.isNullOrEmpty(sc)) {
+                        configuration.setCharset(sc);
+                    }
+                }
                 // Check if an encryption hash is specified.
                 JsonNode phnode =
                         header.get(JSONConfigConstants.CONFIG_HEADER_PASSWD_HASH);

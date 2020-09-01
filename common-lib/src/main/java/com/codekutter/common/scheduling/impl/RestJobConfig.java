@@ -17,6 +17,7 @@
 
 package com.codekutter.common.scheduling.impl;
 
+import com.codekutter.common.GlobalConstants;
 import com.codekutter.common.scheduling.IRestRequestBuilder;
 import com.codekutter.common.scheduling.IRestResponseHandler;
 import com.codekutter.common.scheduling.JobConfig;
@@ -73,7 +74,7 @@ public class RestJobConfig extends JobConfig {
     public void configure(@Nonnull AbstractConfigNode node) throws ConfigurationException {
         super.configure(node);
         try {
-            requestUrl = URLDecoder.decode(requestUrl, StandardCharsets.UTF_8.name());
+            requestUrl = URLDecoder.decode(requestUrl, GlobalConstants.defaultCharset().name());
             if (node instanceof ConfigPathNode) {
                 if (((ConfigPathNode) node).parmeters() != null) {
                     ConfigParametersNode params = ((ConfigPathNode) node).parmeters();

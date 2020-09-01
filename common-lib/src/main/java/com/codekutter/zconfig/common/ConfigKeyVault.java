@@ -17,6 +17,7 @@
 
 package com.codekutter.zconfig.common;
 
+import com.codekutter.common.GlobalConstants;
 import com.codekutter.common.IKeyVault;
 import com.codekutter.common.utils.CypherUtils;
 import com.codekutter.zconfig.common.model.Configuration;
@@ -94,7 +95,7 @@ public class ConfigKeyVault {
             if (data == null || data.length <= 0) {
                 throw new SecurityException(String.format("No passcode returned for configuration. [name=%s]", name));
             }
-            return new String(data, StandardCharsets.UTF_8);
+            return new String(data, GlobalConstants.defaultCharset());
         } catch (Exception e) {
             throw new SecurityException(e);
         }

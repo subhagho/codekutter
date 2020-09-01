@@ -24,6 +24,7 @@
 
 package com.codekutter.zconfig.common.parsers;
 
+import com.codekutter.common.GlobalConstants;
 import com.codekutter.common.stores.AbstractConnection;
 import com.codekutter.common.stores.ConnectionManager;
 import com.codekutter.common.utils.ConfigUtils;
@@ -100,6 +101,13 @@ public abstract class AbstractConfigParser implements Closeable {
         configuration.getRootConfigNode().validate();
         // Mark the configuration has been loaded.
         configuration.loaded();
+
+        String charset = configuration.getHeader().getCharset();
+        if (!Strings.isNullOrEmpty(charset)) {
+            GlobalConstants.defaultCharset(charset);
+        } else {
+            configuration.getHeader().setCharset(GlobalConstants.defaultCharset().name());
+        }
     }
 
     /**
