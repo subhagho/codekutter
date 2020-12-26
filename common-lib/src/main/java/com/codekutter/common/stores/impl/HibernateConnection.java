@@ -153,6 +153,20 @@ public class HibernateConnection extends AbstractConnection<Session> {
                 settings.setProperty(Environment.PASS, dbPassword.getDecryptedValue());
                 settings.setProperty(Environment.DIALECT, cfg.dialect);
 
+                if (cfg.enableConnectionPool) {
+                    if (cfg.poolMinSize < 0 || cfg.poolMaxSize <= 0 || cfg.poolMaxSize < cfg.poolMinSize) {
+                        throw new ConfigurationException(
+                                String.format("Invalid Pool Configuration : [min size=%d][max size=%d",
+                                        cfg.poolMinSize, cfg.poolMaxSize));
+                    }
+                    settings.setProperty(HibernateConfig.CONFIG_C3P0_PREFIX + ".min_size", "" + cfg.poolMinSize);
+                    settings.setProperty(HibernateConfig.CONFIG_C3P0_PREFIX + ".max_size", "" + cfg.poolMaxSize);
+                    if (cfg.poolTimeout > 0)
+                        settings.setProperty(HibernateConfig.CONFIG_C3P0_PREFIX + ".timeout", "" + cfg.poolTimeout);
+                    if (cfg.poolConnectionCheck) {
+                        settings.setProperty(HibernateConfig.CONFIG_C3P0_PREFIX + ".testConnectionOnCheckout", "true");
+                    }
+                }
                 if (cfg.enableCaching) {
                     if (Strings.isNullOrEmpty(cfg.cacheConfig)) {
                         throw new ConfigurationException("Missing cache configuration file. ");
@@ -234,6 +248,11 @@ public class HibernateConnection extends AbstractConnection<Session> {
         public static final String CACHE_FACTORY_CLASS = "org.hibernate.cache.ehcache.EhCacheRegionFactory";
         public static final String CACHE_CONFIG_FILE = "net.sf.ehcache.configurationResourceName";
         public static final String CONFIG_HIBERNATE_PATH = "hibernate";
+        public static final String CONFIG_C3P0_PATH = "pool";
+        public static final String CONFIG_C3P0_PREFIX = "hibernate.c3p0";
+        private static final int DEFAULT_POOL_MIN_SIZE = 4;
+        private static final int DEFAULT_POOL_MAX_SIZE = 8;
+        private static final int DEFAULT_POOL_TIMEOUT = 1800;
 
         @ConfigValue(name = "url", required = true)
         private String dbUrl;
@@ -251,6 +270,16 @@ public class HibernateConnection extends AbstractConnection<Session> {
         private boolean enableQueryCaching = false;
         @ConfigValue(name = "cacheConfig")
         private String cacheConfig;
+        @ConfigAttribute(name = "pool@enable")
+        private boolean enableConnectionPool = false;
+        @ConfigValue(name = "pool/minSize")
+        private int poolMinSize = DEFAULT_POOL_MIN_SIZE;
+        @ConfigValue(name = "pool/maxSize")
+        private int poolMaxSize = DEFAULT_POOL_MAX_SIZE;
+        @ConfigValue(name = "pool/timeout")
+        private long poolTimeout = DEFAULT_POOL_TIMEOUT;
+        @ConfigAttribute(name = "pool@check")
+        private boolean poolConnectionCheck = true;
     }
 
 }
