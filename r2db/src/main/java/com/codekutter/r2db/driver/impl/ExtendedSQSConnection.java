@@ -52,6 +52,8 @@ import java.util.Map;
 @Accessors(fluent = true)
 public class ExtendedSQSConnection extends AbstractJmsConnection {
     public static final String DEFAULT_PROFILE = "default";
+    public static final String NODE_S3_CONNECTION = "s3";
+
     @ConfigAttribute(required = true)
     private String region;
     @ConfigAttribute
@@ -109,7 +111,11 @@ public class ExtendedSQSConnection extends AbstractJmsConnection {
                 throw new ConfigurationException(String.format("Invalid connection configuration. [node=%s]", node.getAbsolutePath()));
             }
             s3Connection = new AwsS3Connection();
-            s3Connection.configure(node);
+            AbstractConfigNode s3node = node.find(NODE_S3_CONNECTION);
+            if (!(s3node instanceof ConfigPathNode)) {
+                throw new ConfigurationException(String.format("S3 configuration not found. [node=%s]", node.getAbsolutePath()));
+            }
+            s3Connection.configure(s3node);
 
             ExtendedClientConfiguration config = configBuilder((ConfigPathNode) cnode);
             ProfileCredentialsProvider provider = new ProfileCredentialsProvider(profile);

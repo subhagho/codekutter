@@ -57,6 +57,8 @@ import java.util.Map;
 public class AwsS3Connection extends AbstractConnection<AmazonS3> {
     public static final String DEFAULT_PROFILE = "default";
 
+    @ConfigAttribute
+    private boolean useCredentials = true;
     @ConfigAttribute(required = true)
     private String region;
     @ConfigValue
@@ -101,7 +103,13 @@ public class AwsS3Connection extends AbstractConnection<AmazonS3> {
             if (!(cnode instanceof ConfigPathNode)) {
                 throw new ConfigurationException(String.format("Invalid connection configuration. [node=%s]", node.getAbsolutePath()));
             }
-            if (Strings.isNullOrEmpty(endpoint)) {
+            if (!useCredentials) {
+                ClientConfiguration config = configBuilder((ConfigPathNode) cnode);
+                client = AmazonS3ClientBuilder.standard()
+                        .withRegion(region)
+                        .withClientConfiguration(config)
+                        .build();
+            } else if (Strings.isNullOrEmpty(endpoint)) {
                 ClientConfiguration config = configBuilder((ConfigPathNode) cnode);
                 ProfileCredentialsProvider provider = new ProfileCredentialsProvider(profile);
                 // Only to check a valid profile is specified.
