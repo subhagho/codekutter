@@ -54,6 +54,8 @@ public class ExtendedSQSConnection extends AbstractJmsConnection {
     public static final String DEFAULT_PROFILE = "default";
     public static final String NODE_S3_CONNECTION = "s3";
 
+    @ConfigAttribute
+    private boolean useCredentials = true;
     @ConfigAttribute(required = true)
     private String region;
     @ConfigAttribute
@@ -118,14 +120,22 @@ public class ExtendedSQSConnection extends AbstractJmsConnection {
             s3Connection.configure(s3node);
 
             ExtendedClientConfiguration config = configBuilder((ConfigPathNode) cnode);
-            ProfileCredentialsProvider provider = new ProfileCredentialsProvider(profile);
-            // Only to check a valid profile is specified.
-            provider.getCredentials();
-            client = new AmazonSQSExtendedClient(AmazonSQSClientBuilder
-                    .standard()
-                    .withRegion(region)
-                    .withCredentials(provider).build(),
-                    config);
+            if (useCredentials) {
+                ProfileCredentialsProvider provider = new ProfileCredentialsProvider(profile);
+                // Only to check a valid profile is specified.
+                provider.getCredentials();
+                client = new AmazonSQSExtendedClient(AmazonSQSClientBuilder
+                        .standard()
+                        .withRegion(region)
+                        .withCredentials(provider).build(),
+                        config);
+            } else {
+                client = new AmazonSQSExtendedClient(AmazonSQSClientBuilder
+                        .standard()
+                        .withRegion(region)
+                        .build(),
+                        config);
+            }
             connectionFactory = new SQSConnectionFactory(
                     new ProviderConfiguration(),
                     client

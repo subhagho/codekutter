@@ -51,6 +51,8 @@ import java.util.Map;
 @Accessors(fluent = true)
 public class AwsSQSConnection extends AbstractJmsConnection {
     public static final String DEFAULT_PROFILE = "default";
+    @ConfigAttribute
+    private boolean useCredentials = true;
     @ConfigAttribute(required = true)
     private String region;
     @ConfigAttribute
@@ -106,15 +108,23 @@ public class AwsSQSConnection extends AbstractJmsConnection {
                 throw new ConfigurationException(String.format("Invalid connection configuration. [node=%s]", node.getAbsolutePath()));
             }
             ClientConfiguration config = configBuilder((ConfigPathNode) cnode);
-            ProfileCredentialsProvider provider = new ProfileCredentialsProvider(profile);
-            // Only to check a valid profile is specified.
-            provider.getCredentials();
-            connectionFactory = new SQSConnectionFactory(
-                    new ProviderConfiguration(),
-                    AmazonSQSClientBuilder.standard()
-                            .withRegion(region).withClientConfiguration(config)
-                            .withCredentials(provider)
-            );
+            if (useCredentials) {
+                ProfileCredentialsProvider provider = new ProfileCredentialsProvider(profile);
+                // Only to check a valid profile is specified.
+                provider.getCredentials();
+                connectionFactory = new SQSConnectionFactory(
+                        new ProviderConfiguration(),
+                        AmazonSQSClientBuilder.standard()
+                                .withRegion(region).withClientConfiguration(config)
+                                .withCredentials(provider)
+                );
+            } else {
+                connectionFactory = new SQSConnectionFactory(
+                        new ProviderConfiguration(),
+                        AmazonSQSClientBuilder.standard()
+                                .withRegion(region).withClientConfiguration(config)
+                );
+            }
             connection = connectionFactory.createConnection();
             connection.start();
 

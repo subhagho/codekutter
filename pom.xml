@@ -161,26 +161,30 @@
         <dependency>
             <groupId>com.netflix.spectator</groupId>
             <artifactId>spectator-api</artifactId>
-            <version>0.99.2</version>
+            <version>0.123.1</version>
         </dependency>
+
         <!-- https://mvnrepository.com/artifact/com.netflix.spectator/spectator-ext-gc -->
         <dependency>
             <groupId>com.netflix.spectator</groupId>
             <artifactId>spectator-ext-gc</artifactId>
-            <version>0.99.2</version>
+            <version>0.123.1</version>
         </dependency>
+
         <!-- https://mvnrepository.com/artifact/com.netflix.spectator/spectator-ext-jvm -->
         <dependency>
             <groupId>com.netflix.spectator</groupId>
             <artifactId>spectator-ext-jvm</artifactId>
-            <version>0.99.2</version>
+            <version>0.123.1</version>
         </dependency>
+
         <!-- https://mvnrepository.com/artifact/com.netflix.spectator/spectator-reg-metrics3 -->
         <dependency>
             <groupId>com.netflix.spectator</groupId>
             <artifactId>spectator-reg-metrics3</artifactId>
-            <version>0.99.2</version>
+            <version>0.123.1</version>
         </dependency>
+
     </dependencies>
     <build>
         <pluginManagement>
