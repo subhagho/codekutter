@@ -21,8 +21,10 @@ import com.amazon.sqs.javamessaging.ProviderConfiguration;
 import com.amazon.sqs.javamessaging.SQSConnection;
 import com.amazon.sqs.javamessaging.SQSConnectionFactory;
 import com.amazonaws.ClientConfiguration;
+import com.amazonaws.auth.EC2ContainerCredentialsProviderWrapper;
 import com.amazonaws.auth.profile.ProfileCredentialsProvider;
 import com.amazonaws.services.sqs.AmazonSQSClientBuilder;
+import com.codekutter.common.AwsConstants;
 import com.codekutter.common.stores.ConnectionException;
 import com.codekutter.common.stores.EConnectionState;
 import com.codekutter.common.utils.ConfigUtils;
@@ -123,6 +125,7 @@ public class AwsSQSConnection extends AbstractJmsConnection {
                         new ProviderConfiguration(),
                         AmazonSQSClientBuilder.standard()
                                 .withRegion(region).withClientConfiguration(config)
+                                .withCredentials(new AwsConstants.AWSCredentialsProviderChain())
                 );
             }
             connection = connectionFactory.createConnection();

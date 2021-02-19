@@ -19,9 +19,11 @@ package com.codekutter.r2db.driver.impl;
 
 import com.amazon.sqs.javamessaging.*;
 import com.amazonaws.ClientConfiguration;
+import com.amazonaws.auth.EC2ContainerCredentialsProviderWrapper;
 import com.amazonaws.auth.profile.ProfileCredentialsProvider;
 import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.AmazonSQSClientBuilder;
+import com.codekutter.common.AwsConstants;
 import com.codekutter.common.messaging.AbstractJmsConnection;
 import com.codekutter.common.messaging.AwsSQSConnection;
 import com.codekutter.common.stores.ConnectionException;
@@ -133,6 +135,7 @@ public class ExtendedSQSConnection extends AbstractJmsConnection {
                 client = new AmazonSQSExtendedClient(AmazonSQSClientBuilder
                         .standard()
                         .withRegion(region)
+                        .withCredentials(new AwsConstants.AWSCredentialsProviderChain())
                         .build(),
                         config);
             }

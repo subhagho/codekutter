@@ -20,10 +20,13 @@ package com.codekutter.r2db.driver.impl;
 import com.amazonaws.ClientConfiguration;
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.AnonymousAWSCredentials;
+import com.amazonaws.auth.EC2ContainerCredentialsProviderWrapper;
+import com.amazonaws.auth.InstanceProfileCredentialsProvider;
 import com.amazonaws.auth.profile.ProfileCredentialsProvider;
 import com.amazonaws.client.builder.AwsClientBuilder;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
+import com.codekutter.common.AwsConstants;
 import com.codekutter.common.messaging.AwsSQSConnection;
 import com.codekutter.common.model.ConnectionConfig;
 import com.codekutter.common.stores.AbstractConnection;
@@ -108,6 +111,7 @@ public class AwsS3Connection extends AbstractConnection<AmazonS3> {
                 client = AmazonS3ClientBuilder.standard()
                         .withRegion(region)
                         .withClientConfiguration(config)
+                        .withCredentials(new AwsConstants.AWSCredentialsProviderChain())
                         .build();
             } else if (Strings.isNullOrEmpty(endpoint)) {
                 ClientConfiguration config = configBuilder((ConfigPathNode) cnode);
@@ -148,13 +152,21 @@ public class AwsS3Connection extends AbstractConnection<AmazonS3> {
         }
         name(s3cfg.getName());
         ClientConfiguration config = configBuilder((AwsS3ConnectionConfig) cfg);
-        ProfileCredentialsProvider provider = new ProfileCredentialsProvider(profile);
-        // Only to check a valid profile is specified.
-        provider.getCredentials();
-        client = AmazonS3ClientBuilder.standard()
-                .withRegion(region)
-                .withClientConfiguration(config)
-                .withCredentials(provider).build();
+        if (!useCredentials) {
+            client = AmazonS3ClientBuilder.standard()
+                    .withRegion(region)
+                    .withClientConfiguration(config)
+                    .withCredentials(new AwsConstants.AWSCredentialsProviderChain())
+                    .build();
+        } else {
+            ProfileCredentialsProvider provider = new ProfileCredentialsProvider(profile);
+            // Only to check a valid profile is specified.
+            provider.getCredentials();
+            client = AmazonS3ClientBuilder.standard()
+                    .withRegion(region)
+                    .withClientConfiguration(config)
+                    .withCredentials(provider).build();
+        }
         state().setState(EConnectionState.Open);
     }
 
