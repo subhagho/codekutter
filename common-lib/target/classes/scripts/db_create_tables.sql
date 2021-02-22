@@ -97,6 +97,7 @@ CREATE TABLE `config_filesystem_aws`
     `connection_type` varchar(512) NOT NULL,
     `register_types`  text DEFAULT NULL,
     `parameters`      text DEFAULT NULL,
+    `use_credentials` tinyint DEFAULT 1,
     PRIMARY KEY (`name`)
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8 COMMENT ='Table to store AWS S3 connection definitions.';

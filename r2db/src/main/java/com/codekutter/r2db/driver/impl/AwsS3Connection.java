@@ -152,7 +152,7 @@ public class AwsS3Connection extends AbstractConnection<AmazonS3> {
         }
         name(s3cfg.getName());
         ClientConfiguration config = configBuilder((AwsS3ConnectionConfig) cfg);
-        if (!useCredentials) {
+        if (!((AwsS3ConnectionConfig) cfg).isUseCredentials()) {
             client = AmazonS3ClientBuilder.standard()
                     .withRegion(region)
                     .withClientConfiguration(config)

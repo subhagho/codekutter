@@ -38,6 +38,8 @@ import java.util.Map;
 public class AwsS3ConnectionConfig extends ConnectionConfig {
     public static final String DEFAULT_PROFILE = "default";
 
+    @Column(name = "use_credentails")
+    private boolean useCredentials = true;
     @Column(name = "region")
     private String region;
     @Column(name = "profile")
