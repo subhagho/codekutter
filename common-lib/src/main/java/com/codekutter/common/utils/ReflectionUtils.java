@@ -464,23 +464,30 @@ public class ReflectionUtils {
         Preconditions.checkArgument(o != null);
         Preconditions.checkArgument(f != null);
 
-        String method = "set" + StringUtils.capitalize(f.getName());
-        Method m = MethodUtils.getAccessibleMethod(o.getClass(), method,
-                f.getType());
-        if (m == null) {
-            method = f.getName();
-            m = MethodUtils.getAccessibleMethod(o.getClass(), method,
-                    f.getType());
-        }
+        Method m = getSetter(o.getClass(), f);
 
         if (m == null)
             throw new Exception("No accessable method found for field. [field="
                     + f.getName() + "][class=" +
                     o.getClass().getCanonicalName()
                     + "]");
-        MethodUtils.invokeMethod(o, method, value);
+        MethodUtils.invokeMethod(o, m.getName(), value);
     }
 
+
+    public static Method getSetter(Class<?> type, Field f) {
+        Preconditions.checkArgument(f != null);
+
+        String method = "set" + StringUtils.capitalize(f.getName());
+        Method m = MethodUtils.getAccessibleMethod(type, method,
+                f.getType());
+        if (m == null) {
+            method = f.getName();
+            m = MethodUtils.getAccessibleMethod(type, method,
+                    f.getType());
+        }
+        return m;
+    }
 
     /**
      * Set the value of the specified field in the object to the value passed.
